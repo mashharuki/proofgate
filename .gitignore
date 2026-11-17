@@ -4,6 +4,7 @@ node_modules/
 dist/
 cdk.out/
 *.tsbuildinfo
-lean/.lake/
-lean/Generated.lean
+**/.lake/
+**/Generated.lean
+.pack/
 

@@ -74,14 +74,15 @@ importers:
   packages/cdk-plugin:
     dependencies:
       '@proofgate/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@proofgate/extractor':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../extractor
       '@proofgate/model':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../model
+    devDependencies:
       aws-cdk-lib:
         specifier: 2.277.0
         version: 2.277.0(constructs@10.8.1)
@@ -89,13 +90,13 @@ importers:
   packages/core:
     dependencies:
       '@proofgate/model':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../model
 
   packages/extractor:
     dependencies:
       '@proofgate/model':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../model
 
   packages/model: {}

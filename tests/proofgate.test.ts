@@ -114,7 +114,7 @@ describe("ProofGate finite model", () => {
       generateLean(vulnerableModel, { protectedBucketArns: [protectedBucketArn] }),
     );
     const result = spawnSync("lake", ["env", "lean", file], {
-      cwd: resolve("lean"),
+      cwd: resolve("packages/cdk-plugin/lean"),
       encoding: "utf8",
     });
     rmSync(directory, { recursive: true, force: true });

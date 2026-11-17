@@ -1,3 +1,8 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { evaluate, generateLean } from "@proofgate/core";
 import { extractStack } from "@proofgate/extractor";
 import type { ProofGateConfig } from "@proofgate/model";
@@ -7,11 +12,6 @@ import type {
   PolicyValidationPluginReport,
   PolicyViolationBeta1,
 } from "aws-cdk-lib";
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 /** CDKプラグインの設定です。leanDirectoryはテストや特殊な配置でだけ上書きします。 */
 export interface ProofGateValidatorProps extends ProofGateConfig {
@@ -24,7 +24,7 @@ type LeanResult =
   | { readonly status: "rejected" }
   | { readonly status: "error"; readonly diagnostic: string };
 
-/** 
+/**
  * 合成済みCloudFormationを検査し、CDK標準のValidation Reportを返します。
  */
 export class ProofGateValidator implements IPolicyValidationPlugin {
@@ -36,17 +36,17 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
 
   /**
    * コンストラクター
-   * @param props 
+   * @param props
    */
   public constructor(private readonly props: ProofGateValidatorProps) {
     this.leanDirectory =
-      props.leanDirectory ?? resolve(dirname(fileURLToPath(import.meta.url)), "../../../lean");
+      props.leanDirectory ?? resolve(dirname(fileURLToPath(import.meta.url)), "../lean");
   }
 
   /**
    * 検証メソッド
-   * @param context 
-   * @returns 
+   * @param context
+   * @returns
    */
   public validate(context: IPolicyValidationContext): PolicyValidationPluginReport {
     const violations: PolicyViolationBeta1[] = [];
@@ -74,7 +74,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
       });
       return { success: false, violations };
     }
-    
+
     for (const templatePath of context.templatePaths) {
       let template: unknown;
       // CDK assemblyが壊れている場合も例外で終了せず、PG-IAM-003として報告します。
@@ -155,7 +155,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
     return { success: violations.length === 0, violations };
   }
 
-  /** 
+  /**
    * 一時ファイルとして生成コードを検査し、終了時には成功・失敗にかかわらず削除します。
    */
   private runLean(source: string): LeanResult {
@@ -182,7 +182,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
   }
 }
 
-/** 
+/**
  * `Resources.<LogicalId>...`というJSON pathから、CDKレポート用のLogical IDを復元します。
  */
 function logicalIdFromPath(path: string): string {

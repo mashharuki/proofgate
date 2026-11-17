@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
+
+      - name: Show tool versions
+        run: |
+          node --version
+          pnpm --version
+
+      - name: Set up and build Lean
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: packages/cdk-plugin/lean
+          auto-config: false
+          build: true
+          test: false
+          lint: false
+
+      - name: Check code quality
+        run: pnpm quality
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Audit Lean sources
+        run: |
+          if grep -REn '(^|[^[:alnum:]_])sorry([^[:alnum:]_]|$)|^[[:space:]]*axiom[[:space:]]' packages/cdk-plugin/lean --include='*.lean'; then
+            echo 'Lean sources must not contain sorry or project-defined axioms.' >&2
+            exit 1
+          fi
+
+      - name: Verify npm package contents
+        run: pnpm pack:check

@@ -6,7 +6,7 @@
       "!!**/node_modules",
       "!!**/dist",
       "!!**/cdk.out",
-      "!!lean/.lake",
+      "!!**/.lake",
       "!!**/.pnpm-store",
       "!!**/.serena"
     ]

@@ -33,8 +33,8 @@ const statementsAllow = (role: RoleModel, actions: readonly string[], resource: 
     (statement) => allowsAction(statement, actions) && allowsResource(statement, resource),
   );
 
-/** 
- * StatementのResourceが、指定した対象ロールを表しているかを判定します。 
+/**
+ * StatementのResourceが、指定した対象ロールを表しているかを判定します。
  */
 function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boolean {
   if (!allowsAction(statement, ["iam:PassRole"])) return false;

@@ -21,7 +21,7 @@ const strings = (value: unknown): string[] | undefined =>
       ? value
       : undefined;
 
-/** 
+/**
  * 通常のIAM Policy Statementを、文字列だけで構成された決定的なモデルへ変換します。
  */
 function parseStatements(
@@ -65,9 +65,9 @@ function parseStatements(
   });
 }
 
-/** 
- * Trust Policyから、ロールを引き受けられるAWSサービスだけを抽出します。 
-　　*/
+/**
+ * Trust Policyから、ロールを引き受けられるAWSサービスだけを抽出します。
+ */
 function parseTrustServices(
   document: unknown,
   path: string,

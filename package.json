@@ -2,6 +2,7 @@
   "name": "proofgate",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
   "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=26"
@@ -15,12 +16,13 @@
     "lint": "biome lint .",
     "knip": "knip",
     "jscpd": "jscpd .",
+    "pack:check": "node scripts/check-packages.mjs",
     "quality": "pnpm biome:check && pnpm knip && pnpm jscpd",
     "test": "pnpm build && vitest run",
     "typecheck": "pnpm -r typecheck",
     "synth": "pnpm --filter @proofgate/safe-app synth && pnpm --filter @proofgate/vulnerable-app synth",
     "verify:demo": "pnpm --filter @proofgate/safe-app synth:proofgate && pnpm --filter @proofgate/vulnerable-app synth:proofgate",
-    "lean:build": "lake --dir lean build"
+    "lean:build": "node scripts/run-lean.mjs build"
   },
   "devDependencies": {
     "@proofgate/core": "workspace:*",

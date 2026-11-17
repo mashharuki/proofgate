@@ -15,7 +15,7 @@ ProofGateは、Leanを利用したAWS CDK向けのデプロイ前検証ゲート
 
 - Node.js 26以降（`.nvmrc`では26.13.1に固定）
 - pnpm 11
-- `elan`で導入したLean 4 / Lake（正確なバージョンは`lean/lean-toolchain`で固定）
+- `elan`で導入したLean 4 / Lake（正確なバージョンは`packages/cdk-plugin/lean/lean-toolchain`で固定）
 
 ## デモの実行
 
@@ -44,6 +44,23 @@ pnpm quality
 ```
 
 このコマンドはBiomeによるフォーマット・Lint・Assist検査、Knipによる未使用ファイル・依存関係・export検査、jscpdによる重複コード検査を順番に実行します。自動修正可能なBiomeの指摘は`pnpm biome:fix`で修正できます。
+
+## 公開パッケージ
+
+次の4パッケージをnpmへ公開できる構成にしています。
+
+- `@proofgate/cdk-plugin`: CDK利用者向けのValidation Plugin。固定済みLeanプロジェクトを同梱
+- `@proofgate/core`: TypeScript参照評価器とLeanモジュール生成器
+- `@proofgate/extractor`: CloudFormation IAM Extractor
+- `@proofgate/model`: CDK非依存の中間モデル
+
+公開前に、各tarballのエントリーポイント、型定義、README、ライセンス、Leanソース、workspace依存のsemver変換を検査できます。
+
+```bash
+pnpm pack:check
+```
+
+実際にnpmへ公開するには、`@proofgate`スコープを利用できるnpmアカウントまたはOrganizationの設定が別途必要です。
 
 ## CDKへの導入
 
