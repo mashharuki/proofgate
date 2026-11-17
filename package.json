@@ -19,7 +19,7 @@
     "pack:check": "node scripts/check-packages.mjs",
     "quality": "pnpm biome:check && pnpm knip && pnpm jscpd",
     "test": "pnpm build && vitest run",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm build && pnpm -r typecheck",
     "synth": "pnpm --filter @proofgate/safe-app synth && pnpm --filter @proofgate/vulnerable-app synth",
     "verify:demo": "pnpm --filter @proofgate/safe-app synth:proofgate && pnpm --filter @proofgate/vulnerable-app synth:proofgate",
     "lean:build": "node scripts/run-lean.mjs build"
