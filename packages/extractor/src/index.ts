@@ -5,8 +5,13 @@ import type {
   UnsupportedFinding,
 } from "@proofgate/model";
 
+/**
+ * CloudFormation JSONから、ProofGateが扱うIAMの有限モデルを抽出します。
+ * 解釈が曖昧な構文を推測で通さず、Unsupportedとして記録することがこの層の責務です。
+ */
 type JsonObject = Record<string, unknown>;
 
+// unknownのまま受け取ったJSONを、必要な形へ段階的に絞り込みます。
 const object = (value: unknown): value is JsonObject =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const strings = (value: unknown): string[] | undefined =>
@@ -16,6 +21,9 @@ const strings = (value: unknown): string[] | undefined =>
       ? value
       : undefined;
 
+/** 
+ * 通常のIAM Policy Statementを、文字列だけで構成された決定的なモデルへ変換します。
+ */
 function parseStatements(
   document: unknown,
   path: string,
@@ -32,6 +40,7 @@ function parseStatements(
       unsupported.push({ sourcePath, reason: "Statement must be an object" });
       return [];
     }
+    // 否定形式やConditionは意味を過小評価する危険があるため、初期版では必ず拒否します。
     for (const key of ["NotAction", "NotResource", "Condition"] as const) {
       if (key in raw)
         unsupported.push({ sourcePath: `${sourcePath}.${key}`, reason: `${key} is not supported` });
@@ -56,6 +65,9 @@ function parseStatements(
   });
 }
 
+/** 
+ * Trust Policyから、ロールを引き受けられるAWSサービスだけを抽出します。 
+　　*/
 function parseTrustServices(
   document: unknown,
   path: string,
@@ -98,6 +110,7 @@ function parseTrustServices(
       });
       return;
     }
+    // Allowされたsts:AssumeRoleだけが、サービスによる引き受け経路を作ります。
     if (
       raw.Effect !== "Allow" ||
       !actions.some((action) => ["*", "sts:*", "sts:assumerole"].includes(action.toLowerCase()))
@@ -129,6 +142,10 @@ function parseTrustServices(
   return [...new Set(services)].sort();
 }
 
+/**
+ * 1つのCloudFormationテンプレートを正規化します。
+ * 未対応構文があれば部分的なモデルを返さず、呼び出し側がFail Closedにできるようにします。
+ */
 export function extractStack(template: unknown): ExtractionResult {
   const unsupported: UnsupportedFinding[] = [];
   if (!object(template) || !object(template.Resources)) {
@@ -140,6 +157,7 @@ export function extractStack(template: unknown): ExtractionResult {
   }
 
   const roles = new Map<string, RoleModel>();
+  // 第1段階: AWS::IAM::Role本体とロール内インラインポリシーを収集します。
   for (const [logicalId, rawResource] of Object.entries(template.Resources)) {
     if (object(rawResource) && rawResource.Type === "AWS::IAM::ManagedPolicy") {
       unsupported.push({
@@ -217,6 +235,7 @@ export function extractStack(template: unknown): ExtractionResult {
     roles.set(logicalId, { logicalId, roleName, trustServices, statements });
   }
 
+  // 第2段階: 独立したAWS::IAM::Policyを、Refで指定されたローカルロールへ結合します。
   for (const [logicalId, rawResource] of Object.entries(template.Resources)) {
     if (
       !object(rawResource) ||
@@ -248,6 +267,7 @@ export function extractStack(template: unknown): ExtractionResult {
     }
   }
 
+  // 検査対象が空のときに定理が自明に成立する「空虚な証明」を防ぎます。
   if (roles.size === 0)
     unsupported.push({
       sourcePath: "Resources",

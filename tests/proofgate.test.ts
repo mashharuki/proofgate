@@ -9,6 +9,7 @@ import type { StackModel } from "@proofgate/model";
 import { describe, expect, it } from "vitest";
 
 const protectedBucketArn = "arn:aws:s3:::proofgate-protected-data";
+// CloudFormationを経由しないUnit Testで共有する、最小の危険モデルです。
 const vulnerableModel: StackModel = {
   version: "1",
   roles: [
@@ -47,6 +48,7 @@ const vulnerableModel: StackModel = {
   ],
 };
 
+// 有限モデル上の経路検出と、Lean生成結果の意味を固定します。
 describe("ProofGate finite model", () => {
   it("finds the PassRole + Lambda + protected S3 path", () => {
     expect(evaluate(vulnerableModel, { protectedBucketArns: [protectedBucketArn] })).toMatchObject([
@@ -127,6 +129,7 @@ describe("ProofGate finite model", () => {
   });
 });
 
+// 未対応IAM構文を見逃さず、出典付きでFail Closedにする境界を検査します。
 describe("CloudFormation extractor", () => {
   it("fails closed on unsupported Condition", () => {
     const result = extractStack({
@@ -195,6 +198,7 @@ describe("CloudFormation extractor", () => {
   });
 });
 
+// 設定・テンプレート・Lean実行環境の障害が、必ずPG-IAM-003になることを検査します。
 describe("CDK plugin fail-closed behavior", () => {
   it("rejects an empty protected bucket configuration", () => {
     const validator = new ProofGateValidator({ protectedBucketArns: [] });
@@ -245,6 +249,7 @@ describe("CDK plugin fail-closed behavior", () => {
   });
 });
 
+// 実際のcdk synthを使い、プラグイン有効時だけ危険なアプリが拒否されることを確認します。
 describe("CDK integration", () => {
   it("allows both apps without ProofGate and only the safe app with ProofGate", () => {
     const run = (app: "safe-app" | "vulnerable-app", script: "synth" | "synth:proofgate") =>
@@ -262,6 +267,7 @@ describe("CDK integration", () => {
   }, 30_000);
 });
 
+/** Extractorテストで共有する、Lambdaから引き受け可能な単一ロールのCloudFormationです。 */
 function singleRoleTemplate(): unknown {
   return {
     Resources: {

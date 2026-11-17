@@ -7,23 +7,35 @@ import type {
 } from "@proofgate/model";
 import { RULE_ID } from "@proofgate/model";
 
+/**
+ * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、
+ * TypeScript参照実装での判定と、同じ事実を検査するLeanコード生成を提供します。
+ */
 const lower = (value: string) => value.toLowerCase();
+
+// IAMのAction・Resourceで使用される*を、文字列全体に対するglobとして扱います。
 const matches = (pattern: string, value: string): boolean => {
   const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
   return new RegExp(`^${escaped}$`, "i").test(value);
 };
+
 const allowsAction = (statement: StatementModel, actions: readonly string[]) =>
   statement.effect === "Allow" &&
   statement.actions.some((pattern) =>
     actions.some((action) => matches(lower(pattern), lower(action))),
   );
+
 const allowsResource = (statement: StatementModel, resource: string) =>
   statement.resources.some((pattern) => matches(pattern, resource));
+
 const statementsAllow = (role: RoleModel, actions: readonly string[], resource: string) =>
   role.statements.filter(
     (statement) => allowsAction(statement, actions) && allowsResource(statement, resource),
   );
 
+/** 
+ * StatementのResourceが、指定した対象ロールを表しているかを判定します。 
+ */
 function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boolean {
   if (!allowsAction(statement, ["iam:PassRole"])) return false;
   const directIdentifiers = [target.logicalId, target.roleName].filter((value): value is string =>
@@ -35,6 +47,7 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
     const roleMarker = ":role/";
     const markerIndex = resourcePattern.indexOf(roleMarker);
     if (markerIndex < 0) return false;
+    // partitionやアカウント部分はPolicy側の値を保ち、ロール名部分だけを検査対象へ置き換えます。
     const candidateWithSameArnScope = `${resourcePattern.slice(0, markerIndex + roleMarker.length)}${target.roleName}`;
     return matches(resourcePattern, candidateWithSameArnScope);
   });
@@ -42,6 +55,10 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
 
 const S3_DATA_ACTIONS = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:*"] as const;
 
+/**
+ * 任意コードを対象ロールで実行できるLambda操作の根拠を返します。
+ * 新規作成は単独で成立します。既存関数の悪用には、ロール設定とコードの両方の更新を要求します。
+ */
 function lambdaControlStatements(role: RoleModel): StatementModel[] {
   const create = role.statements.filter((statement) =>
     allowsAction(statement, ["lambda:CreateFunction"]),
@@ -66,6 +83,7 @@ interface CandidatePath {
   readonly bucketAccess: readonly StatementModel[];
 }
 
+/** すべての「起点ロール × 対象ロール × 保護バケット」の有限な組み合わせを列挙します。 */
 function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePath[] {
   const candidates: CandidatePath[] = [];
   for (const principal of model.roles) {
@@ -99,6 +117,7 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
   return candidates;
 }
 
+/** 4条件をすべて満たす経路を、説明可能なViolationへ変換するTypeScript参照実装です。 */
 export function evaluate(model: StackModel, config: ProofGateConfig): Violation[] {
   const violations: Violation[] = [];
   for (const {
@@ -134,6 +153,10 @@ export function evaluate(model: StackModel, config: ProofGateConfig): Violation[
 }
 
 const leanString = (value: string) => JSON.stringify(value);
+/**
+ * 候補経路を具体的なLean値として直列化し、安全性定理を決定的に生成します。
+ * #evalのマーカーは「定理が偽」と「Lean自体の実行失敗」を呼び出し側が区別するために使います。
+ */
 export function generateLean(model: StackModel, config: ProofGateConfig): string {
   const paths = candidatePaths(model, config).map(
     ({
