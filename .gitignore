@@ -1,0 +1,9 @@
+node_modules/
+.pnpm-store/
+.serena/
+dist/
+cdk.out/
+*.tsbuildinfo
+lean/.lake/
+lean/Generated.lean
+
