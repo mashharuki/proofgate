@@ -1,0 +1,9 @@
+{
+  "threshold": 5,
+  "reporters": ["console"],
+  "ignore": ["**/node_modules/**", "**/dist/**", "**/cdk.out/**", "**/.lake/**", "**/.serena/**"],
+  "format": ["typescript"],
+  "minLines": 8,
+  "minTokens": 70,
+  "mode": "mild"
+}

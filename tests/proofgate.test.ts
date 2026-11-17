@@ -2,11 +2,11 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { describe, expect, it } from "vitest";
 import { ProofGateValidator } from "@proofgate/cdk-plugin";
 import { evaluate, generateLean } from "@proofgate/core";
 import { extractStack } from "@proofgate/extractor";
 import type { StackModel } from "@proofgate/model";
+import { describe, expect, it } from "vitest";
 
 const protectedBucketArn = "arn:aws:s3:::proofgate-protected-data";
 const vulnerableModel: StackModel = {
@@ -55,7 +55,10 @@ describe("ProofGate finite model", () => {
   });
 
   it("does not report a path when PassRole is absent", () => {
-    const safe: StackModel = { ...vulnerableModel, roles: [{ ...vulnerableModel.roles[0], statements: vulnerableModel.roles[0].statements.slice(1) }, vulnerableModel.roles[1]] };
+    const safe: StackModel = {
+      ...vulnerableModel,
+      roles: [{ ...vulnerableModel.roles[0], statements: vulnerableModel.roles[0].statements.slice(1) }, vulnerableModel.roles[1]],
+    };
     expect(evaluate(safe, { protectedBucketArns: [protectedBucketArn] })).toEqual([]);
   });
 
@@ -89,7 +92,13 @@ describe("CloudFormation extractor", () => {
         Role: {
           Type: "AWS::IAM::Role",
           Properties: {
-            Policies: [{ PolicyDocument: { Statement: [{ Effect: "Allow", Action: "s3:GetObject", Resource: "*", Condition: { StringEquals: {} } }] } }],
+            Policies: [
+              {
+                PolicyDocument: {
+                  Statement: [{ Effect: "Allow", Action: "s3:GetObject", Resource: "*", Condition: { StringEquals: {} } }],
+                },
+              },
+            ],
           },
         },
       },
@@ -105,8 +114,12 @@ describe("CloudFormation extractor", () => {
   });
 
   it("fails closed on a Condition in the role trust policy", () => {
-    const template = singleRoleTemplate() as { Resources: { DataRole: { Properties: { AssumeRolePolicyDocument: { Statement: Array<Record<string, unknown>> } } } } };
-    template.Resources.DataRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition = { StringEquals: { "aws:SourceAccount": "123456789012" } };
+    const template = singleRoleTemplate() as {
+      Resources: { DataRole: { Properties: { AssumeRolePolicyDocument: { Statement: Array<Record<string, unknown>> } } } };
+    };
+    template.Resources.DataRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition = {
+      StringEquals: { "aws:SourceAccount": "123456789012" },
+    };
     const result = extractStack(template);
     expect(result.model).toBeUndefined();
     expect(result.unsupported).toContainEqual(expect.objectContaining({ reason: "Condition is not supported in trust policies" }));
@@ -115,7 +128,9 @@ describe("CloudFormation extractor", () => {
   it("fails closed on unsupported IAM resource types", () => {
     const result = extractStack({ Resources: { User: { Type: "AWS::IAM::User", Properties: {} } } });
     expect(result.model).toBeUndefined();
-    expect(result.unsupported).toContainEqual(expect.objectContaining({ reason: "AWS::IAM::User is not supported in the first vertical slice" }));
+    expect(result.unsupported).toContainEqual(
+      expect.objectContaining({ reason: "AWS::IAM::User is not supported in the first vertical slice" }),
+    );
   });
 });
 
@@ -136,7 +151,10 @@ describe("CDK plugin fail-closed behavior", () => {
     rmSync(directory, { recursive: true, force: true });
     expect(report.success).toBe(false);
     expect(report.violations).toHaveLength(1);
-    expect(report.violations[0]).toMatchObject({ ruleName: "PG-IAM-003", description: expect.stringContaining("Lean verification failed to execute") });
+    expect(report.violations[0]).toMatchObject({
+      ruleName: "PG-IAM-003",
+      description: expect.stringContaining("Lean verification failed to execute"),
+    });
   });
 
   it("reports malformed synthesized templates as PG-IAM-003", () => {
@@ -147,7 +165,10 @@ describe("CDK plugin fail-closed behavior", () => {
     const report = validator.validate({ templatePaths: [templatePath] } as Parameters<ProofGateValidator["validate"]>[0]);
     rmSync(directory, { recursive: true, force: true });
     expect(report.success).toBe(false);
-    expect(report.violations[0]).toMatchObject({ ruleName: "PG-IAM-003", description: expect.stringContaining("could not be read or parsed") });
+    expect(report.violations[0]).toMatchObject({
+      ruleName: "PG-IAM-003",
+      description: expect.stringContaining("could not be read or parsed"),
+    });
   });
 });
 

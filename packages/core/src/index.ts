@@ -56,7 +56,15 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
       const targetIsLambdaAssumable = target.trustServices.some((service) => service === "*" || service === "lambda.amazonaws.com");
       for (const bucketArn of config.protectedBucketArns) {
         const objectArn = `${bucketArn.replace(/\/$/, "")}/*`;
-        candidates.push({ principal, target, bucketArn, passRole, lambdaControl, targetIsLambdaAssumable, bucketAccess: statementsAllow(target, S3_DATA_ACTIONS, objectArn) });
+        candidates.push({
+          principal,
+          target,
+          bucketArn,
+          passRole,
+          lambdaControl,
+          targetIsLambdaAssumable,
+          bucketAccess: statementsAllow(target, S3_DATA_ACTIONS, objectArn),
+        });
       }
     }
   }
@@ -65,24 +73,28 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
 
 export function evaluate(model: StackModel, config: ProofGateConfig): Violation[] {
   const violations: Violation[] = [];
-  for (const { principal, target, bucketArn, passRole, lambdaControl, targetIsLambdaAssumable, bucketAccess } of candidatePaths(model, config)) {
-      if (passRole.length === 0 || lambdaControl.length === 0 || !targetIsLambdaAssumable || bucketAccess.length === 0) continue;
-        violations.push({
-          ruleId: RULE_ID,
-          principalLogicalId: principal.logicalId,
-          targetRoleLogicalId: target.logicalId,
-          protectedBucketArn: bucketArn,
-          sourcePaths: [...new Set([...passRole, ...lambdaControl, ...bucketAccess].map((statement) => statement.sourcePath))],
-          explanation: `${principal.logicalId} can pass Lambda-assumable role ${target.logicalId} and control Lambda code or configuration; ${target.logicalId} can access protected bucket ${bucketArn}.`,
-        });
+  for (const { principal, target, bucketArn, passRole, lambdaControl, targetIsLambdaAssumable, bucketAccess } of candidatePaths(
+    model,
+    config,
+  )) {
+    if (passRole.length === 0 || lambdaControl.length === 0 || !targetIsLambdaAssumable || bucketAccess.length === 0) continue;
+    violations.push({
+      ruleId: RULE_ID,
+      principalLogicalId: principal.logicalId,
+      targetRoleLogicalId: target.logicalId,
+      protectedBucketArn: bucketArn,
+      sourcePaths: [...new Set([...passRole, ...lambdaControl, ...bucketAccess].map((statement) => statement.sourcePath))],
+      explanation: `${principal.logicalId} can pass Lambda-assumable role ${target.logicalId} and control Lambda code or configuration; ${target.logicalId} can access protected bucket ${bucketArn}.`,
+    });
   }
   return violations;
 }
 
 const leanString = (value: string) => JSON.stringify(value);
 export function generateLean(model: StackModel, config: ProofGateConfig): string {
-  const paths = candidatePaths(model, config).map(({ principal, target, bucketArn, passRole, lambdaControl, targetIsLambdaAssumable, bucketAccess }) =>
-    `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, canPassRole := ${passRole.length > 0}, canControlLambda := ${lambdaControl.length > 0}, targetIsLambdaAssumable := ${targetIsLambdaAssumable}, targetCanAccess := ${bucketAccess.length > 0} }`,
+  const paths = candidatePaths(model, config).map(
+    ({ principal, target, bucketArn, passRole, lambdaControl, targetIsLambdaAssumable, bucketAccess }) =>
+      `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, canPassRole := ${passRole.length > 0}, canControlLambda := ${lambdaControl.length > 0}, targetIsLambdaAssumable := ${targetIsLambdaAssumable}, targetCanAccess := ${bucketAccess.length > 0} }`,
   );
   return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n`;
 }

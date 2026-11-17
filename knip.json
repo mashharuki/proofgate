@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreBinaries": ["lake"],
+  "workspaces": {
+    ".": {
+      "entry": ["tests/**/*.test.ts"],
+      "project": ["tests/**/*.ts"]
+    },
+    "packages/*": {
+      "project": ["src/**/*.ts"]
+    },
+    "examples/*": {
+      "entry": ["src/app.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

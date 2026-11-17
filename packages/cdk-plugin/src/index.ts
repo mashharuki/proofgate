@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { generateLean, evaluate } from "@proofgate/core";
+import { evaluate, generateLean } from "@proofgate/core";
 import { extractStack } from "@proofgate/extractor";
 import type { ProofGateConfig } from "@proofgate/model";
 import type { IPolicyValidationContext, IPolicyValidationPlugin, PolicyValidationPluginReport, PolicyViolationBeta1 } from "aws-cdk-lib";
@@ -29,13 +29,19 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
 
   public validate(context: IPolicyValidationContext): PolicyValidationPluginReport {
     const violations: PolicyViolationBeta1[] = [];
-    if (!Array.isArray(this.props.protectedBucketArns) || this.props.protectedBucketArns.length === 0 || this.props.protectedBucketArns.some((arn) => typeof arn !== "string" || arn.trim().length === 0)) {
+    if (
+      !Array.isArray(this.props.protectedBucketArns) ||
+      this.props.protectedBucketArns.length === 0 ||
+      this.props.protectedBucketArns.some((arn) => typeof arn !== "string" || arn.trim().length === 0)
+    ) {
       const templatePath = context.templatePaths[0] ?? "proofgate.config.json";
       violations.push({
         ruleName: "PG-IAM-003",
         description: "ProofGate requires at least one non-empty protected S3 bucket ARN; refusing a vacuous proof.",
         fix: "Configure protectedBucketArns with every S3 bucket that must be protected.",
-        violatingResources: [{ resourceLogicalId: "ProofGateConfiguration", templatePath, locations: ["ProofGateConfig.protectedBucketArns"] }],
+        violatingResources: [
+          { resourceLogicalId: "ProofGateConfiguration", templatePath, locations: ["ProofGateConfig.protectedBucketArns"] },
+        ],
       });
       return { success: false, violations };
     }
@@ -106,7 +112,8 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
       const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
       if (result.status === 0 && output.includes("PROOFGATE_SAFE")) return { status: "accepted" };
       if (result.status !== 0 && output.includes("PROOFGATE_UNSAFE")) return { status: "rejected" };
-      const diagnostic = result.error?.message ?? (output.trim().split("\n").slice(-4).join(" ") || `Lean exited with status ${String(result.status)}`);
+      const diagnostic =
+        result.error?.message ?? (output.trim().split("\n").slice(-4).join(" ") || `Lean exited with status ${String(result.status)}`);
       return { status: "error", diagnostic: diagnostic.slice(0, 500) };
     } finally {
       rmSync(directory, { recursive: true, force: true });

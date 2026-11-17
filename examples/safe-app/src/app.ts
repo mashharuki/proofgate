@@ -1,6 +1,6 @@
+import { ProofGateValidator } from "@proofgate/cdk-plugin";
 import { App, Stack, Validations } from "aws-cdk-lib";
 import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
 
 const protectedBucketArn = "arn:aws:s3:::proofgate-protected-data";
 const app = new App();

@@ -72,7 +72,10 @@ function parseTrustServices(document: unknown, path: string, unsupported: Unsupp
     for (const [principalType, values] of Object.entries(raw.Principal)) {
       const parsed = strings(values);
       if (!parsed) {
-        unsupported.push({ sourcePath: `${sourcePath}.Principal.${principalType}`, reason: "Trust principals must contain literal strings" });
+        unsupported.push({
+          sourcePath: `${sourcePath}.Principal.${principalType}`,
+          reason: "Trust principals must contain literal strings",
+        });
       } else if (principalType === "Service") {
         services.push(...parsed.map((service) => service.toLowerCase()));
       }
@@ -90,11 +93,22 @@ export function extractStack(template: unknown): ExtractionResult {
   const roles = new Map<string, RoleModel>();
   for (const [logicalId, rawResource] of Object.entries(template.Resources)) {
     if (object(rawResource) && rawResource.Type === "AWS::IAM::ManagedPolicy") {
-      unsupported.push({ sourcePath: `Resources.${logicalId}`, reason: "AWS::IAM::ManagedPolicy is not supported in the first vertical slice" });
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}`,
+        reason: "AWS::IAM::ManagedPolicy is not supported in the first vertical slice",
+      });
       continue;
     }
-    if (object(rawResource) && typeof rawResource.Type === "string" && rawResource.Type.startsWith("AWS::IAM::") && !["AWS::IAM::Role", "AWS::IAM::Policy"].includes(rawResource.Type)) {
-      unsupported.push({ sourcePath: `Resources.${logicalId}`, reason: `${rawResource.Type} is not supported in the first vertical slice` });
+    if (
+      object(rawResource) &&
+      typeof rawResource.Type === "string" &&
+      rawResource.Type.startsWith("AWS::IAM::") &&
+      !["AWS::IAM::Role", "AWS::IAM::Policy"].includes(rawResource.Type)
+    ) {
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}`,
+        reason: `${rawResource.Type} is not supported in the first vertical slice`,
+      });
       continue;
     }
     if (!object(rawResource) || rawResource.Type !== "AWS::IAM::Role" || !object(rawResource.Properties)) continue;
@@ -114,13 +128,22 @@ export function extractStack(template: unknown): ExtractionResult {
       }
     }
     if (rawResource.Properties.ManagedPolicyArns !== undefined) {
-      unsupported.push({ sourcePath: `Resources.${logicalId}.Properties.ManagedPolicyArns`, reason: "Managed policies are not supported in the first vertical slice" });
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}.Properties.ManagedPolicyArns`,
+        reason: "Managed policies are not supported in the first vertical slice",
+      });
     }
     if (rawResource.Properties.RoleName !== undefined && typeof rawResource.Properties.RoleName !== "string") {
-      unsupported.push({ sourcePath: `Resources.${logicalId}.Properties.RoleName`, reason: "RoleName must be a literal string when present" });
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}.Properties.RoleName`,
+        reason: "RoleName must be a literal string when present",
+      });
     }
     if (rawResource.Properties.Path !== undefined && rawResource.Properties.Path !== "/") {
-      unsupported.push({ sourcePath: `Resources.${logicalId}.Properties.Path`, reason: "Non-default IAM role paths are not supported in the first vertical slice" });
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}.Properties.Path`,
+        reason: "Non-default IAM role paths are not supported in the first vertical slice",
+      });
     }
     const roleName = typeof rawResource.Properties.RoleName === "string" ? rawResource.Properties.RoleName : undefined;
     roles.set(logicalId, { logicalId, roleName, trustServices, statements });
@@ -137,10 +160,14 @@ export function extractStack(template: unknown): ExtractionResult {
     }
     for (const [index, roleRef] of roleRefs.entries()) {
       if (!object(roleRef) || typeof roleRef.Ref !== "string" || !roles.has(roleRef.Ref)) {
-        unsupported.push({ sourcePath: `Resources.${logicalId}.Properties.Roles[${index}]`, reason: "Only local role Ref targets are supported" });
+        unsupported.push({
+          sourcePath: `Resources.${logicalId}.Properties.Roles[${index}]`,
+          reason: "Only local role Ref targets are supported",
+        });
         continue;
       }
-      const role = roles.get(roleRef.Ref)!;
+      const role = roles.get(roleRef.Ref);
+      if (!role) continue;
       roles.set(role.logicalId, { ...role, statements: [...role.statements, ...statements] });
     }
   }
@@ -149,5 +176,7 @@ export function extractStack(template: unknown): ExtractionResult {
   if ([...roles.values()].every((role) => role.statements.length === 0)) {
     unsupported.push({ sourcePath: "Resources", reason: "No supported IAM policy statements were found; refusing a vacuous proof" });
   }
-  return unsupported.length > 0 ? { unsupported } : { model: { version: "1", roles: [...roles.values()].sort((a, b) => a.logicalId.localeCompare(b.logicalId)) }, unsupported };
+  return unsupported.length > 0
+    ? { unsupported }
+    : { model: { version: "1", roles: [...roles.values()].sort((a, b) => a.logicalId.localeCompare(b.logicalId)) }, unsupported };
 }
