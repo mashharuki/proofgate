@@ -1,41 +1,43 @@
 # ProofGate
 
-ProofGate is a Lean-powered deployment gate for AWS CDK. The first vertical slice detects this privilege-escalation path in synthesized CloudFormation:
+ProofGateは、Leanを利用したAWS CDK向けのデプロイ前検証ゲートです。
 
-1. an IAM principal can `iam:PassRole` a target role;
-2. the same principal can create a Lambda function, or update both its role configuration and code; and
-3. the target role trusts the Lambda service; and
-4. the target role can access a configured protected S3 bucket.
+最初の実装では、合成されたCloudFormationから次の権限昇格経路を検出します。
 
-The repository is independent of Kiro. It uses TypeScript, Lean 4, pnpm, and the stable AWS CDK `IPolicyValidationPlugin` API.
+1. IAMプリンシパルが対象ロールに対する`iam:PassRole`権限を持っている
+2. 同じプリンシパルがLambda関数を作成できる、またはLambda関数のロール設定とコードの両方を更新できる
+3. 対象ロールがLambdaサービスを信頼している
+4. 対象ロールが設定で指定された保護対象S3バケットへアクセスできる
 
-## Requirements
+このリポジトリはKiroに依存しません。TypeScript、Lean 4、pnpm、およびAWS CDKの安定版`IPolicyValidationPlugin` APIを使用します。
 
-- Node.js 22 or newer
+## 必要な環境
+
+- Node.js 22以降
 - pnpm 11
-- Lean 4 / Lake through `elan` (the exact version is pinned in `lean/lean-toolchain`)
+- `elan`で導入したLean 4 / Lake（正確なバージョンは`lean/lean-toolchain`で固定）
 
-## Run the demo
+## デモの実行
 
 ```bash
 pnpm install
 pnpm build
 pnpm lean:build
 
-# Both ordinary syntheses succeed.
+# 通常のsynthは両方とも成功する
 pnpm --filter @proofgate/safe-app synth
 pnpm --filter @proofgate/vulnerable-app synth
 
-# ProofGate allows the safe app.
+# ProofGateはsafe-appを許可する
 pnpm --filter @proofgate/safe-app synth:proofgate
 
-# ProofGate rejects this with PG-IAM-004 and exit status 1.
+# ProofGateはvulnerable-appをPG-IAM-004、終了コード1で拒否する
 pnpm --filter @proofgate/vulnerable-app synth:proofgate
 ```
 
-Run the complete automated suite with `pnpm test`.
+自動テスト一式は`pnpm test`で実行できます。
 
-## CDK integration
+## CDKへの導入
 
 ```ts
 import { App, Validations } from "aws-cdk-lib";
@@ -49,8 +51,8 @@ Validations.of(app).addPlugins(
 );
 ```
 
-The plugin reads `IPolicyValidationContext.templatePaths`, extracts a deliberately limited IAM model, generates a concrete Lean module, and asks the Lean kernel to decide that no complete escalation path exists. Unsupported policy syntax is reported as `PG-IAM-003` and fails closed.
+プラグインは`IPolicyValidationContext.templatePaths`を読み取り、意図的に範囲を限定したIAMモデルを抽出します。次に、具体的なLeanモジュールを生成し、完全な権限昇格経路が存在しないことをLeanカーネルに検査させます。未対応のポリシー構文は`PG-IAM-003`として報告し、Fail Closedで拒否します。
 
-## Current scope
+## 現在の対応範囲
 
-This is the first end-to-end slice, not a complete IAM evaluator. It supports local IAM roles and inline policies with literal `Effect`, `Action`, and `Resource` values. See [supported IAM](docs/SUPPORTED_IAM.md) and [trust boundaries](docs/ASSUMPTIONS.md) before using it as a deployment control.
+これは最初のEnd-to-End実装であり、完全なIAM評価器ではありません。ローカルのIAMロールと、`Effect`、`Action`、`Resource`がリテラル値で記述されたインラインポリシーに対応しています。デプロイ制御として使用する前に、[対応するIAM構文](docs/SUPPORTED_IAM.md)と[前提・信頼境界](docs/ASSUMPTIONS.md)を確認してください。

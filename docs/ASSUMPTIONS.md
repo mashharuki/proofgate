@@ -1,23 +1,28 @@
-# Assumptions and trust boundaries
+# 前提と信頼境界
 
-## What is checked
+## 検査するもの
 
-For the extracted finite model, ProofGate checks that no principal simultaneously has a supported `iam:PassRole` edge to a role, a supported Lambda-control permission, a target role that trusts the Lambda service, and a target role with supported access to a configured S3 bucket.
+ProofGateは抽出した有限モデルについて、次の4条件を同時に満たすプリンシパルからの経路が存在しないことを検査します。
 
-## Trusted components
+- 対象ロールへの、対応範囲内の`iam:PassRole`権限がある
+- 対応範囲内のLambda制御権限がある
+- 対象ロールがLambdaサービスを信頼している
+- 対象ロールが設定された保護対象S3バケットへ、対応範囲内のアクセス権限を持っている
 
-- the CloudFormation extractor and action/resource matcher;
-- the TypeScript-to-Lean generator;
-- the pinned Lean compiler, runtime used by `native_decide`, and Lean kernel;
-- the synthesized CloudFormation template as a representation of the proposed deployment;
-- AWS IAM and Lambda behaving according to their documented semantics.
+## 信頼するもの
 
-## Not covered yet
+- CloudFormation ExtractorとAction・Resource Matcherの実装
+- TypeScriptからLeanへのGenerator
+- バージョン固定済みLeanコンパイラ、`native_decide`が使用するランタイム、Leanカーネル
+- 合成されたCloudFormationテンプレートが予定されるデプロイ内容を表していること
+- AWS IAMとLambdaが公開仕様どおりに動作すること
 
-- SCPs, permissions boundaries, session policies, resource policies, and explicit-deny evaluation;
-- transitive role assumption and cross-stack or cross-account references;
-- service-specific Lambda constraints beyond service trust, and `iam:PassedToService` conditions;
-- managed policies, policy variables, most CloudFormation intrinsic functions, and IAM conditions;
-- drift or changes made outside the checked CDK synthesis.
+## 現在の検査対象外
 
-The extractor rejects unsupported constructs rather than treating them as safe. AWS deployment is intentionally outside this repository's demo and tests.
+- SCP、Permissions Boundary、Session Policy、Resource Policy、Explicit Denyの評価
+- 推移的なロール引き受け、スタック間参照、クロスアカウント参照
+- サービス信頼以外のLambda固有制約と`iam:PassedToService` Condition
+- Managed Policy、ポリシー変数、大部分のCloudFormation intrinsic function、IAM Condition
+- 検査済みのCDK synthを経由しない変更やデプロイ後のドリフト
+
+Extractorは、未対応の構文を安全とみなさず拒否します。AWSへのデプロイは、意図的にこのリポジトリのデモとテストの対象外にしています。
