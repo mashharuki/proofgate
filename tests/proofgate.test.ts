@@ -17,15 +17,32 @@ const vulnerableModel: StackModel = {
       roleName: "developer",
       trustServices: ["ec2.amazonaws.com"],
       statements: [
-        { effect: "Allow", actions: ["iam:PassRole"], resources: ["arn:aws:iam::*:role/data-role"], sourcePath: "pass" },
-        { effect: "Allow", actions: ["lambda:CreateFunction"], resources: ["*"], sourcePath: "lambda" },
+        {
+          effect: "Allow",
+          actions: ["iam:PassRole"],
+          resources: ["arn:aws:iam::*:role/data-role"],
+          sourcePath: "pass",
+        },
+        {
+          effect: "Allow",
+          actions: ["lambda:CreateFunction"],
+          resources: ["*"],
+          sourcePath: "lambda",
+        },
       ],
     },
     {
       logicalId: "DataRole",
       roleName: "data-role",
       trustServices: ["lambda.amazonaws.com"],
-      statements: [{ effect: "Allow", actions: ["s3:GetObject"], resources: [`${protectedBucketArn}/*`], sourcePath: "s3" }],
+      statements: [
+        {
+          effect: "Allow",
+          actions: ["s3:GetObject"],
+          resources: [`${protectedBucketArn}/*`],
+          sourcePath: "s3",
+        },
+      ],
     },
   ],
 };
@@ -33,7 +50,11 @@ const vulnerableModel: StackModel = {
 describe("ProofGate finite model", () => {
   it("finds the PassRole + Lambda + protected S3 path", () => {
     expect(evaluate(vulnerableModel, { protectedBucketArns: [protectedBucketArn] })).toMatchObject([
-      { ruleId: "PG-IAM-004", principalLogicalId: "DeveloperRole", targetRoleLogicalId: "DataRole" },
+      {
+        ruleId: "PG-IAM-004",
+        principalLogicalId: "DeveloperRole",
+        targetRoleLogicalId: "DataRole",
+      },
     ]);
   });
 
@@ -44,20 +65,30 @@ describe("ProofGate finite model", () => {
         {
           ...vulnerableModel.roles[0],
           statements: [
-            { effect: "Allow", actions: ["iam:PassRole"], resources: ["arn:aws:iam::123456789012:role/data-role"], sourcePath: "pass" },
+            {
+              effect: "Allow",
+              actions: ["iam:PassRole"],
+              resources: ["arn:aws:iam::123456789012:role/data-role"],
+              sourcePath: "pass",
+            },
             vulnerableModel.roles[0].statements[1],
           ],
         },
         vulnerableModel.roles[1],
       ],
     };
-    expect(evaluate(accountSpecific, { protectedBucketArns: [protectedBucketArn] })).toHaveLength(1);
+    expect(evaluate(accountSpecific, { protectedBucketArns: [protectedBucketArn] })).toHaveLength(
+      1,
+    );
   });
 
   it("does not report a path when PassRole is absent", () => {
     const safe: StackModel = {
       ...vulnerableModel,
-      roles: [{ ...vulnerableModel.roles[0], statements: vulnerableModel.roles[0].statements.slice(1) }, vulnerableModel.roles[1]],
+      roles: [
+        { ...vulnerableModel.roles[0], statements: vulnerableModel.roles[0].statements.slice(1) },
+        vulnerableModel.roles[1],
+      ],
     };
     expect(evaluate(safe, { protectedBucketArns: [protectedBucketArn] })).toEqual([]);
   });
@@ -65,7 +96,10 @@ describe("ProofGate finite model", () => {
   it("does not report a path when the target role does not trust Lambda", () => {
     const nonLambdaTarget: StackModel = {
       ...vulnerableModel,
-      roles: [vulnerableModel.roles[0], { ...vulnerableModel.roles[1], trustServices: ["ec2.amazonaws.com"] }],
+      roles: [
+        vulnerableModel.roles[0],
+        { ...vulnerableModel.roles[1], trustServices: ["ec2.amazonaws.com"] },
+      ],
     };
     expect(evaluate(nonLambdaTarget, { protectedBucketArns: [protectedBucketArn] })).toEqual([]);
   });
@@ -73,15 +107,23 @@ describe("ProofGate finite model", () => {
   it("generates a Lean theorem that rejects the vulnerable model", () => {
     const directory = mkdtempSync(join(tmpdir(), "proofgate-test-"));
     const file = join(directory, "Generated.lean");
-    writeFileSync(file, generateLean(vulnerableModel, { protectedBucketArns: [protectedBucketArn] }));
-    const result = spawnSync("lake", ["env", "lean", file], { cwd: resolve("lean"), encoding: "utf8" });
+    writeFileSync(
+      file,
+      generateLean(vulnerableModel, { protectedBucketArns: [protectedBucketArn] }),
+    );
+    const result = spawnSync("lake", ["env", "lean", file], {
+      cwd: resolve("lean"),
+      encoding: "utf8",
+    });
     rmSync(directory, { recursive: true, force: true });
     expect(result.status).not.toBe(0);
     expect(`${result.stdout}\n${result.stderr}`).toContain("ProofGate.safe generatedPaths = true");
   });
 
   it("emits an explicit Lean decision marker", () => {
-    expect(generateLean(vulnerableModel, { protectedBucketArns: [protectedBucketArn] })).toContain("PROOFGATE_UNSAFE");
+    expect(generateLean(vulnerableModel, { protectedBucketArns: [protectedBucketArn] })).toContain(
+      "PROOFGATE_UNSAFE",
+    );
   });
 });
 
@@ -95,7 +137,14 @@ describe("CloudFormation extractor", () => {
             Policies: [
               {
                 PolicyDocument: {
-                  Statement: [{ Effect: "Allow", Action: "s3:GetObject", Resource: "*", Condition: { StringEquals: {} } }],
+                  Statement: [
+                    {
+                      Effect: "Allow",
+                      Action: "s3:GetObject",
+                      Resource: "*",
+                      Condition: { StringEquals: {} },
+                    },
+                  ],
                 },
               },
             ],
@@ -104,7 +153,9 @@ describe("CloudFormation extractor", () => {
       },
     });
     expect(result.model).toBeUndefined();
-    expect(result.unsupported).toContainEqual(expect.objectContaining({ reason: "Condition is not supported" }));
+    expect(result.unsupported).toContainEqual(
+      expect.objectContaining({ reason: "Condition is not supported" }),
+    );
   });
 
   it("extracts Lambda service trust", () => {
@@ -115,21 +166,31 @@ describe("CloudFormation extractor", () => {
 
   it("fails closed on a Condition in the role trust policy", () => {
     const template = singleRoleTemplate() as {
-      Resources: { DataRole: { Properties: { AssumeRolePolicyDocument: { Statement: Array<Record<string, unknown>> } } } };
+      Resources: {
+        DataRole: {
+          Properties: { AssumeRolePolicyDocument: { Statement: Array<Record<string, unknown>> } };
+        };
+      };
     };
     template.Resources.DataRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition = {
       StringEquals: { "aws:SourceAccount": "123456789012" },
     };
     const result = extractStack(template);
     expect(result.model).toBeUndefined();
-    expect(result.unsupported).toContainEqual(expect.objectContaining({ reason: "Condition is not supported in trust policies" }));
+    expect(result.unsupported).toContainEqual(
+      expect.objectContaining({ reason: "Condition is not supported in trust policies" }),
+    );
   });
 
   it("fails closed on unsupported IAM resource types", () => {
-    const result = extractStack({ Resources: { User: { Type: "AWS::IAM::User", Properties: {} } } });
+    const result = extractStack({
+      Resources: { User: { Type: "AWS::IAM::User", Properties: {} } },
+    });
     expect(result.model).toBeUndefined();
     expect(result.unsupported).toContainEqual(
-      expect.objectContaining({ reason: "AWS::IAM::User is not supported in the first vertical slice" }),
+      expect.objectContaining({
+        reason: "AWS::IAM::User is not supported in the first vertical slice",
+      }),
     );
   });
 });
@@ -137,17 +198,27 @@ describe("CloudFormation extractor", () => {
 describe("CDK plugin fail-closed behavior", () => {
   it("rejects an empty protected bucket configuration", () => {
     const validator = new ProofGateValidator({ protectedBucketArns: [] });
-    const report = validator.validate({ templatePaths: ["unused.json"] } as Parameters<ProofGateValidator["validate"]>[0]);
+    const report = validator.validate({ templatePaths: ["unused.json"] } as Parameters<
+      ProofGateValidator["validate"]
+    >[0]);
     expect(report.success).toBe(false);
-    expect(report.violations[0]).toMatchObject({ ruleName: "PG-IAM-003", description: expect.stringContaining("vacuous proof") });
+    expect(report.violations[0]).toMatchObject({
+      ruleName: "PG-IAM-003",
+      description: expect.stringContaining("vacuous proof"),
+    });
   });
 
   it("reports a Lean toolchain error instead of treating it as an unsafe theorem", () => {
     const directory = mkdtempSync(join(tmpdir(), "proofgate-plugin-test-"));
     const templatePath = join(directory, "template.json");
     writeFileSync(templatePath, JSON.stringify(singleRoleTemplate()));
-    const validator = new ProofGateValidator({ protectedBucketArns: [protectedBucketArn], leanDirectory: join(directory, "missing-lean") });
-    const report = validator.validate({ templatePaths: [templatePath] } as Parameters<ProofGateValidator["validate"]>[0]);
+    const validator = new ProofGateValidator({
+      protectedBucketArns: [protectedBucketArn],
+      leanDirectory: join(directory, "missing-lean"),
+    });
+    const report = validator.validate({ templatePaths: [templatePath] } as Parameters<
+      ProofGateValidator["validate"]
+    >[0]);
     rmSync(directory, { recursive: true, force: true });
     expect(report.success).toBe(false);
     expect(report.violations).toHaveLength(1);
@@ -162,7 +233,9 @@ describe("CDK plugin fail-closed behavior", () => {
     const templatePath = join(directory, "template.json");
     writeFileSync(templatePath, "{not-json");
     const validator = new ProofGateValidator({ protectedBucketArns: [protectedBucketArn] });
-    const report = validator.validate({ templatePaths: [templatePath] } as Parameters<ProofGateValidator["validate"]>[0]);
+    const report = validator.validate({ templatePaths: [templatePath] } as Parameters<
+      ProofGateValidator["validate"]
+    >[0]);
     rmSync(directory, { recursive: true, force: true });
     expect(report.success).toBe(false);
     expect(report.violations[0]).toMatchObject({
@@ -175,7 +248,10 @@ describe("CDK plugin fail-closed behavior", () => {
 describe("CDK integration", () => {
   it("allows both apps without ProofGate and only the safe app with ProofGate", () => {
     const run = (app: "safe-app" | "vulnerable-app", script: "synth" | "synth:proofgate") =>
-      spawnSync("pnpm", ["--filter", `@proofgate/${app}`, script], { cwd: resolve("."), encoding: "utf8" });
+      spawnSync("pnpm", ["--filter", `@proofgate/${app}`, script], {
+        cwd: resolve("."),
+        encoding: "utf8",
+      });
 
     expect(run("safe-app", "synth").status).toBe(0);
     expect(run("vulnerable-app", "synth").status).toBe(0);
@@ -194,9 +270,23 @@ function singleRoleTemplate(): unknown {
         Properties: {
           RoleName: "data-role",
           AssumeRolePolicyDocument: {
-            Statement: [{ Effect: "Allow", Action: "sts:AssumeRole", Principal: { Service: "lambda.amazonaws.com" } }],
+            Statement: [
+              {
+                Effect: "Allow",
+                Action: "sts:AssumeRole",
+                Principal: { Service: "lambda.amazonaws.com" },
+              },
+            ],
           },
-          Policies: [{ PolicyDocument: { Statement: [{ Effect: "Allow", Action: "s3:GetObject", Resource: `${protectedBucketArn}/*` }] } }],
+          Policies: [
+            {
+              PolicyDocument: {
+                Statement: [
+                  { Effect: "Allow", Action: "s3:GetObject", Resource: `${protectedBucketArn}/*` },
+                ],
+              },
+            },
+          ],
         },
       },
     },

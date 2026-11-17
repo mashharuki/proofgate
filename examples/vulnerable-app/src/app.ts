@@ -11,7 +11,11 @@ const dataRole = new Role(stack, "ProtectedDataRole", {
   assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
 });
 dataRole.addToPolicy(
-  new PolicyStatement({ effect: Effect.ALLOW, actions: ["s3:GetObject", "s3:PutObject"], resources: [`${protectedBucketArn}/*`] }),
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ["s3:GetObject", "s3:PutObject"],
+    resources: [`${protectedBucketArn}/*`],
+  }),
 );
 
 const developer = new Role(stack, "DeveloperRole", {
@@ -34,7 +38,9 @@ developer.addToPolicy(
 );
 
 if (process.env.PROOFGATE === "1") {
-  Validations.of(app).addPlugins(new ProofGateValidator({ protectedBucketArns: [protectedBucketArn] }));
+  Validations.of(app).addPlugins(
+    new ProofGateValidator({ protectedBucketArns: [protectedBucketArn] }),
+  );
 }
 
 app.synth();

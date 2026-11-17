@@ -1,13 +1,21 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
   "files": {
-    "includes": ["**", "!!**/node_modules", "!!**/dist", "!!**/cdk.out", "!!lean/.lake", "!!**/.pnpm-store", "!!**/.serena"]
+    "includes": [
+      "**",
+      "!!**/node_modules",
+      "!!**/dist",
+      "!!**/cdk.out",
+      "!!lean/.lake",
+      "!!**/.pnpm-store",
+      "!!**/.serena"
+    ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 140
+    "lineWidth": 100
   },
   "linter": {
     "enabled": true,
