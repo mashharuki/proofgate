@@ -40,6 +40,7 @@ developer.addToPolicy(
 // 環境変数でプラグインの有無を切り替え、通常synthと検証付きsynthの両方を再現します。
 if (process.env.PROOFGATE === "1") {
   Validations.of(app).addPlugins(
+    // ProofGateの検証プラグインを追加します。
     new ProofGateValidator({ protectedBucketArns: [protectedBucketArn] }),
   );
 }
