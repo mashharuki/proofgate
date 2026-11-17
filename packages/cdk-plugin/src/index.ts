@@ -33,6 +33,8 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
   public readonly ruleIds = ["PG-IAM-003", "PG-IAM-004"];
   public readonly version = "0.1.0";
   private readonly leanDirectory: string;
+  // undefinedは未実行、nullは成功、文字列は失敗診断を表します。同じsynth中の再ビルドを避けます。
+  private leanBuildError: string | null | undefined;
 
   /**
    * コンストラクター
@@ -117,7 +119,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
         violations.push({
           ruleName: "PG-IAM-003",
           description: `Lean verification failed to execute: ${leanResult.diagnostic}`,
-          fix: "Install the pinned Lean toolchain and run pnpm lean:build before synthesis.",
+          fix: "Install elan and the Lean toolchain pinned by the packaged lean/lean-toolchain file.",
           violatingResources: [
             { resourceLogicalId: "ProofGateModel", templatePath, locations: ["Resources"] },
           ],
@@ -159,15 +161,28 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
    * 一時ファイルとして生成コードを検査し、終了時には成功・失敗にかかわらず削除します。
    */
   private runLean(source: string): LeanResult {
+    const buildError = this.prepareLean();
+    if (buildError !== null) return { status: "error", diagnostic: buildError };
+
     const directory = mkdtempSync(join(tmpdir(), "proofgate-"));
     const generated = join(directory, "Generated.lean");
     writeFileSync(generated, source, "utf8");
     try {
-      const result = spawnSync("lake", ["env", "lean", generated], {
+      let result = spawnSync("lake", ["env", "lean", generated], {
         cwd: this.leanDirectory,
         encoding: "utf8",
       });
-      const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+      let output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+      // 異なるLeanバージョンの成果物が残っている場合だけ、安全に生成キャッシュを作り直します。
+      if (result.status !== 0 && output.includes("incompatible header")) {
+        const rebuildError = this.rebuildLean();
+        if (rebuildError !== null) return { status: "error", diagnostic: rebuildError };
+        result = spawnSync("lake", ["env", "lean", generated], {
+          cwd: this.leanDirectory,
+          encoding: "utf8",
+        });
+        output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+      }
       // 生成コードの明示的なマーカーがある場合だけ、定理の受理・拒否として扱います。
       if (result.status === 0 && output.includes("PROOFGATE_SAFE")) return { status: "accepted" };
       if (result.status !== 0 && output.includes("PROOFGATE_UNSAFE")) return { status: "rejected" };
@@ -179,6 +194,46 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }
+  }
+
+  /**
+   * 同梱したLeanソースを固定ツールチェーンでビルドします。
+   * 古い`.olean`が残っていてもLakeが再生成するため、Lean更新後のヘッダー不一致を防げます。
+   */
+  private prepareLean(): string | null {
+    if (this.leanBuildError !== undefined) return this.leanBuildError;
+
+    let result = spawnSync("lake", ["build"], {
+      cwd: this.leanDirectory,
+      encoding: "utf8",
+    });
+    let output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+    if (result.status !== 0 && output.includes("incompatible header")) {
+      rmSync(join(this.leanDirectory, ".lake", "build"), { recursive: true, force: true });
+      result = spawnSync("lake", ["build"], {
+        cwd: this.leanDirectory,
+        encoding: "utf8",
+      });
+      output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+    }
+    if (result.status === 0) {
+      this.leanBuildError = null;
+      return null;
+    }
+
+    const diagnostic =
+      result.error?.message ??
+      (output.trim().split("\n").slice(-4).join(" ") ||
+        `Lake exited with status ${String(result.status)}`);
+    this.leanBuildError = `Lean project build failed: ${diagnostic.slice(0, 500)}`;
+    return this.leanBuildError;
+  }
+
+  /** Leanのバージョン不一致時だけ生成物を捨て、同梱ソースから作り直します。 */
+  private rebuildLean(): string | null {
+    rmSync(join(this.leanDirectory, ".lake", "build"), { recursive: true, force: true });
+    this.leanBuildError = undefined;
+    return this.prepareLean();
   }
 }
 

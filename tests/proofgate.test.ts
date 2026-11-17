@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { ProofGateValidator } from "@proofgate/cdk-plugin";
 import { evaluate, generateLean } from "@proofgate/core";
 import { extractStack } from "@proofgate/extractor";
@@ -230,6 +230,29 @@ describe("CDK plugin fail-closed behavior", () => {
       ruleName: "PG-IAM-003",
       description: expect.stringContaining("Lean verification failed to execute"),
     });
+  });
+
+  it("builds packaged Lean sources automatically before verification", () => {
+    const directory = mkdtempSync(join(tmpdir(), "proofgate-lean-build-test-"));
+    const leanDirectory = join(directory, "lean");
+    const templatePath = join(directory, "template.json");
+    // `.lake`を含めずにコピーし、インストール直後と同じ未ビルド状態を再現します。
+    cpSync(resolve("packages/cdk-plugin/lean"), leanDirectory, {
+      recursive: true,
+      filter: (source) => basename(source) !== ".lake",
+    });
+    writeFileSync(templatePath, JSON.stringify(singleRoleTemplate()));
+
+    const validator = new ProofGateValidator({
+      protectedBucketArns: [protectedBucketArn],
+      leanDirectory,
+    });
+    const report = validator.validate({ templatePaths: [templatePath] } as Parameters<
+      ProofGateValidator["validate"]
+    >[0]);
+
+    rmSync(directory, { recursive: true, force: true });
+    expect(report).toEqual({ success: true, violations: [] });
   });
 
   it("reports malformed synthesized templates as PG-IAM-003", () => {

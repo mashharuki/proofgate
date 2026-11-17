@@ -8,7 +8,7 @@ Leanでアプリケーション固有のIAM安全条件を検査する、AWS CDK
 pnpm add @proofgate/cdk-plugin aws-cdk-lib
 ```
 
-Node.js 26以降と、`elan`で導入したLean 4 / Lakeが必要です。Leanのバージョンはパッケージに同梱した`lean/lean-toolchain`で固定されています。
+Node.js 26以降と、`elan`で導入したLean 4 / Lakeが必要です。Leanのバージョンはパッケージに同梱した`lean/lean-toolchain`で固定されています。プラグインは初回検証時に同梱Leanプロジェクトを自動ビルドし、同じ`synth`内では成果物を再利用します。
 
 ## CDKへの導入
 
