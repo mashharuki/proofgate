@@ -31,7 +31,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
   /** プラグイン名、ルールID、バージョンはCDKレポートに表示されます。 */
   public readonly name = "ProofGate";
   public readonly ruleIds = ["PG-IAM-003", "PG-IAM-004"];
-  public readonly version = "0.1.0";
+  public readonly version = "1.0.0";
   private readonly leanDirectory: string;
   // undefinedは未実行、nullは成功、文字列は失敗診断を表します。同じsynth中の再ビルドを避けます。
   private leanBuildError: string | null | undefined;
