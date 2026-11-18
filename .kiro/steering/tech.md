@@ -18,6 +18,6 @@
 - The Lean project is built on first verification by the published package (`lake build`). Do not commit `.lake`.
 - Lean sources must not contain `sorry` or project-defined `axiom`. CI audits this.
 - Generated tests use an in-repo seeded generator and shrinker. No property-testing library is used (`fast-check` was evaluated and rejected: per-value shrinking conflicts with batched Lean launches).
-- `pnpm typecheck` does not cover `tests/`. Check test code with a temporary tsconfig that extends `tsconfig.base.json` until that is changed.
+- `pnpm typecheck` does not cover `tests/`, by the user's decision. Check new test code with a temporary tsconfig that extends `tsconfig.base.json`; do not add a tests tsconfig or change the typecheck script.
 - Kiro must never appear in `dependencies`, `peerDependencies`, or runtime code paths.
 - Never commit credentials, tokens, or credit codes.

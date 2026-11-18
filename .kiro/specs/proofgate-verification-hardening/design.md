@@ -660,7 +660,7 @@ Revision 3 brings this document in line with the implementation of Phases 0 to 5
 | Orchestration | Not named | `agreement.ts` (Model level) and `extractor-run.ts` (Extractor level) take the functions under test as parameters, so Task 13 can inject mutants |
 | Lean-checked set | Seeded sample | `selectLeanCases`: all Cases when the limit allows, otherwise all boundary and conservative Cases plus the earliest others (no random sampling) |
 
-Open item: `pnpm typecheck` does not cover `tests/`. The test code was checked with a temporary tsconfig. Adding a `tests/tsconfig.json` and a typecheck script would put it under the quality gate. This is a change to existing scripts and is waiting for a decision.
+Decision (user): `pnpm typecheck` does not cover `tests/`, and that stays as it is. The test code is checked with a temporary tsconfig when it is written, not by the quality gate. No `tests/tsconfig.json` and no change to the typecheck script.
 
 Revision history:
 
