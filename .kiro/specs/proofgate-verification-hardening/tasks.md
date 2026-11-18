@@ -95,29 +95,29 @@ These are the only definitions of success for the demo commands. Use them in Tas
 
 ## Phase 2: Lean batch runner, comparison, shrinking
 
-- [ ] 4. Lean batch runner
-  - [ ] 4.1 Create `tests/pbt/support/lean-batch.ts` builder.
+- [x] 4. Lean batch runner
+  - [x] 4.1 Create `tests/pbt/support/lean-batch.ts` builder.
     - Call the real `generateLean` per Case. Strict structural check of the output (one `import ProofGate.Security`, one `def generatedPaths ...`, one `#eval` marker line, one `theorem generatedStackIsSafe ... native_decide`). Any difference is a harness error naming the Case. Emit `case_i`, the `PGCASE i` `#eval`, and `thm_i` stating the TS verdict. Record line ranges per Case.
     - _Requirements: 3.2, 4.4_ · _Property: P13_ · _Design: 4.5_
-  - [ ] 4.2 Implement the runner: temp directory removed in `finally`, `lake env lean` with cwd `packages/cdk-plugin/lean`, timeout, `.lake` existence check, no `lake build`.
+  - [x] 4.2 Implement the runner: temp directory removed in `finally`, `lake env lean` with cwd `packages/cdk-plugin/lean`, timeout, `.lake` existence check, no `lake build`.
     - _Requirements: 3.3, 4.6_
-  - [ ] 4.3 Implement the result classifier exactly as in the design 4.5 table.
+  - [x] 4.3 Implement the result classifier exactly as in the design 4.5 table.
     - Success only with exit 0, zero error diagnostics, and one marker per Case. An error inside a Case's lines is a per-Case mismatch. Any unmapped error, even with all markers present, is an infrastructure failure. A truncated error list fails the run. Warnings are printed only.
     - _Requirements: 3.3_ · _Property: P11_
-  - [ ] 4.4 Add a launch counter that lives inside the Lean runner of the Model-level test file, and the default-profile split rule (a second launch only above 4,000 Lean-checked Cases). The counter is read only by the same test file and does not need to work across Vitest workers. If task 0.3 found a conflict, serialize this test.
+  - [x] 4.4 Add a launch counter that lives inside the Lean runner of the Model-level test file, and the default-profile split rule (a second launch only above 4,000 Lean-checked Cases). The counter is read only by the same test file and does not need to work across Vitest workers. If task 0.3 found a conflict, serialize this test.
     - _Requirements: 4.1, 4.3_ · _Property: P12_
-  - [ ] 4.5 Unit tests with small hand-written modules: all pass; one wrong theorem; unmapped error with all markers; missing marker; truncated errors; shape change.
+  - [x] 4.5 Unit tests with small hand-written modules: all pass; one wrong theorem; unmapped error with all markers; missing marker; truncated errors; shape change.
     - _Property: P9, P11, P13_
 
-- [ ] 5. Comparison and shrinking
-  - [ ] 5.1 Create `tests/pbt/support/compare.ts`: the per-category rules of design 4.4, the `witness` explanation check against violation `sourcePaths`, tag vitality, and the `Counterexample` type with a mismatch kind and verdict pair.
+- [x] 5. Comparison and shrinking
+  - [x] 5.1 Create `tests/pbt/support/compare.ts`: the per-category rules of design 4.4, the `witness` explanation check against violation `sourcePaths`, tag vitality, and the `Counterexample` type with a mismatch kind and verdict pair.
     - _Requirements: 2.3, 3.1, 3.4, 13.4_ · _Property: P5 to P10_
-  - [ ] 5.2 Create `tests/pbt/support/shrink.ts`: operations and rules of design 4.6.
+  - [x] 5.2 Create `tests/pbt/support/shrink.ts`: operations and rules of design 4.6.
     - Valid StackModel check, same verdict pair, O2 as the verdict after reduction, rejection of steps that remove the witness, at most 8 batched rounds for Lean-involved mismatches, one final three-way confirmation, fallback to the last confirmed Case.
     - _Requirements: 5.4 to 5.9_ · _Property: P17, P18_
-  - [ ] 5.3 Create `tests/pbt/support/report.ts`: the failure report of design 6.1 with the separate heading for harness errors and the replay command.
+  - [x] 5.3 Create `tests/pbt/support/report.ts`: the failure report of design 6.1 with the separate heading for harness errors and the replay command.
     - _Requirements: 5.3_
-  - [ ] 5.4 Unit tests for shrinking on synthetic failing predicates (validity, verdict pair preserved, confirmation failure fallback, size never grows).
+  - [x] 5.4 Unit tests for shrinking on synthetic failing predicates (validity, verdict pair preserved, confirmation failure fallback, size never grows).
     - _Property: P17, P18_
 
 ## Phase 3: Model-level suite, red first
