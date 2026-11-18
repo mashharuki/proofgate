@@ -1,6 +1,6 @@
 {
   "name": "@proofgate-cdk/model",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CDK-independent intermediate representation for ProofGate IAM validation.",
   "type": "module",
   "main": "./dist/index.js",
