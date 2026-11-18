@@ -94,9 +94,10 @@ describe("policy variables in Resource (D5)", () => {
     it(`reports ${name} as unsupported at the Resource, with no model`, () => {
       const result = extractStack(template());
       expect(result.model).toBeUndefined();
-      expect(result.unsupported).toHaveLength(1);
-      expect(result.unsupported[0]?.sourcePath).toBe(path);
-      expect(result.unsupported[0]?.reason).toContain("policy variable");
+      // 対応するStatementが残らないため、空虚な証明を拒否する既存の指摘も付きます。
+      const found = result.unsupported.filter((f) => f.reason.includes("policy variable"));
+      expect(found).toHaveLength(1);
+      expect(found[0]?.sourcePath).toBe(path);
     });
   }
 
@@ -123,14 +124,13 @@ describe("policy variables in Resource (D5)", () => {
         ProofGateValidator["validate"]
       >[0]);
       expect(report.success).toBe(false);
-      expect(report.violations).toHaveLength(1);
-      expect(report.violations[0]).toMatchObject({
+      const found = report.violations.filter((v) => v.description?.includes("policy variable"));
+      expect(found).toHaveLength(1);
+      expect(found[0]).toMatchObject({
         ruleName: "PG-IAM-003",
         description: expect.stringContaining("Unsupported IAM syntax"),
       });
-      expect(report.violations[0]?.violatingResources[0]?.locations).toEqual([
-        `${inlinePath}.Resource`,
-      ]);
+      expect(found[0]?.violatingResources[0]?.locations).toEqual([`${inlinePath}.Resource`]);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

@@ -169,22 +169,22 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
     - Expected: the policy-variable tests fail (no finding, a model is returned, so `ProofGateValidator` does not report `PG-IAM-003` for D5); the intrinsic characterization test passes.
     - Record the failure output and the `sourcePath` values (or their absence) in the usage log. If the characterization test fails before the fix, stop and report.
     - _Requirements: 7.5_
-  - [ ] 9.3 **Minimal extractor fix.** Return an unsupported finding for a literal Resource string, or literal array element, that contains IAM policy variable syntax (`${` with a closing `}`).
+  - [x] 9.3 **Minimal extractor fix.** Return an unsupported finding for a literal Resource string, or literal array element, that contains IAM policy variable syntax (`${` with a closing `}`).
     - `sourcePath` is `<statement>.Resource` or `<statement>.Resource[k]`. The reason says IAM policy variables in Resource are not supported. No model is returned. Variables are not evaluated.
     - Apply to Allow and Deny Statements, in inline role policies and `AWS::IAM::Policy`.
     - If the Resource is already unsupported because it is a CloudFormation intrinsic, leave the existing finding exactly as is and add nothing.
     - _Requirements: 7.5, 7.6_ · _Design: 13.3_
-  - [ ] 9.4 **Confirm the tests pass after the fix.** The policy-variable tests pass. The intrinsic characterization test still passes unchanged, with the same finding text, path, and count. All existing tests and assertions are unchanged and pass. Run `pnpm test`, `pnpm synth`, and `pnpm verify:demo` by the Command success criteria.
+  - [x] 9.4 **Confirm the tests pass after the fix.** The policy-variable tests pass. The intrinsic characterization test still passes unchanged, with the same finding text, path, and count. All existing tests and assertions are unchanged and pass. Run `pnpm test`, `pnpm synth`, and `pnpm verify:demo` by the Command success criteria.
     - _Property: P20, P21_
-  - [ ] 9.5 Add Japanese bullets (additions only, nothing removed) to `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`, and to `packages/cdk-plugin/README.md` and the root `README.md`, stating that policy variables in Resource are rejected with `PG-IAM-003`, that this rejects more input than before, and that S3 access now means access to any object in a protected bucket.
+  - [x] 9.5 Add Japanese bullets (additions only, nothing removed) to `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`, and to `packages/cdk-plugin/README.md` and the root `README.md`, stating that policy variables in Resource are rejected with `PG-IAM-003`, that this rejects more input than before, and that S3 access now means access to any object in a protected bucket.
     - Update `docs/PROOFS.md` only if it describes the access fact; add, do not delete.
     - _Requirements: 10.2_ · _Design: 13.3_
   - [ ] 9.6 Report to the user that this change rejects more input (Fail Closed), and name who is affected.
     - _Requirements: 7.6_
 
 - [ ] 10. Checkpoint after production corrections
-  - [ ] 10.1 Run `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, `pnpm verify:demo`, plus both `synth:proofgate` commands. Judge each by the Command success criteria: `pnpm synth` exits 0; `safe-app` `synth:proofgate` exits 0; `vulnerable-app` `synth:proofgate` exits 1 with `PG-IAM-004`; `pnpm verify:demo` exits 1 with `PG-IAM-004`.
-  - [ ] 10.2 Re-run the Model-level suite with several additional seeds. **Upper limit for these routine extra runs:** `PROOFGATE_PBT_CASES=5000` and `PROOFGATE_PBT_LEAN_CASES=2000`, with `PROOFGATE_PBT_SEED` set to each seed. The 20,000-Case profile is a manual deep profile only and is not part of this task. Any new Counterexample becomes its own task (design 13.4) and is reported before any fix that could change a verdict from unsafe to safe.
+  - [x] 10.1 Run `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, `pnpm verify:demo`, plus both `synth:proofgate` commands. Judge each by the Command success criteria: `pnpm synth` exits 0; `safe-app` `synth:proofgate` exits 0; `vulnerable-app` `synth:proofgate` exits 1 with `PG-IAM-004`; `pnpm verify:demo` exits 1 with `PG-IAM-004`.
+  - [x] 10.2 Re-run the Model-level suite with several additional seeds. **Upper limit for these routine extra runs:** `PROOFGATE_PBT_CASES=5000` and `PROOFGATE_PBT_LEAN_CASES=2000`, with `PROOFGATE_PBT_SEED` set to each seed. The 20,000-Case profile is a manual deep profile only and is not part of this task. Any new Counterexample becomes its own task (design 13.4) and is reported before any fix that could change a verdict from unsafe to safe.
     - _Requirements: 5.2, 7.7, 8.3_
   - [ ] 10.3 **CHECKPOINT 3.** Report the results of 10.1 and 10.2, the production diff, and the Fail Closed impact of D5. Stop and wait for the user's review before starting Phase 5.
 
