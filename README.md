@@ -62,7 +62,7 @@ pnpm --filter @proofgate/safe-app synth:proofgate
 pnpm --filter @proofgate/vulnerable-app synth:proofgate
 ```
 
-自動テスト一式は`pnpm test`で実行できます。
+自動テスト一式は`pnpm test`で実行できます。生成テスト（独立したオラクルとLeanによる照合、CloudFormation断片の読み戻し）の実行方法と環境変数は、[`tests/pbt/README.md`](tests/pbt/README.md)（英語）を参照してください。
 
 コード品質チェックは次のコマンドで実行できます。
 

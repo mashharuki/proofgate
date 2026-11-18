@@ -1,6 +1,6 @@
 # Tasks: proofgate-verification-hardening
 
-Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 6 are done. Phase 7: Task 14 and Task 15.1 are done; Task 15.2 (Checkpoint 4, push permission) is waiting for the user. Checkpoints 1 to 3 are passed. The box of each task shows its state.
+Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 7 are done, Checkpoint 4 is passed (CI measured). Phase 8 (Tasks 16 and 17) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
 
 ## Progress by phase
 
@@ -15,8 +15,8 @@ Each phase has its own branch, stacked on the previous one. Nothing is pushed or
 | 4 | `hardening/phase-4-corrections` | 7, 8, 9, 10 | done, Checkpoint 3 reported |
 | 5 | `hardening/phase-5-extractor` | 11, 12 | done |
 | 6 | `hardening/phase-6-selfcheck` | 13 | done |
-| 7 | `hardening/phase-7-packaging` | 14, 15 | Task 14 and 15.1 done; waiting at Checkpoint 4 (15.2) |
-| 8 | not started | 16, 17 | Checkpoint 5 |
+| 7 | `hardening/phase-7-packaging` | 14, 15 | done, Checkpoint 4 passed; draft PR #1 |
+| 8 | not started | 16, 17 | next; Checkpoint 5 |
 
 Structure: **18 top-level tasks (Task 0 to Task 17) in 9 phases (Phase 0 to Phase 8).**
 
@@ -245,15 +245,15 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
   - [x] 14.2 Run `pnpm pack:check` and confirm no test-only code is in any tarball and no `dependencies` changed.
     - _Requirements: 9.2, 9.3, 9.5, 9.6_
 
-- [ ] 15. Time budget and CI
+- [x] 15. Time budget and CI
   - [x] 15.1 Measure the whole PBT suite locally: wall time added to `pnpm test`, Lean batch time, launch count. The limit is 60 seconds.
     - _Requirements: 8.2_
-  - [ ] 15.2 **CHECKPOINT 4. Push permission needed.** Push is not allowed in this spec without the user's approval. Report the local timing from 15.1, ask the user to run the CI or to authorize a commit and push, and stop. Do not guess CI time. Continue to 15.3 only after the user supplies CI results or declines.
+  - [x] 15.2 **CHECKPOINT 4. Push permission needed.** Push is not allowed in this spec without the user's approval. Report the local timing from 15.1, ask the user to run the CI or to authorize a commit and push, and stop. Do not guess CI time. Continue to 15.3 only after the user supplies CI results or declines.
     - _Requirements: 8.1, 8.2_
-  - [ ] 15.3 With the CI numbers, fix the default Lean-checked count (design 9.2). If the Lean batch for 2,000 Cases exceeds 90 s in CI, lower the Lean-checked count with a seeded sample that always includes boundary and conservative Cases.
+  - [x] 15.3 With the CI numbers, fix the default Lean-checked count (design 9.2). If the Lean batch for 2,000 Cases exceeds 90 s in CI, lower the Lean-checked count with a seeded sample that always includes boundary and conservative Cases.
     - Record in `.kiro/steering/kiroween.md`: local time, CI time, the Case counts tried, and the final count, with the machine and runner named.
     - _Requirements: 8.2, 8.4, 11.1_
-  - [ ] 15.4 Document the deep profile and the seed variables (a short English section in a new `tests/pbt/README.md`, and one Japanese line in the root `README.md` pointing to it). Confirm the CI job needs no new workflow.
+  - [x] 15.4 Document the deep profile and the seed variables (a short English section in a new `tests/pbt/README.md`, and one Japanese line in the root `README.md` pointing to it). Confirm the CI job needs no new workflow.
     - _Requirements: 8.1, 8.3_
 
 ## Phase 8: Final verification and records
