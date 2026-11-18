@@ -86,3 +86,71 @@ describe("single-character wildcard in IAM patterns", () => {
     expect(verdict({ passResource: "arn:aws:iam::123456789012:role/(data-role)" })).toBe("safe");
   });
 });
+
+// 保護バケット内の一部（プレフィックスや単一オブジェクト）へのアクセスも、アクセスとみなすこと（D1）。
+// ポリシーResourceが表すARN集合と、保護バケットのオブジェクト集合の交差で判定します。
+describe("access to the protected bucket (D1, set intersection)", () => {
+  const unsafe = [
+    ["prefix", `${bucket}/reports/*`],
+    ["single object", `${bucket}/reports/file.csv`],
+    ["any object", `${bucket}/*`],
+    ["bucket wildcard that matches the bucket", "arn:aws:s3:::protected-*/*"],
+    ["trailing star after the bucket name", `${bucket}*`],
+    ["every S3 object", "arn:aws:s3:::*"],
+    ["single-character key", `${bucket}/?`],
+    ["different letter case (kept as conservative)", "arn:aws:s3:::PROTECTED-BUCKET/reports/*"],
+    ["star that spans a colon (kept as conservative)", "arn:aws:s3:*protected-bucket/*"],
+  ] as const;
+  const safe = [
+    ["prefix of another bucket", "arn:aws:s3:::another-bucket/reports/*"],
+    ["bucket-level ARN only", bucket],
+    ["bucket wildcard that cannot match the bucket", "arn:aws:s3:::other-*/*"],
+    ["bucket whose name only starts with the protected name", `${bucket}-2/reports/*`],
+    ["different service", "arn:aws:sqs:::protected-bucket/*"],
+  ] as const;
+
+  for (const [name, access] of unsafe) {
+    it(`is unsafe: ${name} (${access})`, () => {
+      expect(verdict({ access })).toBe("unsafe");
+    });
+  }
+  for (const [name, access] of safe) {
+    it(`is safe: ${name} (${access})`, () => {
+      expect(verdict({ access })).toBe("safe");
+    });
+  }
+
+  it("ignores a trailing slash in the configured bucket ARN", () => {
+    const withSlash = { protectedBucketArns: [`${bucket}/`] };
+    expect(evaluate(model({ ...exact, access: `${bucket}/reports/*` }), withSlash)).toHaveLength(1);
+  });
+
+  it("checks every configured bucket", () => {
+    const two = { protectedBucketArns: ["arn:aws:s3:::first", bucket] };
+    expect(evaluate(model({ ...exact, access: `${bucket}/reports/*` }), two)).toHaveLength(1);
+  });
+
+  it("does not count a non-data S3 action as access", () => {
+    const listOnly = model(exact);
+    const target = listOnly.roles[1];
+    expect(target).toBeDefined();
+    const changed: StackModel = {
+      ...listOnly,
+      roles: [
+        listOnly.roles[0] as StackModel["roles"][number],
+        {
+          ...(target as StackModel["roles"][number]),
+          statements: [
+            {
+              effect: "Allow",
+              actions: ["s3:ListBucket"],
+              resources: [`${bucket}/*`],
+              sourcePath: "s3",
+            },
+          ],
+        },
+      ],
+    };
+    expect(evaluate(changed, config)).toHaveLength(0);
+  });
+});

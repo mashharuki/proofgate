@@ -147,14 +147,14 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
     - _Property: P5, P6, P16_
 
 - [ ] 8. Fix S3 access to use intersection (`@proofgate/core`), D1
-  - [ ] 8.1 Add the production intersection function (case-insensitive literals, `*` crosses any character, `?` one character). Write it independently of `tests/pbt/support/glob.ts`.
+  - [x] 8.1 Add the production intersection function (case-insensitive literals, `*` crosses any character, `?` one character). Write it independently of `tests/pbt/support/glob.ts`.
     - _Requirements: 7.5_ · _Design: 13.2_
-  - [ ] 8.2 Use it for the protected-bucket access fact: policy Resource set intersects the protected bucket's object set (bucket ARN without trailing `/`, then `/`, then any key). Keep the PassRole path on `matches`.
+  - [x] 8.2 Use it for the protected-bucket access fact: policy Resource set intersects the protected bucket's object set (bucket ARN without trailing `/`, then `/`, then any key). Keep the PassRole path on `matches`.
     - The Lean side and `generateLean` stay unchanged.
     - _Requirements: 7.5_ · _Property: P16_
-  - [ ] 8.3 Confirm all D1 regression cases pass: D1-1 to D1-8 and D1-10.
+  - [x] 8.3 Confirm all D1 regression cases pass: D1-1 to D1-8 and D1-10.
     - _Property: P5, P6, P10, P16_
-  - [ ] 8.4 Add or update production unit tests only by **adding** cases. Existing assertions stay.
+  - [x] 8.4 Add or update production unit tests only by **adding** cases. Existing assertions stay.
     - _Requirements: 7.3, 7.4_
   - [ ] 8.5 Report to the user: the fix only adds findings and no existing demo result changed (`safe-app` passes, `vulnerable-app` is rejected with `PG-IAM-004`).
     - _Requirements: 7.6, 7.7_
