@@ -1,6 +1,6 @@
 # Tasks: proofgate-verification-hardening
 
-Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 5 are done; Phase 6 (Task 13) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
+Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 6 are done; Phase 7 (Tasks 14 and 15) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
 
 ## Progress by phase
 
@@ -14,8 +14,8 @@ Each phase has its own branch, stacked on the previous one. Nothing is pushed or
 | 3 | `hardening/phase-3-red-first` | 6 | done, Checkpoint 2 passed |
 | 4 | `hardening/phase-4-corrections` | 7, 8, 9, 10 | done, Checkpoint 3 reported |
 | 5 | `hardening/phase-5-extractor` | 11, 12 | done |
-| 6 | not started | 13 | next |
-| 7 | not started | 14, 15 | Checkpoint 4 needs push permission |
+| 6 | `hardening/phase-6-selfcheck` | 13 | done |
+| 7 | not started | 14, 15 | next; Checkpoint 4 needs push permission |
 | 8 | not started | 16, 17 | Checkpoint 5 |
 
 Structure: **18 top-level tasks (Task 0 to Task 17) in 9 phases (Phase 0 to Phase 8).**
@@ -229,12 +229,12 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
 
 ## Phase 6: Harness self-check and regressions
 
-- [ ] 13. Self-check with mutants
-  - [ ] 13.1 Create `tests/pbt/selfcheck.test.ts` with the mutants of design 11, through the same parameters the harness already uses.
+- [x] 13. Self-check with mutants
+  - [x] 13.1 Create `tests/pbt/selfcheck.test.ts` with the mutants of design 11, through the same parameters the harness already uses.
     - Mutants: evaluator ignores role-name wildcard PassRole; evaluator returns safe with three or more roles (and the shrunk output is no larger than the original); evaluator reports unsafe without a witness; evaluator never over-approximates `TRUST_STAR`; `generateLean` flips `targetCanAccess` (one Lean launch, 200 Cases); `generateLean` output of a changed shape (harness error naming the Case); Lean module with an unmapped error and all markers present (infrastructure failure); O2 mutant (case-sensitive Action, harness error).
     - The test fails if any mutant is not detected.
     - _Requirements: 6.3, 4.2_ · _Property: P24, P13, P11_
-  - [ ] 13.2 Record the self-check launch count in the usage log and in the file header.
+  - [x] 13.2 Record the self-check launch count in the usage log and in the file header.
     - _Requirements: 4.2_
 
 ## Phase 7: Packaging, CI, and time budget

@@ -658,6 +658,7 @@ Revision 3 brings this document in line with the implementation of Phases 0 to 5
 | Poisons | Listed by group | 24 poisons plus 3 empty-fragment kinds, each counted by the coverage check |
 | Lean result classifier | 100 errors as the truncation signal | An error line is `file:line:col: error`; a position-less line that starts with `error` also counts as unmapped; 100 or more errors fail the run as possibly truncated |
 | Orchestration | Not named | `agreement.ts` (Model level) and `extractor-run.ts` (Extractor level) take the functions under test as parameters, so Task 13 can inject mutants |
+| Self-check (section 11) | 4 evaluator mutants, 1 oracle mutant, 2 `generateLean` mutants, 1 unmapped-error check | Plus a control run with the real components, a second Lean-fact test that shrinks (at most 60 candidates per Lean round, so one round stays inside Lean's error limit of about 100), and a test that a flip across a whole batch is treated as a possibly truncated error list. Evaluator and oracle mutants run without Lean (`useLean: false`) |
 | Lean-checked set | Seeded sample | `selectLeanCases`: all Cases when the limit allows, otherwise all boundary and conservative Cases plus the earliest others (no random sampling) |
 
 Decision (user): `pnpm typecheck` does not cover `tests/`, and that stays as it is. The test code is checked with a temporary tsconfig when it is written, not by the quality gate. No `tests/tsconfig.json` and no change to the typecheck script.

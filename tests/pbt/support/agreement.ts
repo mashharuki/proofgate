@@ -18,6 +18,9 @@ import { oracleVerdict } from "./oracle.js";
 import { formatCounterexample } from "./report.js";
 import { type Shrinkable, shrink } from "./shrink.js";
 
+/** Lean絡みの縮小で、1ラウンドに調べる候補の最大数です。Leanのエラー報告の上限（約100件）より小さくします。 */
+const MAX_LEAN_CANDIDATES_PER_ROUND = 60;
+
 export interface AgreementDeps {
   readonly evaluate: (model: StackModel, config: ProofGateConfig) => Violation[];
   readonly generate: (model: StackModel, config: ProofGateConfig) => string;
@@ -29,8 +32,10 @@ export interface AgreementOptions {
   readonly seed: number;
   /** Leanへ渡すCaseの上限です。境界Caseとconservative Caseは常に含めます。 */
   readonly leanCases: number;
-  /** 種別ごとに、縮小して報告するCounterexampleの最大数です。 */
+  /** 種別ごとに、縮小して報告するCounterexampleの最大数です。0なら縮小しません。 */
   readonly maxReportsPerKind: number;
+  /** falseならLeanを起動しません（評価器やオラクルだけを調べる自己検査用）。既定はtrueです。 */
+  readonly useLean?: boolean;
 }
 
 export interface AgreementReport {
@@ -84,7 +89,8 @@ export function runAgreement(
   }
 
   // Leanの検査: 1回のバッチで、対象Case全件の判定を取得します。
-  const leanSet = selectLeanCases(cases, options.leanCases);
+  const useLean = options.useLean ?? true;
+  const leanSet = useLean ? selectLeanCases(cases, options.leanCases) : [];
   for (const c of leanSet) coverage.add(`lean:category:${c.category}`);
   const batch: BatchCase[] = leanSet.map((c) => ({
     id: c.id,
@@ -129,7 +135,7 @@ export function runAgreement(
     for (let i = 0; i < wanted; i++) {
       const ce = ofKind[Math.floor((i * ofKind.length) / wanted)] as Counterexample;
       const original = byId.get(ce.caseId) as Case;
-      const reduced = reduce(original, ce, deps, oracle);
+      const reduced = reduce(original, ce, deps, oracle, useLean);
       reports.push(formatCounterexample("model", options.seed, ce, reduced));
     }
   }
@@ -187,12 +193,18 @@ function reduce(
   ce: Counterexample,
   deps: AgreementDeps,
   oracle: NonNullable<AgreementDeps["oracle"]>,
+  useLean: boolean,
 ) {
   const start: Shrinkable = { model: original.model, config: original.config };
   if (ce.kind === "ts-lean") {
     return shrink(start, {
       maxRounds: 8,
-      check: (candidates) => leanDisagrees(candidates, deps),
+      // 1ラウンドを1回のLean起動に収めるため、先頭の候補だけを調べます。系統的な不一致では全候補が失敗し、
+      // 100件のエラー上限（打ち切りの疑い）に達してしまうためです。貪欲法は先頭の成功を採るので影響は小さいです。
+      check: (candidates) => {
+        const head = leanDisagrees(candidates.slice(0, MAX_LEAN_CANDIDATES_PER_ROUND), deps);
+        return candidates.map((_, index) => head[index] ?? false);
+      },
       confirm: (candidate) => leanDisagrees([candidate], deps)[0] === true,
     });
   }
@@ -203,7 +215,7 @@ function reduce(
     // 最終確認: O2とTypeScriptで不一致が残り、Leanも同じ候補で実行して結果を得られること。
     confirm: (candidate) => {
       if (!stillFails(ce.kind, original, candidate, deps, oracle)) return false;
-      leanDisagrees([candidate], deps);
+      if (useLean) leanDisagrees([candidate], deps);
       return true;
     },
   });
