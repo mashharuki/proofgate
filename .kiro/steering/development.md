@@ -40,7 +40,7 @@ Expected: `safe-app` succeeds. `vulnerable-app` exits 1 with `PG-IAM-004`.
 - Do not edit generated output (`dist/`, `cdk.out/`, `.lake/`).
 - Do not update dependencies, commit, or push unless asked.
 - A new rule or supported syntax needs: extractor support or an explicit rejection, evaluator logic, Lean generation, tests for both verdicts, and updates to `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`.
-- Keep public package contents in sync with `files` in each `package.json`, and verify with `pnpm pack:check`.
+- Keep public package contents in sync with `files` in each `package.json`, and verify with `pnpm pack:check`. `pnpm pack:check` also rejects any tarball entry outside `package.json`, `README.md`, `LICENSE`, `dist/`, and `lean/`, and any entry with a test-only name (`scripts/pack-rules.mjs`, tested by `tests/pack-rules.test.ts`).
 
 ## Generated tests (`tests/pbt/`)
 

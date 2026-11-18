@@ -1,6 +1,6 @@
 # Tasks: proofgate-verification-hardening
 
-Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 6 are done; Phase 7 (Tasks 14 and 15) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
+Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 6 are done. Phase 7: Task 14 and Task 15.1 are done; Task 15.2 (Checkpoint 4, push permission) is waiting for the user. Checkpoints 1 to 3 are passed. The box of each task shows its state.
 
 ## Progress by phase
 
@@ -15,7 +15,7 @@ Each phase has its own branch, stacked on the previous one. Nothing is pushed or
 | 4 | `hardening/phase-4-corrections` | 7, 8, 9, 10 | done, Checkpoint 3 reported |
 | 5 | `hardening/phase-5-extractor` | 11, 12 | done |
 | 6 | `hardening/phase-6-selfcheck` | 13 | done |
-| 7 | not started | 14, 15 | next; Checkpoint 4 needs push permission |
+| 7 | `hardening/phase-7-packaging` | 14, 15 | Task 14 and 15.1 done; waiting at Checkpoint 4 (15.2) |
 | 8 | not started | 16, 17 | Checkpoint 5 |
 
 Structure: **18 top-level tasks (Task 0 to Task 17) in 9 phases (Phase 0 to Phase 8).**
@@ -239,14 +239,14 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
 
 ## Phase 7: Packaging, CI, and time budget
 
-- [ ] 14. Package boundary check
-  - [ ] 14.1 Add one assertion to `scripts/check-packages.mjs`: every tarball entry is under `package/dist/`, `package/lean/`, or is `package.json`, `README.md`, `LICENSE`. This changes a script, not a package.
+- [x] 14. Package boundary check
+  - [x] 14.1 Add one assertion to `scripts/check-packages.mjs`: every tarball entry is under `package/dist/`, `package/lean/`, or is `package.json`, `README.md`, `LICENSE`. This changes a script, not a package.
     - _Requirements: 9.1, 9.2_ · _Property: P25_
-  - [ ] 14.2 Run `pnpm pack:check` and confirm no test-only code is in any tarball and no `dependencies` changed.
+  - [x] 14.2 Run `pnpm pack:check` and confirm no test-only code is in any tarball and no `dependencies` changed.
     - _Requirements: 9.2, 9.3, 9.5, 9.6_
 
 - [ ] 15. Time budget and CI
-  - [ ] 15.1 Measure the whole PBT suite locally: wall time added to `pnpm test`, Lean batch time, launch count. The limit is 60 seconds.
+  - [x] 15.1 Measure the whole PBT suite locally: wall time added to `pnpm test`, Lean batch time, launch count. The limit is 60 seconds.
     - _Requirements: 8.2_
   - [ ] 15.2 **CHECKPOINT 4. Push permission needed.** Push is not allowed in this spec without the user's approval. Report the local timing from 15.1, ask the user to run the CI or to authorize a commit and push, and stop. Do not guess CI time. Continue to 15.3 only after the user supplies CI results or declines.
     - _Requirements: 8.1, 8.2_
