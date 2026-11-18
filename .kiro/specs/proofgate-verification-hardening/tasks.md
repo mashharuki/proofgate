@@ -1,6 +1,6 @@
 # Tasks: proofgate-verification-hardening
 
-Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 7 are done, Checkpoint 4 is passed (CI measured). Phase 8 (Tasks 16 and 17) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
+Status: APPROVED (revision 2). Implementation is in progress. All 18 tasks are done. Phase 8 is complete and waits for the user's review at Checkpoint 5. Checkpoints 1 to 3 are passed. The box of each task shows its state.
 
 ## Progress by phase
 
@@ -16,7 +16,7 @@ Each phase has its own branch, stacked on the previous one. Nothing is pushed or
 | 5 | `hardening/phase-5-extractor` | 11, 12 | done |
 | 6 | `hardening/phase-6-selfcheck` | 13 | done |
 | 7 | `hardening/phase-7-packaging` | 14, 15 | done, Checkpoint 4 passed; draft PR #1 |
-| 8 | not started | 16, 17 | next; Checkpoint 5 |
+| 8 | `hardening/phase-8-final` | 16, 17 | done; Checkpoint 5 reported |
 
 Structure: **18 top-level tasks (Task 0 to Task 17) in 9 phases (Phase 0 to Phase 8).**
 
@@ -258,28 +258,28 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
 
 ## Phase 8: Final verification and records
 
-- [ ] 16. Final verification
-  - [ ] 16.1 Run, on a clean build: `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, the two `synth:proofgate` commands, and `pnpm verify:demo`. Judge each by the Command success criteria:
+- [x] 16. Final verification
+  - [x] 16.1 Run, on a clean build: `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, the two `synth:proofgate` commands, and `pnpm verify:demo`. Judge each by the Command success criteria:
     - `pnpm synth`: exit code 0 (both apps succeed).
     - `safe-app` `synth:proofgate`: exit code 0.
     - `vulnerable-app` `synth:proofgate`: exit code 1 and the output contains `PG-IAM-004`.
     - `pnpm verify:demo`: exit code 1 and the output contains `PG-IAM-004`. This is expected and is not a failure.
     - _Requirements: 7.1, 7.2, 10.1_
-  - [ ] 16.2 Confirm by diff review that no existing test or assertion was deleted, skipped, or weakened, and that `lean-toolchain`, Node, pnpm, and TypeScript versions are unchanged.
+  - [x] 16.2 Confirm by diff review that no existing test or assertion was deleted, skipped, or weakened, and that `lean-toolchain`, Node, pnpm, and TypeScript versions are unchanged.
     - _Requirements: 7.4, 9.5_
-  - [ ] 16.3 Grep the repository for `sorry` and `axiom` in Lean sources (the CI audit command) and confirm none.
+  - [x] 16.3 Grep the repository for `sorry` and `axiom` in Lean sources (the CI audit command) and confirm none.
     - _Requirements: 10.1_
-  - [ ] 16.4 Confirm no credentials, tokens, or credit codes were written to any file.
+  - [x] 16.4 Confirm no credentials, tokens, or credit codes were written to any file.
     - _Requirements: 11.3_
 
-- [ ] 17. Kiro work record and write-up material
-  - [ ] 17.1 Review the usage log in `.kiro/steering/kiroween.md`. Each row names the Kiro app, the feature, and the result. It includes failures, rejected options (`fast-check`), the red-first run, and every Counterexample found.
+- [x] 17. Kiro work record and write-up material
+  - [x] 17.1 Review the usage log in `.kiro/steering/kiroween.md`. Each row names the Kiro app, the feature, and the result. It includes failures, rejected options (`fast-check`), the red-first run, and every Counterexample found.
     - _Requirements: 11.1, 11.2_
-  - [ ] 17.2 State in the log whether Kiro's property-based testing feature was used to generate or run any of P1 to P26, or whether the in-repo harness did, with the reason.
+  - [x] 17.2 State in the log whether Kiro's property-based testing feature was used to generate or run any of P1 to P26, or whether the in-repo harness did, with the reason.
     - _Requirements: 11.4_
-  - [ ] 17.3 Write a short English summary for the submission write-up: the problem the oracle solved (TS vs Lean alone is weak), what the suite found, and the exact claims allowed by Requirement 14. Do not claim Lean independently verifies CloudFormation or IAM statements.
+  - [x] 17.3 Write a short English summary for the submission write-up: the problem the oracle solved (TS vs Lean alone is weak), what the suite found, and the exact claims allowed by Requirement 14. Do not claim Lean independently verifies CloudFormation or IAM statements.
     - _Requirements: 14.1 to 14.5_
-  - [ ] 17.4 **CHECKPOINT 5.** Report to the user: files changed, findings, open risks, and the diff. Stop and wait. Do not commit or push.
+  - [x] 17.4 **CHECKPOINT 5.** Report to the user: files changed, findings, open risks, and the diff. Stop and wait. Do not commit or push.
 
 ## Checkpoints
 
