@@ -182,11 +182,11 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
   - [x] 9.6 Report to the user that this change rejects more input (Fail Closed), and name who is affected.
     - _Requirements: 7.6_
 
-- [ ] 10. Checkpoint after production corrections
+- [x] 10. Checkpoint after production corrections
   - [x] 10.1 Run `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, `pnpm verify:demo`, plus both `synth:proofgate` commands. Judge each by the Command success criteria: `pnpm synth` exits 0; `safe-app` `synth:proofgate` exits 0; `vulnerable-app` `synth:proofgate` exits 1 with `PG-IAM-004`; `pnpm verify:demo` exits 1 with `PG-IAM-004`.
   - [x] 10.2 Re-run the Model-level suite with several additional seeds. **Upper limit for these routine extra runs:** `PROOFGATE_PBT_CASES=5000` and `PROOFGATE_PBT_LEAN_CASES=2000`, with `PROOFGATE_PBT_SEED` set to each seed. The 20,000-Case profile is a manual deep profile only and is not part of this task. Any new Counterexample becomes its own task (design 13.4) and is reported before any fix that could change a verdict from unsafe to safe.
     - _Requirements: 5.2, 7.7, 8.3_
-  - [ ] 10.3 **CHECKPOINT 3.** Report the results of 10.1 and 10.2, the production diff, and the Fail Closed impact of D5. Stop and wait for the user's review before starting Phase 5.
+  - [x] 10.3 **CHECKPOINT 3.** Report the results of 10.1 and 10.2, the production diff, and the Fail Closed impact of D5. Stop and wait for the user's review before starting Phase 5.
 
 ## Phase 5: Extractor-level suite
 
