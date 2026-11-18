@@ -1,0 +1,52 @@
+{
+  "name": "reduced-d1-prefix-delete-split",
+  "note": "Reduced from generated boundary case 3 (seed 1347571526). Prefix-scoped DeleteObject on the protected bucket, with Lambda control split over two statements. Found by the model-level run against unfixed code.",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "roleName": "data-role",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:DeleteObject"],
+            "resources": ["arn:aws:s3:::protected-bucket/b/"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "roleName": "dev-role",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::123456789012:role/data-role"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:UpdateFunctionConfiguration"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:UpdateFunctionCode"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[2]"
+          }
+        ]
+      }
+    ]
+  }
+}

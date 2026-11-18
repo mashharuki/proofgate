@@ -10,6 +10,8 @@ import type {
  * 解釈が曖昧な構文を推測で通さず、Unsupportedとして記録することがこの層の責務です。
  */
 type JsonObject = Record<string, unknown>;
+/** IAMポリシー変数の構文（`${`から`}`まで）です。 */
+const POLICY_VARIABLE = /\$\{[^}]*\}/;
 
 // unknownのまま受け取ったJSONを、必要な形へ段階的に絞り込みます。
 const object = (value: unknown): value is JsonObject =>
@@ -59,6 +61,23 @@ function parseStatements(
         sourcePath: `${sourcePath}.Effect`,
         reason: "Effect must be Allow or Deny",
       });
+      return [];
+    }
+    // IAMポリシー変数（`${aws:username}`など）は評価せず、未対応として拒否します。
+    // 実行時に展開されるため、リテラル文字列として扱うと権限を過小評価する危険があるためです。
+    // CloudFormationのintrinsicで既に未対応になったResourceは、上のfindingだけを維持します。
+    const variableFindings = resources.flatMap((resource, index) =>
+      POLICY_VARIABLE.test(resource)
+        ? [
+            {
+              sourcePath: `${sourcePath}.Resource${typeof raw.Resource === "string" ? "" : `[${index}]`}`,
+              reason: "IAM policy variables in Resource are not supported",
+            },
+          ]
+        : [],
+    );
+    if (variableFindings.length > 0) {
+      unsupported.push(...variableFindings);
       return [];
     }
     return [{ effect: raw.Effect, actions, resources, sourcePath }];

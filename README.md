@@ -62,7 +62,7 @@ pnpm --filter @proofgate/safe-app synth:proofgate
 pnpm --filter @proofgate/vulnerable-app synth:proofgate
 ```
 
-自動テスト一式は`pnpm test`で実行できます。
+自動テスト一式は`pnpm test`で実行できます。生成テスト（独立したオラクルとLeanによる照合、CloudFormation断片の読み戻し）の実行方法と環境変数は、[`tests/pbt/README.md`](tests/pbt/README.md)（英語）を参照してください。
 
 コード品質チェックは次のコマンドで実行できます。
 
@@ -108,3 +108,5 @@ Validations.of(app).addPlugins(
 ## 現在の対応範囲
 
 これは最初のEnd-to-End実装であり、完全なIAM評価器ではありません。ローカルのIAMロールと、`Effect`、`Action`、`Resource`がリテラル値で記述されたインラインポリシーに対応しています。デプロイ制御として使用する前に、[対応するIAM構文](docs/SUPPORTED_IAM.md)と[前提・信頼境界](docs/ASSUMPTIONS.md)を確認してください。
+
+S3アクセスは、保護対象バケット内の一部（プレフィックスや単一オブジェクト）へのアクセスも検出します。`Resource`にIAMポリシー変数（`${aws:username}`など）を含むStatementは評価せず、`PG-IAM-003`で拒否します。

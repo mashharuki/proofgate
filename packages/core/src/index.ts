@@ -13,9 +13,12 @@ import { RULE_ID } from "@proofgate/model";
  */
 const lower = (value: string) => value.toLowerCase();
 
-// IAMのAction・Resourceで使用される*を、文字列全体に対するglobとして扱います。
+// IAMのAction・Resourceで使用される`*`（任意長）と`?`（任意の1文字）を、文字列全体に対するglobとして扱います。
 const matches = (pattern: string, value: string): boolean => {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replaceAll("*", ".*")
+    .replaceAll("?", ".");
   return new RegExp(`^${escaped}$`, "i").test(value);
 };
 
@@ -25,14 +28,65 @@ const allowsAction = (statement: StatementModel, actions: readonly string[]) =>
     actions.some((action) => matches(lower(pattern), lower(action))),
   );
 
-const allowsResource = (statement: StatementModel, resource: string) =>
-  statement.resources.some((pattern) => matches(pattern, resource));
-
-const statementsAllow = (role: RoleModel, actions: readonly string[], resource: string) =>
-  role.statements.filter(
-    (statement) => allowsAction(statement, actions) && allowsResource(statement, resource),
+// --- globで表した2つのARN集合が交わるかの判定（保護バケットのアクセス判定に使用） ---
+type GlobToken =
+  | { readonly kind: "lit"; readonly char: string }
+  | { readonly kind: "one" }
+  | { readonly kind: "star" };
+const STAR: GlobToken = { kind: "star" };
+/** IAMのglobを、`*`（任意長）と`?`（任意の1文字）を含むトークン列へ変換します。比較は大文字小文字を区別しません。 */
+const globOf = (pattern: string): GlobToken[] =>
+  [...pattern].map((char) =>
+    char === "*" ? STAR : char === "?" ? { kind: "one" } : { kind: "lit", char: lower(char) },
   );
-
+/** ワイルドカードを解釈しない、完全に固定した文字列のトークン列です。 */
+const literalOf = (text: string): GlobToken[] =>
+  [...text].map((char) => ({ kind: "lit", char: lower(char) }));
+const isStar = (token: GlobToken | undefined) => token?.kind === "star";
+/** 非`*`同士のトークンが、同じ1文字を受理できるかを判定します。 */
+const compatible = (a: GlobToken, b: GlobToken) =>
+  a.kind === "one" ||
+  b.kind === "one" ||
+  (a.kind === "lit" && b.kind === "lit" && a.char === b.char);
+/**
+ * 2つのglobが表す文字列集合の共通部分が空でないかを判定します。
+ * 一方を他方の文字列として照合する一方向のマッチではなく、集合同士の交差を調べます。
+ */
+function globsIntersect(a: readonly GlobToken[], b: readonly GlobToken[]): boolean {
+  const memo = new Map<number, boolean>();
+  const width = b.length + 1;
+  const go = (i: number, j: number): boolean => {
+    const key = i * width + j;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    const left = a[i];
+    const right = b[j];
+    let result = left === undefined && right === undefined;
+    if (!result && isStar(left)) result = go(i + 1, j);
+    if (!result && isStar(right)) result = go(i, j + 1);
+    if (!result && left !== undefined && right !== undefined) {
+      if (!isStar(left) && !isStar(right)) result = compatible(left, right) && go(i + 1, j + 1);
+      // 片方が`*`のとき、もう片方の1文字を`*`が吸収します。
+      else if (isStar(left) && !isStar(right)) result = go(i, j + 1);
+      else if (!isStar(left) && isStar(right)) result = go(i + 1, j);
+    }
+    memo.set(key, result);
+    return result;
+  };
+  return go(0, 0);
+}
+/**
+ * 保護バケットのオブジェクト（`<バケット>/`で始まる任意のキー）に届くStatementを返します。
+ * バケットレベルのARNだけではオブジェクト操作に届かず、`bucket/reports/*`のような一部のプレフィックスは届きます。
+ */
+function bucketAccessStatements(role: RoleModel, bucketArn: string): StatementModel[] {
+  const objects = [...literalOf(`${bucketArn.replace(/\/$/, "")}/`), STAR];
+  return role.statements.filter(
+    (statement) =>
+      allowsAction(statement, S3_DATA_ACTIONS) &&
+      statement.resources.some((resource) => globsIntersect(globOf(resource), objects)),
+  );
+}
 /**
  * StatementのResourceが、指定した対象ロールを表しているかを判定します。
  */
@@ -101,7 +155,6 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
         (service) => service === "*" || service === "lambda.amazonaws.com",
       );
       for (const bucketArn of config.protectedBucketArns) {
-        const objectArn = `${bucketArn.replace(/\/$/, "")}/*`;
         candidates.push({
           principal,
           target,
@@ -109,7 +162,7 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
           passRole,
           lambdaControl,
           targetIsLambdaAssumable,
-          bucketAccess: statementsAllow(target, S3_DATA_ACTIONS, objectArn),
+          bucketAccess: bucketAccessStatements(target, bucketArn),
         });
       }
     }

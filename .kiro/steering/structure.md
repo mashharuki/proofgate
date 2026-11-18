@@ -21,10 +21,11 @@ Dependencies: `cdk-plugin` depends on `core`, `extractor`, and `model`. `core` a
 ## Other directories
 
 - `examples/safe-app`, `examples/vulnerable-app`: CDK apps with the same shape. The vulnerable one adds `iam:PassRole` plus extra Lambda and S3 write actions. `PROOFGATE=1` registers the plugin.
-- `tests/`: Vitest suite covering the evaluator, extractor, fail-closed paths, and CDK integration.
+- `tests/`: `proofgate.test.ts` (evaluator, extractor, fail-closed paths, CDK integration) and `core-matching.test.ts` (`?` wildcard and S3 intersection).
+- `tests/pbt/`: generated tests, never part of a published package. `support/` holds the generator, the independent oracle (`glob.ts`, `oracle.ts`, type-only imports), the Lean batch runner, the comparison rules, and the shrinker. `regressions/` holds fixed and reduced Cases as JSON. The Extractor-level tests must not import the Lean runner, `@proofgate/core`, `@proofgate/cdk-plugin`, or `child_process` (`architecture.test.ts` checks this).
 - `docs/`: `architecture.md`, `ASSUMPTIONS.md`, `PROOFS.md`, `SUPPORTED_IAM.md` (Japanese).
 - `scripts/`: `run-lean.mjs` (runs Lake in the Lean dir) and `check-packages.mjs` (inspects packed tarballs).
-- `.kiro/`: steering, specs, hooks, and MCP settings. Must stay committed and not git-ignored.
+- `.kiro/`: steering, specs (`specs/<name>/` with `requirements.md`, `design.md`, `tasks.md`, and Kiro's `tasks.meta.json`), hooks (`hooks/`), the hook script (`scripts/`), and MCP settings. Must stay committed and not git-ignored. Excluded from Biome.
 
 ## Generated output (never edit by hand)
 

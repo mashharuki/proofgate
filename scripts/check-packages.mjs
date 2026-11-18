@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { unexpectedEntries } from "./pack-rules.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputDirectory = mkdtempSync(join(tmpdir(), "proofgate-pack-"));
@@ -76,6 +77,13 @@ try {
       [...entries].some((entry) => entry.includes("/.lake/") || entry.endsWith("/Generated.lean"))
     ) {
       throw new Error(`${archive} contains generated Lean build files`);
+    }
+    // 許可されたファイル（package.json、README.md、LICENSE、dist/、lean/）以外と、テスト専用コードを拒否します。
+    const unexpected = unexpectedEntries(entries);
+    if (unexpected.length > 0) {
+      throw new Error(
+        `${archive} contains files that must not be published: ${unexpected.join(", ")}`,
+      );
     }
     for (const required of packageSpec.required) {
       if (!entries.has(required)) throw new Error(`${archive} does not contain ${required}`);

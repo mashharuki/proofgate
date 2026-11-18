@@ -1,0 +1,46 @@
+{
+  "name": "reduced-question-wildcard-lambda-glob",
+  "note": "Reduced from generated case 664 (seed 1347571526). The reduction keeps both a single-character wildcard in iam:PassRol? (fixed in Task 7) and an S3 grant that covers only part of the protected bucket (fixed in Task 8), so it stays red until both fixes are in.",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-a"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Role0",
+        "roleName": "r0x-batch",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["lambda:*Function*"],
+            "resources": ["arn:aws:lambda:"],
+            "sourcePath": "Resources.Role0.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRol?"],
+            "resources": ["arn:aws:iam::123456789012:role/r1x-admin"],
+            "sourcePath": "Resources.Role0.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Role1",
+        "roleName": "r1x-admin",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:*"],
+            "resources": ["arn:aws:s3:::protected-a/"],
+            "sourcePath": "Resources.Role1.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      }
+    ]
+  }
+}

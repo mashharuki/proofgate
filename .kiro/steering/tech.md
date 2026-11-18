@@ -7,7 +7,7 @@
 | Package manager     | pnpm 11 workspaces (`packageManager` field pins the exact version)                |
 | Infrastructure      | AWS CDK v2, using the stable `IPolicyValidationPlugin` API (`aws-cdk-lib` ^2.277) |
 | Formal verification | Lean 4 with Lake; toolchain pinned in `packages/cdk-plugin/lean/lean-toolchain`   |
-| Tests               | Vitest (`tests/proofgate.test.ts`)                                                |
+| Tests               | Vitest: fixed tests in `tests/*.test.ts`, generated tests in `tests/pbt/`          |
 | Quality             | Biome (format, lint, import order), Knip (unused code), jscpd (duplication)       |
 | CI                  | GitHub Actions `.github/workflows/ci.yml`                                         |
 
@@ -17,5 +17,7 @@
 - Existing source comments and docs are in Japanese. Keep them. Add English alongside, never replace.
 - The Lean project is built on first verification by the published package (`lake build`). Do not commit `.lake`.
 - Lean sources must not contain `sorry` or project-defined `axiom`. CI audits this.
+- Generated tests use an in-repo seeded generator and shrinker. No property-testing library is used (`fast-check` was evaluated and rejected: per-value shrinking conflicts with batched Lean launches).
+- `pnpm typecheck` does not cover `tests/`, by the user's decision. Check new test code with a temporary tsconfig that extends `tsconfig.base.json`; do not add a tests tsconfig or change the typecheck script.
 - Kiro must never appear in `dependencies`, `peerDependencies`, or runtime code paths.
 - Never commit credentials, tokens, or credit codes.
