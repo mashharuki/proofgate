@@ -13,9 +13,12 @@ import { RULE_ID } from "@proofgate/model";
  */
 const lower = (value: string) => value.toLowerCase();
 
-// IAMのAction・Resourceで使用される*を、文字列全体に対するglobとして扱います。
+// IAMのAction・Resourceで使用される`*`（任意長）と`?`（任意の1文字）を、文字列全体に対するglobとして扱います。
 const matches = (pattern: string, value: string): boolean => {
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("*", ".*");
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replaceAll("*", ".*")
+    .replaceAll("?", ".");
   return new RegExp(`^${escaped}$`, "i").test(value);
 };
 

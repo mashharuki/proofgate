@@ -140,10 +140,10 @@ These are the only definitions of success for the demo commands. Use them in Tas
 
 Each task is a minimal change with a regression test and must keep `pnpm test`, `pnpm synth`, and `pnpm verify:demo` passing. None may accept more input. Check this explicitly.
 
-- [ ] 7. Fix `?` wildcard matching (`@proofgate/core`)
-  - [ ] 7.1 Make `matches` treat `?` as one arbitrary character in Action and Resource patterns. Keep existing case rules and the wide `*`.
+- [x] 7. Fix `?` wildcard matching (`@proofgate/core`)
+  - [x] 7.1 Make `matches` treat `?` as one arbitrary character in Action and Resource patterns. Keep existing case rules and the wide `*`.
     - _Requirements: 7.5, 7.6_ · _Design: 13.1_
-  - [ ] 7.2 Confirm the `?` regression files pass and no existing test changed.
+  - [x] 7.2 Confirm the `?` regression files pass and no existing test changed.
     - _Property: P5, P6, P16_
 
 - [ ] 8. Fix S3 access to use intersection (`@proofgate/core`), D1

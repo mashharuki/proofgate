@@ -1,6 +1,6 @@
 {
   "name": "reduced-question-wildcard-lambda-glob",
-  "note": "Reduced from generated case 664 (seed 1347571526). The single-character wildcard in iam:PassRol? must match iam:PassRole. Found by the model-level run against unfixed code.",
+  "note": "Reduced from generated case 664 (seed 1347571526). The reduction keeps both a single-character wildcard in iam:PassRol? (fixed in Task 7) and an S3 grant that covers only part of the protected bucket (fixed in Task 8), so it stays red until both fixes are in.",
   "label": "unsafe",
   "expectedTs": "unsafe",
   "config": {
