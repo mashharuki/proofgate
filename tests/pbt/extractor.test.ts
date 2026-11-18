@@ -1,4 +1,4 @@
-import { extractStack } from "@proofgate/extractor";
+import { extractStack } from "@proofgate-cdk/extractor";
 import { beforeAll, describe, expect, it } from "vitest";
 import { readConfig } from "./support/config.js";
 import { assertCoverage } from "./support/coverage.js";

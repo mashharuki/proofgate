@@ -131,11 +131,11 @@ describe("oracle independence", () => {
   it("imports nothing from the production packages except types", () => {
     for (const file of ["oracle.ts", "glob.ts"]) {
       const source = readFileSync(join(process.cwd(), "tests/pbt/support", file), "utf8");
-      expect(source, file).not.toContain("@proofgate/core");
-      expect(source, file).not.toContain("@proofgate/extractor");
-      expect(source, file).not.toContain("@proofgate/cdk-plugin");
+      expect(source, file).not.toContain("@proofgate-cdk/core");
+      expect(source, file).not.toContain("@proofgate-cdk/extractor");
+      expect(source, file).not.toContain("@proofgate-cdk/cdk-plugin");
       for (const line of source.split("\n")) {
-        if (/^import .*from "@proofgate\//.test(line)) {
+        if (/^import .*from "@proofgate-cdk\//.test(line)) {
           expect(line, `${file}: ${line}`).toMatch(/^import type /);
         }
       }

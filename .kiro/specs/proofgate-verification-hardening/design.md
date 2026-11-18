@@ -668,3 +668,5 @@ Revision history:
 - Revision 1: first design.
 - Revision 2: review changes (conservative category, intersection for D1, policy variables for D5, strict Lean result classifier).
 - Revision 3: implementation notes above.
+
+Note on package names: the spec documents, the task titles, and the usage log keep the development-time names `@proofgate/*`. Before the first npm publication the packages were renamed to `@proofgate-cdk/*` (npm organization `proofgate-cdk`). The code, tests, scripts, READMEs, and the changelog use the new names. The task titles also serve as keys in Kiro's `tasks.meta.json`, which is why they were not rewritten.

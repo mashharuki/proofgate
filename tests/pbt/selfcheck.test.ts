@@ -14,8 +14,8 @@
  * - 対応付けられないエラー: 1回
  */
 import { join } from "node:path";
-import { evaluate, generateLean } from "@proofgate/core";
-import type { ProofGateConfig, StackModel, Violation } from "@proofgate/model";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
+import type { ProofGateConfig, StackModel, Violation } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 import { type AgreementDeps, runAgreement } from "./support/agreement.js";
 import { DEFAULT_SEED } from "./support/config.js";

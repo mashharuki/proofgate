@@ -4,8 +4,8 @@ import type {
   StackModel,
   StatementModel,
   Violation,
-} from "@proofgate/model";
-import { RULE_ID } from "@proofgate/model";
+} from "@proofgate-cdk/model";
+import { RULE_ID } from "@proofgate-cdk/model";
 
 /**
  * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、

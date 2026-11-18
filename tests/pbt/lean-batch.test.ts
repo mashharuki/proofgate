@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { evaluate, generateLean } from "@proofgate/core";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SEED } from "./support/config.js";
 import {

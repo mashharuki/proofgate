@@ -9,7 +9,7 @@
  *
  * 比較のたびに、どの規則に違反したかをCounterexampleとして返します。
  */
-import type { Violation } from "@proofgate/model";
+import type { Violation } from "@proofgate-cdk/model";
 import { HarnessError, type Verdict } from "./lean-batch.js";
 import type { Case, Category, Tag } from "./model-gen.js";
 

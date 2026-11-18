@@ -15,7 +15,7 @@
  * - Lambda resource scoping (lambda:* Resource is not evaluated; this is conservative)
  * - S3 data actions beyond GetObject, PutObject, DeleteObject (see design.md section 18)
  */
-import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate/model";
+import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
 import { ANY_SUFFIX, compileGlob, intersects, literalTokens, matchTokens } from "./glob.js";
 
 export type OracleVerdict = "unsafe" | "safe";

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { evaluate, generateLean } from "@proofgate/core";
-import type { ProofGateConfig, StackModel } from "@proofgate/model";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
+import type { ProofGateConfig, StackModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 import { tsVerdict } from "./support/compare.js";
 import { type BatchCase, runBatch, type Verdict } from "./support/lean-batch.js";

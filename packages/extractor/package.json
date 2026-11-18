@@ -1,6 +1,6 @@
 {
-  "name": "@proofgate/extractor",
-  "version": "1.0.0",
+  "name": "@proofgate-cdk/extractor",
+  "version": "1.0.1",
   "description": "Fail-closed CloudFormation IAM extractor for ProofGate.",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,6 +47,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@proofgate/model": "workspace:^"
+    "@proofgate-cdk/model": "workspace:^"
   }
 }

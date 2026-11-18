@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { evaluate, generateLean } from "@proofgate/core";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
 import { beforeAll, describe, expect, it } from "vitest";
 import { type AgreementReport, runAgreement } from "./support/agreement.js";
 import { readConfig } from "./support/config.js";

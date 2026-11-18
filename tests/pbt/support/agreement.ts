@@ -3,7 +3,7 @@
  * `evaluate`・`generateLean`・オラクルを引数にしているため、自己検査では意図的に壊した実装を
  * 差し込んで、ハーネスが欠陥を検出できることを確かめられます（design 11）。
  */
-import type { ProofGateConfig, StackModel, Violation } from "@proofgate/model";
+import type { ProofGateConfig, StackModel, Violation } from "@proofgate-cdk/model";
 import {
   type Counterexample,
   explainedTags,

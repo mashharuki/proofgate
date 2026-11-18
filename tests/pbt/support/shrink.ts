@@ -6,7 +6,7 @@
  * - 最後に`confirm`で3者を再実行し、確認できた最小のCaseだけを報告します。
  * - 縮小中に残るStatementのsourcePathは変更しないため、witnessの参照は有効なままです。
  */
-import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate/model";
+import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
 
 export interface Shrinkable {
   readonly model: StackModel;

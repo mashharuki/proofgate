@@ -1,8 +1,20 @@
 # Changelog
 
-All published packages (`@proofgate/model`, `@proofgate/extractor`, `@proofgate/core`, `@proofgate/cdk-plugin`) share one version.
+All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
+
+## 1.0.1 - 2026-11-18
+
+The first version published to npm. There is no change in behavior or in the code compared with 1.0.0; the packages were renamed.
+
+### Package names
+
+The packages are published under the npm scope `@proofgate-cdk`: `@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, and `@proofgate-cdk/cdk-plugin`. Import paths use the new scope.
+
+The tag and GitHub release `v1.0.0` are a source release only. At that tag the packages were still named `@proofgate/*`, a scope that was never published. 1.0.1 is the first version on npm; use it instead of `v1.0.0`. The behavior changes listed under 1.0.0 are all included.
 
 ## 1.0.0 - 2026-11-18
+
+Source release only (tag `v1.0.0`). The packages were named `@proofgate/*` at that tag and were not published to npm. See 1.0.1.
 
 First stable release. The version is 1.0.0 because this release changes what ProofGate accepts and rejects. Read "Upgrade notes" before updating.
 
@@ -29,7 +41,19 @@ All three changes only add findings or rejections. A comparison of the old and n
 - If `pnpm cdk synth` now fails with `PG-IAM-003` and the message "IAM policy variables in Resource are not supported", the stack uses a policy variable in a `Resource`. There is no setting to allow it. Write the `Resource` without the variable (for example, a fixed ARN) or do not enable ProofGate for that stack.
 - If a stack that passed before now fails with `PG-IAM-004`, check for a grant on a prefix or an object of a protected bucket. It was missed before and is access to that bucket.
 
+## 1.0.1 - 2026-11-18（日本語）
+
+npmに公開する最初のバージョンです。1.0.0からコードと挙動の変更はなく、パッケージ名を変更しました。
+
+### パッケージ名
+
+パッケージはnpmのスコープ`@proofgate-cdk`で公開します: `@proofgate-cdk/model`、`@proofgate-cdk/extractor`、`@proofgate-cdk/core`、`@proofgate-cdk/cdk-plugin`。importのパスも新しいスコープです。
+
+タグとGitHub Releaseの`v1.0.0`は、ソースのみのリリースです。このタグの時点では、パッケージ名は`@proofgate/*`で、このスコープは公開されていません。npmに公開した最初のバージョンは1.0.1です。`v1.0.0`ではなく1.0.1を使ってください。1.0.0に記載した挙動の変更は、すべて含まれます。
+
 ## 1.0.0 - 2026-11-18（日本語）
+
+ソースのみのリリースです（タグ`v1.0.0`）。このタグの時点のパッケージ名は`@proofgate/*`で、npmには公開していません。1.0.1を参照してください。
 
 初の安定版です。受理・拒否の範囲が変わるため、バージョンを1.0.0にしました。更新前に「更新時の注意」を確認してください。
 

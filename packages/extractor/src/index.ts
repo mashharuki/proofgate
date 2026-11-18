@@ -3,7 +3,7 @@ import type {
   RoleModel,
   StatementModel,
   UnsupportedFinding,
-} from "@proofgate/model";
+} from "@proofgate-cdk/model";
 
 /**
  * CloudFormation JSONから、ProofGateが扱うIAMの有限モデルを抽出します。

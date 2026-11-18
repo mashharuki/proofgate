@@ -11,16 +11,16 @@ importers:
       '@biomejs/biome':
         specifier: 2.6.8
         version: 2.6.8
-      '@proofgate/cdk-plugin':
+      '@proofgate-cdk/cdk-plugin':
         specifier: workspace:*
         version: link:packages/cdk-plugin
-      '@proofgate/core':
+      '@proofgate-cdk/core':
         specifier: workspace:*
         version: link:packages/core
-      '@proofgate/extractor':
+      '@proofgate-cdk/extractor':
         specifier: workspace:*
         version: link:packages/extractor
-      '@proofgate/model':
+      '@proofgate-cdk/model':
         specifier: workspace:*
         version: link:packages/model
       '@types/node':
@@ -41,7 +41,7 @@ importers:
 
   examples/safe-app:
     dependencies:
-      '@proofgate/cdk-plugin':
+      '@proofgate-cdk/cdk-plugin':
         specifier: workspace:*
         version: link:../../packages/cdk-plugin
       aws-cdk-lib:
@@ -57,7 +57,7 @@ importers:
 
   examples/vulnerable-app:
     dependencies:
-      '@proofgate/cdk-plugin':
+      '@proofgate-cdk/cdk-plugin':
         specifier: workspace:*
         version: link:../../packages/cdk-plugin
       aws-cdk-lib:
@@ -73,13 +73,13 @@ importers:
 
   packages/cdk-plugin:
     dependencies:
-      '@proofgate/core':
+      '@proofgate-cdk/core':
         specifier: workspace:^
         version: link:../core
-      '@proofgate/extractor':
+      '@proofgate-cdk/extractor':
         specifier: workspace:^
         version: link:../extractor
-      '@proofgate/model':
+      '@proofgate-cdk/model':
         specifier: workspace:^
         version: link:../model
     devDependencies:
@@ -89,13 +89,13 @@ importers:
 
   packages/core:
     dependencies:
-      '@proofgate/model':
+      '@proofgate-cdk/model':
         specifier: workspace:^
         version: link:../model
 
   packages/extractor:
     dependencies:
-      '@proofgate/model':
+      '@proofgate-cdk/model':
         specifier: workspace:^
         version: link:../model
 

@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import type { ProofGateConfig, StackModel } from "@proofgate/model";
+import type { ProofGateConfig, StackModel } from "@proofgate-cdk/model";
 
 export type Verdict = "unsafe" | "safe";
 

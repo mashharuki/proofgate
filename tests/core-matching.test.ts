@@ -1,5 +1,5 @@
-import { evaluate } from "@proofgate/core";
-import type { StackModel } from "@proofgate/model";
+import { evaluate } from "@proofgate-cdk/core";
+import type { StackModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 
 const bucket = "arn:aws:s3:::protected-bucket";

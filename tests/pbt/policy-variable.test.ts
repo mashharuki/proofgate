@@ -1,8 +1,8 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
-import { extractStack } from "@proofgate/extractor";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
+import { extractStack } from "@proofgate-cdk/extractor";
 import { describe, expect, it } from "vitest";
 
 // IAMポリシー変数（`${aws:username}`など）を含むResourceは、評価せずに未対応として拒否します（D5）。
