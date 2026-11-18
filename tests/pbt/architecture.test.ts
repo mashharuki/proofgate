@@ -7,11 +7,11 @@ import { describe, expect, it } from "vitest";
 //
 // - Extractor側のファイルから、相対importを再帰的にたどります。
 // - 型だけのimport（`import type`）は実行時に存在しないため、対象外です。
-// - 禁止対象: lean-batch、@proofgate/core、@proofgate/cdk-plugin、child_process。
+// - 禁止対象: lean-batch、@proofgate-cdk/core、@proofgate-cdk/cdk-plugin、child_process。
 const FORBIDDEN = [
   /(^|\/)lean-batch(\.js|\.ts)?$/,
-  /^@proofgate\/core$/,
-  /^@proofgate\/cdk-plugin$/,
+  /^@proofgate-cdk\/core$/,
+  /^@proofgate-cdk\/cdk-plugin$/,
 ];
 const FORBIDDEN_BUILTIN = new Set(["node:child_process", "child_process"]);
 
@@ -91,19 +91,19 @@ describe("Extractor-level tests stay independent of Lean and the evaluator", () 
         "tests/pbt/entry.test.ts",
         fake({
           "tests/pbt/entry.test.ts": `import { helper } from "./support/helper.js";`,
-          "tests/pbt/support/helper.ts": `import { spawnSync } from "node:child_process";\nimport { evaluate } from "@proofgate/core";`,
+          "tests/pbt/support/helper.ts": `import { spawnSync } from "node:child_process";\nimport { evaluate } from "@proofgate-cdk/core";`,
         }),
       );
       expect(problems).toHaveLength(2);
       expect(problems.join("\n")).toContain("node:child_process");
-      expect(problems.join("\n")).toContain("@proofgate/core");
+      expect(problems.join("\n")).toContain("@proofgate-cdk/core");
     });
 
-    it("detects @proofgate/cdk-plugin", () => {
+    it("detects @proofgate-cdk/cdk-plugin", () => {
       const problems = violations(
         "tests/pbt/entry.test.ts",
         fake({
-          "tests/pbt/entry.test.ts": `import { ProofGateValidator } from "@proofgate/cdk-plugin";`,
+          "tests/pbt/entry.test.ts": `import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";`,
         }),
       );
       expect(problems).toHaveLength(1);
@@ -115,8 +115,8 @@ describe("Extractor-level tests stay independent of Lean and the evaluator", () 
         fake({
           "tests/pbt/entry.test.ts": [
             `import type { Counterexample } from "./support/lean-batch.js";`,
-            `import { extractStack } from "@proofgate/extractor";`,
-            `import type { StackModel } from "@proofgate/model";`,
+            `import { extractStack } from "@proofgate-cdk/extractor";`,
+            `import type { StackModel } from "@proofgate-cdk/model";`,
             `import { describe } from "vitest";`,
           ].join("\n"),
         }),

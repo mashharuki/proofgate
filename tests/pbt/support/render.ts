@@ -1,4 +1,4 @@
-import type { StackModel } from "@proofgate/model";
+import type { StackModel } from "@proofgate-cdk/model";
 
 /**
  * StackModelを、Extractorが受理する最小のCloudFormationテンプレートへ変換します。

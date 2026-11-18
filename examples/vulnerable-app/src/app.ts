@@ -1,4 +1,4 @@
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
 import { App, Stack, Validations } from "aws-cdk-lib";
 import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 

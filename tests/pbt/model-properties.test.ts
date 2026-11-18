@@ -1,6 +1,6 @@
-import { evaluate } from "@proofgate/core";
-import { extractStack } from "@proofgate/extractor";
-import type { ProofGateConfig, RoleModel, StackModel } from "@proofgate/model";
+import { evaluate } from "@proofgate-cdk/core";
+import { extractStack } from "@proofgate-cdk/extractor";
+import type { ProofGateConfig, RoleModel, StackModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 import { readConfig } from "./support/config.js";
 import { assertCoverage, Coverage } from "./support/coverage.js";

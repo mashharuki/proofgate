@@ -2,7 +2,7 @@
  * Extractor-levelの実行本体です。`extractStack`相当の関数を引数にしているため、
  * 自己検査では意図的に壊した実装を差し込めます。Leanも本番の評価器も使いません（Requirement 4.7）。
  */
-import type { ExtractionResult } from "@proofgate/model";
+import type { ExtractionResult } from "@proofgate-cdk/model";
 import { Coverage } from "./coverage.js";
 import { replayCommand } from "./report.js";
 import { shrinkWith } from "./shrink.js";

@@ -3,9 +3,9 @@
  *
  * 断片は「レシピ」から作ります。対応する断片では、レシピから独立に期待モデルを計算します。
  * 未対応の断片では、対応するレシピへ「毒」を1つだけ混ぜ、期待するsourcePathを記録します。
- * このファイルは@proofgate/extractorの型とモデル型だけに依存し、Leanも本番の評価器も使いません。
+ * このファイルは@proofgate-cdk/extractorの型とモデル型だけに依存し、Leanも本番の評価器も使いません。
  */
-import type { ExtractionResult, StackModel, StatementModel } from "@proofgate/model";
+import type { ExtractionResult, StackModel, StatementModel } from "@proofgate-cdk/model";
 import { createRng, type Rng } from "./prng.js";
 
 interface StatementRecipe {

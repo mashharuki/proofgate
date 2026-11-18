@@ -2,10 +2,10 @@ import { spawnSync } from "node:child_process";
 import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
-import { evaluate, generateLean } from "@proofgate/core";
-import { extractStack } from "@proofgate/extractor";
-import type { StackModel } from "@proofgate/model";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
+import { extractStack } from "@proofgate-cdk/extractor";
+import type { StackModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 
 const protectedBucketArn = "arn:aws:s3:::proofgate-protected-data";
@@ -276,7 +276,7 @@ describe("CDK plugin fail-closed behavior", () => {
 describe("CDK integration", () => {
   it("allows both apps without ProofGate and only the safe app with ProofGate", () => {
     const run = (app: "safe-app" | "vulnerable-app", script: "synth" | "synth:proofgate") =>
-      spawnSync("pnpm", ["--filter", `@proofgate/${app}`, script], {
+      spawnSync("pnpm", ["--filter", `@proofgate-cdk/${app}`, script], {
         cwd: resolve("."),
         encoding: "utf8",
       });

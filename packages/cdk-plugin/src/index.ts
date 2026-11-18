@@ -3,9 +3,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { evaluate, generateLean } from "@proofgate/core";
-import { extractStack } from "@proofgate/extractor";
-import type { ProofGateConfig } from "@proofgate/model";
+import { evaluate, generateLean } from "@proofgate-cdk/core";
+import { extractStack } from "@proofgate-cdk/extractor";
+import type { ProofGateConfig } from "@proofgate-cdk/model";
 import type {
   IPolicyValidationContext,
   IPolicyValidationPlugin,

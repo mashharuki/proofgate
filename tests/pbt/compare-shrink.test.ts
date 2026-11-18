@@ -1,4 +1,4 @@
-import type { Violation } from "@proofgate/model";
+import type { Violation } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 import { selectLeanCases } from "./support/agreement.js";
 import { explainedTags, isExplained, judgeCase, tsVerdict } from "./support/compare.js";

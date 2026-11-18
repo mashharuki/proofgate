@@ -1,5 +1,5 @@
 {
-  "name": "@proofgate/cdk-plugin",
+  "name": "@proofgate-cdk/cdk-plugin",
   "version": "1.0.0",
   "description": "Lean-powered AWS CDK policy validation plugin for application-specific IAM safety rules.",
   "type": "module",
@@ -53,9 +53,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@proofgate/core": "workspace:^",
-    "@proofgate/extractor": "workspace:^",
-    "@proofgate/model": "workspace:^"
+    "@proofgate-cdk/core": "workspace:^",
+    "@proofgate-cdk/extractor": "workspace:^",
+    "@proofgate-cdk/model": "workspace:^"
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.277.0"

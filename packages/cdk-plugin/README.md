@@ -1,11 +1,11 @@
-# @proofgate/cdk-plugin
+# @proofgate-cdk/cdk-plugin
 
 Leanでアプリケーション固有のIAM安全条件を検査する、AWS CDK Validation Pluginです。
 
 ## インストール
 
 ```bash
-pnpm add @proofgate/cdk-plugin aws-cdk-lib
+pnpm add @proofgate-cdk/cdk-plugin aws-cdk-lib
 ```
 
 Node.js 26以降と、`elan`で導入したLean 4 / Lakeが必要です。Leanのバージョンはパッケージに同梱した`lean/lean-toolchain`で固定されています。プラグインは初回検証時に同梱Leanプロジェクトを自動ビルドし、同じ`synth`内では成果物を再利用します。
@@ -13,7 +13,7 @@ Node.js 26以降と、`elan`で導入したLean 4 / Lakeが必要です。Lean�
 ## CDKへの導入
 
 ```ts
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
 import { App, Validations } from "aws-cdk-lib";
 
 const app = new App();

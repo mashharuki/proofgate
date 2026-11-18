@@ -1,6 +1,6 @@
 # Changelog
 
-All published packages (`@proofgate/model`, `@proofgate/extractor`, `@proofgate/core`, `@proofgate/cdk-plugin`) share one version.
+All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
 ## 1.0.0 - 2026-11-18
 

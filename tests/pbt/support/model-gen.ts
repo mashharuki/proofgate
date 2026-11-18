@@ -6,7 +6,7 @@
  *   AWSの意味論ではsafeです。
  * - `label`は常に「AWSの意味論での判定」（O1）です。「ProofGateが言うはずの判定」ではありません。
  */
-import type { ProofGateConfig, RoleModel, StackModel } from "@proofgate/model";
+import type { ProofGateConfig, RoleModel, StackModel } from "@proofgate-cdk/model";
 import type { Rng } from "./prng.js";
 import { createRng } from "./prng.js";
 import { statementPath } from "./render.js";

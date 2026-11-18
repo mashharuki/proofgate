@@ -52,14 +52,14 @@ pnpm build
 pnpm lean:build
 
 # 通常のsynthは両方とも成功する
-pnpm --filter @proofgate/safe-app synth
-pnpm --filter @proofgate/vulnerable-app synth
+pnpm --filter @proofgate-cdk/safe-app synth
+pnpm --filter @proofgate-cdk/vulnerable-app synth
 
 # ProofGateはsafe-appを許可する
-pnpm --filter @proofgate/safe-app synth:proofgate
+pnpm --filter @proofgate-cdk/safe-app synth:proofgate
 
 # ProofGateはvulnerable-appをPG-IAM-004、終了コード1で拒否する
-pnpm --filter @proofgate/vulnerable-app synth:proofgate
+pnpm --filter @proofgate-cdk/vulnerable-app synth:proofgate
 ```
 
 自動テスト一式は`pnpm test`で実行できます。生成テスト（独立したオラクルとLeanによる照合、CloudFormation断片の読み戻し）の実行方法と環境変数は、[`tests/pbt/README.md`](tests/pbt/README.md)（英語）を参照してください。
@@ -76,10 +76,10 @@ pnpm quality
 
 次の4パッケージをnpmへ公開できる構成にしています。
 
-- `@proofgate/cdk-plugin`: CDK利用者向けのValidation Plugin。固定済みLeanプロジェクトを同梱
-- `@proofgate/core`: TypeScript参照評価器とLeanモジュール生成器
-- `@proofgate/extractor`: CloudFormation IAM Extractor
-- `@proofgate/model`: CDK非依存の中間モデル
+- `@proofgate-cdk/cdk-plugin`: CDK利用者向けのValidation Plugin。固定済みLeanプロジェクトを同梱
+- `@proofgate-cdk/core`: TypeScript参照評価器とLeanモジュール生成器
+- `@proofgate-cdk/extractor`: CloudFormation IAM Extractor
+- `@proofgate-cdk/model`: CDK非依存の中間モデル
 
 公開前に、各tarballのエントリーポイント、型定義、README、ライセンス、Leanソース、workspace依存のsemver変換を検査できます。
 
@@ -87,13 +87,13 @@ pnpm quality
 pnpm pack:check
 ```
 
-実際にnpmへ公開するには、`@proofgate`スコープを利用できるnpmアカウントまたはOrganizationの設定が別途必要です。
+実際にnpmへ公開するには、`@proofgate-cdk`スコープを利用できるnpmアカウントまたはOrganizationの設定が別途必要です。
 
 ## CDKへの導入
 
 ```ts
 import { App, Validations } from "aws-cdk-lib";
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
 
 const app = new App();
 Validations.of(app).addPlugins(

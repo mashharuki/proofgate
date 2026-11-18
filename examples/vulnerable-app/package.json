@@ -1,5 +1,5 @@
 {
-  "name": "@proofgate/vulnerable-app",
+  "name": "@proofgate-cdk/vulnerable-app",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "synth:proofgate": "PROOFGATE=1 cdk synth --quiet"
   },
   "dependencies": {
-    "@proofgate/cdk-plugin": "workspace:*",
+    "@proofgate-cdk/cdk-plugin": "workspace:*",
     "aws-cdk-lib": "2.277.0",
     "constructs": "^10.4.2"
   },

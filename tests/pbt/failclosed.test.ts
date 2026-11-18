@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ProofGateValidator } from "@proofgate/cdk-plugin";
+import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
 import { describe, expect, it } from "vitest";
 
 // Fail Closedの境界を、プラグインの入口で確認します（Property: P23）。
