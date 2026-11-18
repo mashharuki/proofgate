@@ -160,12 +160,12 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
     - _Requirements: 7.6, 7.7_
 
 - [ ] 9. Reject policy variables in Resource (`@proofgate/extractor`), D5, red first
-  - [ ] 9.1 **Add the tests first.** Create `tests/pbt/policy-variable.test.ts` with example tests:
+  - [x] 9.1 **Add the tests first.** Create `tests/pbt/policy-variable.test.ts` with example tests:
     - Extractor level (D1-9): a Resource string `arn:aws:s3:::protected-bucket/${aws:username}/*` and the same value as an array element, in an inline role policy and in `AWS::IAM::Policy`, for Allow and Deny. Expect: an unsupported finding, no model, and a `sourcePath` ending in `.Resource` (string) or `.Resource[k]` (array element).
     - Validator level: `ProofGateValidator` on a synthesized template with that Resource reports `PG-IAM-003`.
     - Characterization test for the intrinsic case: a Resource that is a CloudFormation intrinsic (for example `Fn::Join`, including one whose text contains `${aws:username}`) produces the **existing** non-literal finding at the Statement path, exactly one finding, and no variable finding. This test must pass **before** the fix and must keep passing after it.
     - _Requirements: 6.1, 12.4, 12.6_ · _Property: P20, P21_
-  - [ ] 9.2 **Confirm the tests fail before the fix.** Run them against the unfixed extractor.
+  - [x] 9.2 **Confirm the tests fail before the fix.** Run them against the unfixed extractor.
     - Expected: the policy-variable tests fail (no finding, a model is returned, so `ProofGateValidator` does not report `PG-IAM-003` for D5); the intrinsic characterization test passes.
     - Record the failure output and the `sourcePath` values (or their absence) in the usage log. If the characterization test fails before the fix, stop and report.
     - _Requirements: 7.5_
