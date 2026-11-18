@@ -190,16 +190,16 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
 
 ## Phase 5: Extractor-level suite
 
-- [ ] 11. Extractor-level PBT
-  - [ ] 11.1 Create `tests/pbt/support/template-gen.ts`: `TemplateRecipe`, template rendering (string or array Action and Resource, inline `Policies`, `AWS::IAM::Policy` with `Roles: [{ Ref }]`, several roles and Statements, Allow and Deny), and `expectedModel` written independently of the extractor with canonical ordering.
+- [x] 11. Extractor-level PBT
+  - [x] 11.1 Create `tests/pbt/support/template-gen.ts`: `TemplateRecipe`, template rendering (string or array Action and Resource, inline `Policies`, `AWS::IAM::Policy` with `Roles: [{ Ref }]`, several roles and Statements, Allow and Deny), and `expectedModel` written independently of the extractor with canonical ordering.
     - _Requirements: 12.1 to 12.3_ · _Property: P19_ · _Design: 4.7_
-  - [ ] 11.2 Add the poison catalogue: `Condition`, `NotAction`, `NotResource`, trust `NotPrincipal`, trust `Condition`, non-literal trust value, non-literal `Action`, `Resource`, `RoleName`, non-default `Path`, `AWS::IAM::ManagedPolicy`, `ManagedPolicyArns`, another `AWS::IAM::*` type, malformed `PolicyDocument`, missing `Resources`, `POLICY_VARIABLE`, `INTRINSIC_WITH_VARIABLE`. For each poison, record the expected `sourcePath` granularity next to its definition.
+  - [x] 11.2 Add the poison catalogue: `Condition`, `NotAction`, `NotResource`, trust `NotPrincipal`, trust `Condition`, non-literal trust value, non-literal `Action`, `Resource`, `RoleName`, non-default `Path`, `AWS::IAM::ManagedPolicy`, `ManagedPolicyArns`, another `AWS::IAM::*` type, malformed `PolicyDocument`, missing `Resources`, `POLICY_VARIABLE`, `INTRINSIC_WITH_VARIABLE`. For each poison, record the expected `sourcePath` granularity next to its definition.
     - _Requirements: 6.1, 12.4, 12.5_ · _Property: P20, P21_
-  - [ ] 11.3 Create `tests/pbt/extractor.test.ts`: supported round-trip, one poison, mixed fragments (no partial model), no roles, no supported Statements. Default 1,000 Cases with coverage counters per poison.
+  - [x] 11.3 Create `tests/pbt/extractor.test.ts`: supported round-trip, one poison, mixed fragments (no partial model), no roles, no supported Statements. Default 1,000 Cases with coverage counters per poison.
     - _Requirements: 12.2, 12.4 to 12.7_ · _Property: P19 to P22_
-  - [ ] 11.4 Add extractor-layer shrinking (remove resources, statements, array elements; the fragment stays valid; the same failure stays) and the report.
+  - [x] 11.4 Add extractor-layer shrinking (remove resources, statements, array elements; the fragment stays valid; the same failure stays) and the report.
     - _Requirements: 5.10_ · _Property: P17_
-  - [ ] 11.5 Enforce the Extractor layer boundary by import inspection, not by a runtime counter.
+  - [x] 11.5 Enforce the Extractor layer boundary by import inspection, not by a runtime counter.
     - Do **not** rely on an in-memory Lean launch counter across Vitest workers.
     - Create `tests/pbt/architecture.test.ts`. It reads the import specifiers of the Extractor PBT files (`extractor.test.ts`, `template-gen.ts`, and every support file they import, followed transitively through relative imports) and fails if any of them imports: `lean-batch.ts` (any relative path ending in `lean-batch`), `@proofgate/core`, `@proofgate/cdk-plugin`, or `node:child_process` (or `child_process`).
     - Allowed dependencies: `@proofgate/extractor`, types from `@proofgate/model`, `vitest`, Node built-ins other than `child_process`, and Extractor test support (`template-gen.ts`, extractor shrinking, and shared helpers that themselves pass this check: `prng.ts`, `config.ts`, `coverage.ts`, `report.ts`).
@@ -207,8 +207,8 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
     - Add a negative self-check: a fixture file that imports `lean-batch` is reported by the same checker.
     - _Requirements: 4.7_ · _Design: 4.5, 4.7_
 
-- [ ] 12. Fail-closed tests
-  - [ ] 12.1 Create `tests/pbt/failclosed.test.ts`: `ProofGateValidator` with empty `protectedBucketArns` reports `PG-IAM-003` (no Lean start); malformed template file is rejected.
+- [x] 12. Fail-closed tests
+  - [x] 12.1 Create `tests/pbt/failclosed.test.ts`: `ProofGateValidator` with empty `protectedBucketArns` reports `PG-IAM-003` (no Lean start); malformed template file is rejected.
     - _Requirements: 6.2, 6.4_ · _Property: P23_
 
 ## Phase 6: Harness self-check and regressions

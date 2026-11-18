@@ -124,48 +124,53 @@ export function reductions(s: Shrinkable): Shrinkable[] {
   return out.filter(isValid);
 }
 
-export interface ShrinkOptions {
+/** 縮小の対象の型に依存しない、縮小ループの設定です。 */
+export interface ShrinkLoop<T> {
   /** 縮小ラウンドの最大数です（Lean絡みの不一致では8）。 */
   readonly maxRounds: number;
+  readonly reductions: (current: T) => readonly T[];
+  readonly sizeOf: (value: T) => number;
   /** 候補の一覧に対し、元の不一致が残るかを判定します（Leanが絡む場合は1回のバッチで評価します）。 */
-  readonly check: (candidates: readonly Shrinkable[]) => boolean[];
+  readonly check: (candidates: readonly T[]) => boolean[];
   /** 最終確認です。O2、TypeScript、Leanを再実行して、元の不一致が残ることを確かめます。 */
-  readonly confirm: (candidate: Shrinkable) => boolean;
+  readonly confirm: (candidate: T) => boolean;
 }
 
-export interface ShrinkResult {
-  readonly result: Shrinkable;
+export interface ShrinkOutcome<T> {
+  readonly result: T;
   readonly rounds: number;
-  /** 最終確認を通ったか。falseなら、確認できた最後のCaseも見つからず、元のCaseを返しています。 */
+  /** 最終確認を通ったか。falseなら、確認できたCaseが見つからず、元のCaseを返しています。 */
   readonly confirmed: boolean;
   readonly sizeBefore: number;
   readonly sizeAfter: number;
 }
 
+export type ShrinkResult = ShrinkOutcome<Shrinkable>;
+
 /** 貪欲に縮小し、最後に確認できた最小のCaseを返します。 */
-export function shrink(start: Shrinkable, options: ShrinkOptions): ShrinkResult {
-  const history: Shrinkable[] = [start];
+export function shrinkWith<T>(start: T, loop: ShrinkLoop<T>): ShrinkOutcome<T> {
+  const history: T[] = [start];
   let current = start;
   let rounds = 0;
-  while (rounds < options.maxRounds) {
-    const candidates = reductions(current);
+  while (rounds < loop.maxRounds) {
+    const candidates = loop.reductions(current);
     if (candidates.length === 0) break;
     rounds += 1;
-    const accepted = options.check(candidates).indexOf(true);
+    const accepted = loop.check(candidates).indexOf(true);
     if (accepted < 0) break;
-    current = candidates[accepted] as Shrinkable;
+    current = candidates[accepted] as T;
     history.push(current);
   }
   // 最後の候補から順に確認し、確認できた最小のCaseを採用します。
   for (let i = history.length - 1; i >= 0; i--) {
-    const candidate = history[i] as Shrinkable;
-    if (options.confirm(candidate)) {
+    const candidate = history[i] as T;
+    if (loop.confirm(candidate)) {
       return {
         result: candidate,
         rounds,
         confirmed: true,
-        sizeBefore: sizeOf(start),
-        sizeAfter: sizeOf(candidate),
+        sizeBefore: loop.sizeOf(start),
+        sizeAfter: loop.sizeOf(candidate),
       };
     }
   }
@@ -173,7 +178,18 @@ export function shrink(start: Shrinkable, options: ShrinkOptions): ShrinkResult 
     result: start,
     rounds,
     confirmed: false,
-    sizeBefore: sizeOf(start),
-    sizeAfter: sizeOf(start),
+    sizeBefore: loop.sizeOf(start),
+    sizeAfter: loop.sizeOf(start),
   };
+}
+
+export interface ShrinkOptions {
+  readonly maxRounds: number;
+  readonly check: (candidates: readonly Shrinkable[]) => boolean[];
+  readonly confirm: (candidate: Shrinkable) => boolean;
+}
+
+/** StackModelを縮小します。 */
+export function shrink(start: Shrinkable, options: ShrinkOptions): ShrinkResult {
+  return shrinkWith(start, { ...options, reductions, sizeOf });
 }
