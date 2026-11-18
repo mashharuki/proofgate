@@ -6,6 +6,10 @@ All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@pr
 
 First stable release. The version is 1.0.0 because this release changes what ProofGate accepts and rejects. Read "Upgrade notes" before updating.
 
+### Package names
+
+The packages are published under the npm scope `@proofgate-cdk` (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`). They were called `@proofgate/*` during development and were never published under that scope. Import paths use the new scope.
+
 ### Changed: more templates are rejected or reported
 
 - **IAM policy variables in `Resource` are rejected with `PG-IAM-003`.** A Statement whose `Resource` string contains a policy variable such as `${aws:username}` is reported as unsupported, with the location of that `Resource`, and no model is produced. Before, the variable was read as plain text, which could hide access that the variable expands to at run time. The variables are not evaluated. This also applies to Deny statements and to statements about unrelated buckets. A `Resource` that is already an unsupported CloudFormation intrinsic keeps its existing findings.
@@ -32,6 +36,10 @@ All three changes only add findings or rejections. A comparison of the old and n
 ## 1.0.0 - 2026-11-18（日本語）
 
 初の安定版です。受理・拒否の範囲が変わるため、バージョンを1.0.0にしました。更新前に「更新時の注意」を確認してください。
+
+### パッケージ名
+
+パッケージはnpmのスコープ`@proofgate-cdk`で公開します（`@proofgate-cdk/model`、`@proofgate-cdk/extractor`、`@proofgate-cdk/core`、`@proofgate-cdk/cdk-plugin`）。開発中は`@proofgate/*`という名前でしたが、そのスコープでは公開していません。importのパスも新しいスコープです。
 
 ### 変更: より多くのテンプレートを拒否・検出します
 
