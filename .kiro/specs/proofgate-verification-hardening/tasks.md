@@ -34,7 +34,7 @@ These are the only definitions of success for the demo commands. Use them in Tas
 
 ## Phase 0: Baseline and measurement
 
-- [ ] 0. Baseline and feasibility spike
+- [x] 0. Baseline and feasibility spike
   - [x] 0.1 Record the baseline.
     - Run `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, `pnpm verify:demo` on the unchanged tree. Judge each by the Command success criteria. Record pass or fail and the wall time of `pnpm test` in the usage log.
     - `pnpm verify:demo` exiting with code 1 and printing `PG-IAM-004` is the **expected** result. Do not report it as a failure. Also run the two `synth:proofgate` commands separately and record that `safe-app` exits 0 and `vulnerable-app` exits 1 with `PG-IAM-004`.
@@ -50,7 +50,7 @@ These are the only definitions of success for the demo commands. Use them in Tas
   - [x] 0.4 Check the CI measurement plan.
     - CI timing is only available after the harness exists (task 15.3). Write down in the usage log that the final Lean-checked count is open until then.
     - _Design: 9.2_
-  - [ ] 0.5 **CHECKPOINT 1.** Report the baseline results (using the Command success criteria), the measured Lean times, and the concurrency finding. Stop and wait for the user.
+  - [x] 0.5 **CHECKPOINT 1.** Report the baseline results (using the Command success criteria), the measured Lean times, and the concurrency finding. Stop and wait for the user.
 
 ## Phase 1: Support code (no production changes yet)
 
@@ -122,7 +122,7 @@ These are the only definitions of success for the demo commands. Use them in Tas
 
 ## Phase 3: Model-level suite, red first
 
-- [ ] 6. Model-level agreement test
+- [x] 6. Model-level agreement test
   - [x] 6.1 Create `tests/pbt/model-agreement.test.ts`.
     - Generate the default 2,000 Cases, check coverage counters, run O1 vs O2, then TS comparison for all Cases, then one Lean batch for the Lean-checked set (boundary and conservative always included), then per-category comparison. Explicit test timeouts (Lean 120 s, others 60 s). Print the run summary.
     - _Requirements: 1, 2, 3, 4, 8.5_ · _Property: P5 to P12, P26_
@@ -134,7 +134,7 @@ These are the only definitions of success for the demo commands. Use them in Tas
   - [x] 6.3 Create `tests/pbt/regressions.test.ts` and add the Model-level regression files: D1-1 to D1-8, D1-10 (design 6.2) and the reduced `?` Counterexample. D1-9 (policy variable) is an Extractor-level and validator test and is added in Task 9.
     - Replays each through O2, TS, and one Lean batch.
     - _Requirements: 5.11_ · _Design: 6.2_
-  - [ ] 6.4 **CHECKPOINT 2.** Report the red-first result: which Counterexamples were found, their reduced JSON, and whether anything unexpected appeared. Stop and wait for the user before starting Phase 4.
+  - [x] 6.4 **CHECKPOINT 2.** Report the red-first result: which Counterexamples were found, their reduced JSON, and whether anything unexpected appeared. Stop and wait for the user before starting Phase 4.
 
 ## Phase 4: Production corrections (D1, D5, `?`)
 
