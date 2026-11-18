@@ -1,6 +1,6 @@
 # Design: proofgate-verification-hardening
 
-Status: APPROVED (revision 2). `tasks.md` is written and awaiting approval. No application or test code has been changed.
+Status: APPROVED (revision 3). Implementation is in progress; the task boxes in `tasks.md` show the current state. Revision 3 only brings this document in line with what was built (section 20).
 
 Requirements: [requirements.md](./requirements.md) (revision 2, approved).
 
@@ -59,27 +59,37 @@ Tool used: AWS Documentation MCP (`aws-mcp`: `search_documentation`, `read_docum
 
 ```
 tests/
-  proofgate.test.ts                 (existing, unchanged)
+  proofgate.test.ts                 existing, unchanged
+  core-matching.test.ts             unit tests: `?` wildcard and S3 intersection (D1)
   pbt/
     support/
       prng.ts                       seeded PRNG
       config.ts                     seed, counts, profile from env
+      coverage.ts                   category, form, and tag counters
       glob.ts                       independent token matcher and intersection (oracle only)
       oracle.ts                     O2: independent semantic oracle
-      model-gen.ts                  Case generator with categories, recipes (O1), tags
+      model-gen.ts                  Case generator: categories, tags, witness, fixed boundary list
+      render.ts                     StackModel to CloudFormation template
+      lean-batch.ts                 batch module builder, strict shape check, result classifier
       compare.ts                    comparison rules and Counterexample type
-      lean-batch.ts                 batch module builder, result classifier
-      shrink.ts                     valid, verdict-preserving reducer
-      template-gen.ts               extractor-layer generator and expectations
-      coverage.ts                   category, form, and tag counters
+      shrink.ts                     generic shrink loop, StackModel reductions
       report.ts                     failure report formatting
-    model-agreement.test.ts         Model-level PBT (oracle, TS, Lean)
-    model-properties.test.ts        metamorphic and generator self-consistency
-    extractor.test.ts               Extractor-level PBT
-    failclosed.test.ts              empty config, malformed template
-    selfcheck.test.ts               mutants prove the harness detects faults
-    regressions.test.ts             replays tests/pbt/regressions/*.json
+      agreement.ts                  Model-level run: oracle, TypeScript, Lean, shrinking, reports
+      template-gen.ts               Extractor level: recipes, 24 poisons, expected models, recipe shrinking
+      extractor-run.ts              Extractor-level run and reports (no Lean)
+    support-utils.test.ts           PRNG, configuration, coverage counters
+    oracle.test.ts                  glob, intersection, D1 table, oracle independence
+    model-properties.test.ts        generator invariants I1 to I5, metamorphic properties
+    lean-batch.test.ts              classifier rules with real Lean
+    compare-shrink.test.ts          comparison rules, shrinker, report format, Lean case selection
+    model-agreement.test.ts         Model-level PBT (oracle, TypeScript, Lean)
+    regressions.test.ts             replays regressions/*.json
     regressions/                    fixed and reduced Cases (JSON)
+    extractor.test.ts               Extractor-level PBT
+    architecture.test.ts            import boundary of the Extractor-level tests
+    policy-variable.test.ts         D5 examples, validator level, intrinsic characterization
+    failclosed.test.ts              empty configuration and unusable template files
+    selfcheck.test.ts               planned (Task 13): mutants prove the harness detects faults
 ```
 
 - Files under `tests/pbt/support/` have no `*.test.ts` suffix, so Vitest does not run them as tests. Knip reaches them through imports.
@@ -310,7 +320,7 @@ Rules:
 - After the loop, **one final confirmation** reruns O2, `evaluate`, and one Lean launch on the reduced Case. Only a confirmed Case is reported. If confirmation fails, the last confirmed Case is reported with a note.
 - The reduced Case is printed as JSON, with seed, case index, and original and reduced sizes.
 
-The extractor layer shrinks fragments by removing resources, statements, and array elements. A fragment is valid if it is a JSON object with a `Resources` object whose entries have a string `Type`. It compares `extractStack` against the recipe and never calls Lean.
+The extractor layer shrinks the **recipe** (remove a role, an inline policy, a Statement, an action or resource element, an attached policy, noise, or trust extras) and renders the template and the expectation again. The poison target is re-indexed when an earlier element is removed, and a candidate whose target no longer exists is rejected. A candidate is accepted only if the same failure kind remains. The loop is the generic `shrinkWith` shared with the Model level. It compares `extractStack` against the recipe and never calls Lean.
 
 ### 4.7 Extractor layer (Requirement 12)
 
@@ -324,19 +334,20 @@ interface TemplateRecipe {
 ```
 
 - **Supported fragments.** Render with random shapes: `Action` and `Resource` as string or array, `Policies` inline or `AWS::IAM::Policy` with `Roles: [{ Ref }]`, several roles and Statements, Allow and Deny. The expected `StackModel` comes from an independent function (`expectedModel`). Canonical ordering is applied before comparing: the extractor lower-cases, de-duplicates, and sorts trust services, and the expectation does the same, taken from `docs/SUPPORTED_IAM.md` and the existing extractor tests, not from the extractor code.
-- **Unsupported fragments.** Apply exactly one _poison_ at a known JSON path. Poisons:
+- **Unsupported fragments.** Apply exactly one _poison_ at a known JSON path. There are 24 poisons (`POISON_IDS` in `template-gen.ts`). The groups are:
   - Statement: `Condition`, `NotAction`, `NotResource`
   - Trust policy: `NotPrincipal`, `Condition`, non-literal value
   - non-literal `Action`, `Resource`, `RoleName`
   - non-default `Path`
   - `AWS::IAM::ManagedPolicy`, `ManagedPolicyArns`, another `AWS::IAM::*` type
-  - malformed `PolicyDocument`, missing `Resources`
-  - **`POLICY_VARIABLE` (D5):** a Resource string, or an element of a Resource array, containing an IAM policy variable such as `${aws:username}`, `${aws:PrincipalTag/x}`, or `${*}`
+  - malformed `PolicyDocument`, a Statement that is not an object, an invalid Effect, `Policies` that is not an array, missing `Resources`
+  - attached policy: `Roles` that is not an array, a `Ref` to a role that is not in the template
+  - **`POLICY_VARIABLE_STRING` and `POLICY_VARIABLE_ARRAY` (D5):** a Resource string, or an element of a Resource array, containing an IAM policy variable such as `${aws:username}`
   - **`INTRINSIC_WITH_VARIABLE` (D5):** a Resource that is a CloudFormation intrinsic (for example `Fn::Join`) whose text contains a policy variable
 - **Assertions.** The result has no `model`. It has at least one finding whose `sourcePath` equals or begins with the poisoned path. For mixed fragments (valid parts plus one poison), the model is still absent: partial models are never returned.
 - **D5 assertions.**
   - `POLICY_VARIABLE`: exactly one finding for that Resource, with `sourcePath` ending in `.Resource` (string) or `.Resource[k]` (array element), and no model.
-  - `INTRINSIC_WITH_VARIABLE`: only the existing non-literal finding (at the Statement path) is reported, with no additional variable finding. This keeps the existing behavior.
+  - `INTRINSIC_WITH_VARIABLE`: the existing non-literal finding at the Statement path is reported and no policy variable finding is added. This keeps the existing behavior.
 - **Empty cases.** No roles, or roles with no supported Statements: rejected.
 
 Where the extractor's actual `sourcePath` for a poison differs in granularity from the recipe's path (for example the Statement path instead of the key path), the expectation is "begins with the Statement path". This is decided per poison during implementation and written next to the poison definition.
@@ -534,7 +545,7 @@ Replace the one-directional test "policy Resource matches the string `bucket/*`"
   - `sourcePath` points at that Resource: `<statement>.Resource` for a string, `<statement>.Resource[k]` for an array element
   - reason: "IAM policy variables in Resource are not supported"
   - the Statement yields no model entry, and the extractor returns no model (partial models are never returned)
-- If the Resource is already unsupported because it is a CloudFormation intrinsic (the existing "must be literal strings" finding), the existing finding is kept exactly as today. No variable finding is added on top.
+- If the Resource is already unsupported because it is a CloudFormation intrinsic (the existing "must be literal strings" finding), the existing findings are kept exactly as today and no variable finding is added on top. Today a template whose only statement is an intrinsic Resource yields two findings: the Statement finding, and the finding that refuses a vacuous proof because no supported Statement is left.
 - Policy variables are **not** evaluated or expanded.
 - This applies to Allow and Deny Statements alike. A Deny Statement with a variable is also rejected, because Deny is not evaluated and Fail Closed is the safer choice.
 - **This change is Fail Closed and rejects more input.** A template that has `${aws:username}` or similar in a `Resource` and was accepted before now reports `PG-IAM-003`. Users with legitimate policy variables in unrelated resources are affected. This must be written in the Japanese docs (`docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md`) as an added bullet, without removing existing text, and in the package README.
@@ -573,7 +584,7 @@ Each property is a universal statement linked to requirements.
 | P18 | A reported Counterexample reproduces when O2, `evaluate`, and Lean are rerun on it.                                                     | 5.7               |
 | P19 | For any supported fragment, `extractStack` returns exactly the expected model.                                                          | 12.2, 12.3        |
 | P20 | For any fragment with one poison, including `POLICY_VARIABLE`, no model is returned and a finding points at the poisoned path.          | 6.1, 12.4 to 12.6 |
-| P21 | A Resource with a policy variable inside an intrinsic keeps exactly the existing finding.                                               | 7.3, 12.4         |
+| P21 | A Resource with a policy variable inside an intrinsic keeps exactly the existing findings (no variable finding).                                               | 7.3, 12.4         |
 | P22 | For any template with no roles or no supported Statements, `extractStack` returns no model.                                             | 12.7              |
 | P23 | `ProofGateValidator` with empty `protectedBucketArns` reports `PG-IAM-003`.                                                             | 6.2               |
 | P24 | Every mutant in section 11 is detected.                                                                                                 | 6.3               |
@@ -632,3 +643,27 @@ Each Kiro session adds a row to `.kiro/steering/kiroween.md` with the Kiro app, 
 - Correctness properties (section 14) are in Kiro's property format and link to requirement IDs. Implementation tasks will state which property each covers. The log will state whether Kiro's PBT feature generated or ran any of them or whether the in-repo harness did, with the reason (Requirement 11.4).
 - CI measurement results and the final Lean-checked count are recorded as described in 9.2.
 - Counterexamples found, and failed or rejected approaches, are logged as they happen.
+
+## 20. Implementation notes and revision history
+
+Revision 3 brings this document in line with the implementation of Phases 0 to 5. The design decisions did not change. These are the differences between the earlier text and the code.
+
+| Topic | Earlier text | As built |
+| --- | --- | --- |
+| Witness | `witness` lists Statement paths | Two lists: `paths` (Statements with tagged forms) and `roles` (roles whose trust is `*`). Explained means every violation touches `paths` or targets a role in `roles` |
+| Extractor-level shrinking | Remove resources and elements from the fragment | Shrinks the recipe and rebuilds template and expectation, re-indexing the poison target (section 4.6) |
+| Shrink loop | One implementation for StackModel | Generic `shrinkWith` in `shrink.ts`, used by both layers |
+| Reported counterexamples | The first few per kind | Spread evenly over the failing list, so that different causes appear (the first version showed three Cases with the same cause) |
+| Intrinsic Resource | One existing finding | Two existing findings (Statement and the vacuous-proof refusal); unchanged by D5 |
+| Poisons | Listed by group | 24 poisons plus 3 empty-fragment kinds, each counted by the coverage check |
+| Lean result classifier | 100 errors as the truncation signal | An error line is `file:line:col: error`; a position-less line that starts with `error` also counts as unmapped; 100 or more errors fail the run as possibly truncated |
+| Orchestration | Not named | `agreement.ts` (Model level) and `extractor-run.ts` (Extractor level) take the functions under test as parameters, so Task 13 can inject mutants |
+| Lean-checked set | Seeded sample | `selectLeanCases`: all Cases when the limit allows, otherwise all boundary and conservative Cases plus the earliest others (no random sampling) |
+
+Open item: `pnpm typecheck` does not cover `tests/`. The test code was checked with a temporary tsconfig. Adding a `tests/tsconfig.json` and a typecheck script would put it under the quality gate. This is a change to existing scripts and is waiting for a decision.
+
+Revision history:
+
+- Revision 1: first design.
+- Revision 2: review changes (conservative category, intersection for D1, policy variables for D5, strict Lean result classifier).
+- Revision 3: implementation notes above.

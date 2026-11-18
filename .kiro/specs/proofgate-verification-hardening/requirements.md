@@ -1,6 +1,6 @@
 # Requirements: proofgate-verification-hardening
 
-Status: APPROVED (revision 3). `design.md` is written and under review. `tasks.md` is intentionally not written yet.
+Status: APPROVED (revision 3). `design.md` (revision 3) and `tasks.md` are approved. Implementation is in progress; the task boxes in `tasks.md` show the current state.
 
 ## Introduction
 

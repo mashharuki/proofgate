@@ -42,6 +42,28 @@ Expected: `safe-app` succeeds. `vulnerable-app` exits 1 with `PG-IAM-004`.
 - A new rule or supported syntax needs: extractor support or an explicit rejection, evaluator logic, Lean generation, tests for both verdicts, and updates to `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`.
 - Keep public package contents in sync with `files` in each `package.json`, and verify with `pnpm pack:check`.
 
+## Generated tests (`tests/pbt/`)
+
+Part of `pnpm test`. They compare an independent oracle, the TypeScript evaluator, and Lean (Model level, one Lean process for all Cases), and read generated CloudFormation fragments back through the extractor (Extractor level, no Lean).
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `PROOFGATE_PBT_SEED` | fixed in `config.ts` | Base seed. CI always uses the default. |
+| `PROOFGATE_PBT_CASES` | 2000 | Model-level Cases |
+| `PROOFGATE_PBT_LEAN_CASES` | 2000 | Cases also checked by Lean (boundary and conservative Cases are always included) |
+| `PROOFGATE_PBT_EXTRACTOR_CASES` | 1000 | Extractor-level fragments |
+| `PROOFGATE_PBT_ONLY` | unset | Run only the Case with this index |
+
+- Replay one failure: `PROOFGATE_PBT_SEED=<seed> PROOFGATE_PBT_ONLY=<case> pnpm exec vitest run tests/pbt/model-agreement.test.ts` (or `extractor.test.ts`). A failure report prints the seed, the case index, the reduced Case as JSON, and this command.
+- Routine extra seeds: at most `PROOFGATE_PBT_CASES=5000` with `PROOFGATE_PBT_LEAN_CASES=2000`. 20,000 Cases is a manual deep profile only (one Lean launch per 4,000 Cases).
+- Add a regression: save the reduced Case as `tests/pbt/regressions/<name>.json` (`name`, `note`, `label`, `expectedTs`, `config`, `model`).
+- A harness error (oracle label differs from the independent oracle, `generateLean` output shape changed) is a defect of the tests, not of the product. A Lean error that maps to no Case is an infrastructure failure, never a pass.
+- These tests are not covered by `pnpm typecheck`. Check them with a temporary tsconfig.
+
+## Branches
+
+The spec `proofgate-verification-hardening` is built on stacked branches, one per phase: `hardening/phase-0-baseline` to `hardening/phase-5-extractor`, and later phases on the same pattern. Committing on these branches is allowed. Push and merge need the user's approval. Stop at each checkpoint listed in `tasks.md`.
+
 ## Spec task quality gate (Kiro hook)
 
 `.kiro/hooks/proofgate-quality-gate.json` runs after each spec task finishes (trigger `PostTaskExec`). It runs `.kiro/scripts/proofgate-quality-gate.sh` from the project root.

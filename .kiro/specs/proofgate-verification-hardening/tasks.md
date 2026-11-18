@@ -1,10 +1,26 @@
 # Tasks: proofgate-verification-hardening
 
-Status: APPROVED with conditions (revision 2, conditions applied). No task has been started. No application or test code has been changed.
+Status: APPROVED (revision 2). Implementation is in progress. Phases 0 to 5 are done; Phase 6 (Task 13) is next. Checkpoints 1 to 3 are passed. The box of each task shows its state.
+
+## Progress by phase
+
+Each phase has its own branch, stacked on the previous one. Nothing is pushed or merged without the user's approval.
+
+| Phase | Branch | Tasks | State |
+| --- | --- | --- | --- |
+| 0 | `hardening/phase-0-baseline` | 0 | done, Checkpoint 1 passed |
+| 1 | `hardening/phase-1-support` | 1, 2, 3 | done |
+| 2 | `hardening/phase-2-lean-batch` | 4, 5 | done |
+| 3 | `hardening/phase-3-red-first` | 6 | done, Checkpoint 2 passed |
+| 4 | `hardening/phase-4-corrections` | 7, 8, 9, 10 | done, Checkpoint 3 reported |
+| 5 | `hardening/phase-5-extractor` | 11, 12 | done |
+| 6 | not started | 13 | next |
+| 7 | not started | 14, 15 | Checkpoint 4 needs push permission |
+| 8 | not started | 16, 17 | Checkpoint 5 |
 
 Structure: **18 top-level tasks (Task 0 to Task 17) in 9 phases (Phase 0 to Phase 8).**
 
-Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 2). Properties `P1` to `P26` are defined in design section 14.
+Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3). Properties `P1` to `P26` are defined in design section 14.
 
 ## Command success criteria
 
