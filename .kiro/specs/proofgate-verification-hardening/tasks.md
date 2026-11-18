@@ -159,7 +159,7 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
   - [x] 8.5 Report to the user: the fix only adds findings and no existing demo result changed (`safe-app` passes, `vulnerable-app` is rejected with `PG-IAM-004`).
     - _Requirements: 7.6, 7.7_
 
-- [ ] 9. Reject policy variables in Resource (`@proofgate/extractor`), D5, red first
+- [x] 9. Reject policy variables in Resource (`@proofgate/extractor`), D5, red first
   - [x] 9.1 **Add the tests first.** Create `tests/pbt/policy-variable.test.ts` with example tests:
     - Extractor level (D1-9): a Resource string `arn:aws:s3:::protected-bucket/${aws:username}/*` and the same value as an array element, in an inline role policy and in `AWS::IAM::Policy`, for Allow and Deny. Expect: an unsupported finding, no model, and a `sourcePath` ending in `.Resource` (string) or `.Resource[k]` (array element).
     - Validator level: `ProofGateValidator` on a synthesized template with that Resource reports `PG-IAM-003`.
@@ -179,7 +179,7 @@ Each task is a minimal change with a regression test and must keep `pnpm test`, 
   - [x] 9.5 Add Japanese bullets (additions only, nothing removed) to `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`, and to `packages/cdk-plugin/README.md` and the root `README.md`, stating that policy variables in Resource are rejected with `PG-IAM-003`, that this rejects more input than before, and that S3 access now means access to any object in a protected bucket.
     - Update `docs/PROOFS.md` only if it describes the access fact; add, do not delete.
     - _Requirements: 10.2_ · _Design: 13.3_
-  - [ ] 9.6 Report to the user that this change rejects more input (Fail Closed), and name who is affected.
+  - [x] 9.6 Report to the user that this change rejects more input (Fail Closed), and name who is affected.
     - _Requirements: 7.6_
 
 - [ ] 10. Checkpoint after production corrections
