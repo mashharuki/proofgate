@@ -8,7 +8,8 @@
       "!!**/cdk.out",
       "!!**/.lake",
       "!!**/.pnpm-store",
-      "!!**/.serena"
+      "!!**/.serena",
+      "!!**/.kiro"
     ]
   },
   "formatter": {

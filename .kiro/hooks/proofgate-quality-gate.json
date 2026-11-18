@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "proofgate-quality-gate",
+      "description": "After a spec task finishes, run pnpm quality, typecheck, test, and pack:check in order from the project root. Requires Node.js 26 or later. Does not fix, commit, or push. A failure is reported to the agent, which must not mark the task complete.",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "command",
+        "command": "bash .kiro/scripts/proofgate-quality-gate.sh"
+      },
+      "timeout": 900,
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+---
+inclusion: manual
+---
+
+# Kiroween 2026
+
+Source: https://kiroween.devpost.com/ and its Rules tab. Re-check the Rules tab before submitting, because it is the authority.
+
+## Deadline and eligibility
+
+- Submission deadline: Dec 4, 2026, 2:00 PM Pacific.
+- The project must be built during the Submission Period (Oct 30 to Dec 4, 2026). ProofGate's first commit is 2026-11-16, which is inside the period.
+- The app must be built with Kiro (IDE, CLI, Web, or Crew) and entered in one category: Resurrection, Frankenstein, Skeleton Crew, or Costume Contest.
+
+## Submission checklist
+
+- [ ] Public GitHub repository with all source, assets, and run instructions.
+- [ ] Open source license file that GitHub detects (Apache-2.0 `LICENSE` exists; confirm it shows in the About section).
+- [ ] `/.kiro` at the repository root, committed, and not in `.gitignore`.
+- [ ] Working app URL or runnable instructions, plus judge credentials in the Devpost form if needed.
+- [ ] Text description of features and functionality.
+- [ ] Demo video under 3 minutes, public on YouTube, no copyrighted music or third-party trademarks.
+- [ ] Write-up of how Kiro was used: specs, steering, hooks, MCP, custom agents, property-based testing, powers, and which Kiro app was used.
+- [ ] Category chosen, plus any bonus prizes (blog post, `#KiroweenHackathon26` social post).
+
+## Honest Kiro usage policy
+
+- ProofGate's development before the Kiro handover was not done in Kiro. Never describe it as Kiro work.
+- Record only work actually done in Kiro, from the date of the first entry below.
+- Each entry states the date, the Kiro app (IDE, CLI, Web, Crew), the feature used (steering, spec, hook, MCP, and so on), and the concrete result.
+- Record failures and corrections as well. Do not exaggerate.
+- Never write credit codes, tokens, or credentials here or anywhere in the repository.
+- The submission write-up must be built from this log.
+
+## Kiro usage log
+
+| Date       | Kiro app | Feature                     | What was done                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | -------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-18 | Kiro IDE | Steering                    | Reviewed the repository read-only and created `.kiro/steering/` (product, tech, structure, security, development, kiroween). No application code changed.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2026-11-18 | Kiro IDE | Spec                        | Wrote `requirements.md` for `proofgate-verification-hardening`. Reading the code showed that Lean only checks four Booleans computed by TypeScript, so the spec requires an independent oracle instead of comparing TypeScript with Lean alone. `design.md` and `tasks.md` are not written; approval is pending.                                                                                                                                                                                                                                                                               |
+| 2026-11-18 | Kiro IDE | Spec                        | Revised `requirements.md` after user review: split generated tests into model-level and extractor-level layers, bounded Lean launches, added shrinking invariants, an official-AWS verification requirement for oracle rules, and explicit limits on what Lean verifies. AWS documentation has not been consulted yet; that happens in the design step.                                                                                                                                                                                                                                        |
+| 2026-11-18 | Kiro IDE | Spec, AWS Documentation MCP | Wrote `design.md` for `proofgate-verification-hardening`. Read AWS IAM and S3 documentation through the AWS Documentation MCP server (Action, Resource, PassRole, Principal pages). Measured Lean batch timing (2,000 cases in one process: about 21 s). Probing the evaluator found that `?` wildcards are not matched (non-conservative) and that prefix-scoped S3 grants are judged safe. Chose an in-repo generator over `fast-check` because per-value shrinking conflicts with batched Lean launches. Kiro's own PBT feature was not used yet. `tasks.md` not written; approval pending. |
+| 2026-11-18 | Kiro IDE | Spec                        | Revised `design.md` after user review. Fixed a contradiction found in review: Base unsafe Cases contained forms that AWS treats as safe (Logical ID PassRole, trust `*`), so O1 and O2 would disagree before the over-approximation tags applied. Cases now have a `conservative` category with O1=O2=safe, and unsafe Cases use AWS-valid forms only. Added intersection-based S3 access (D1), policy-variable rejection (D5), and a Lean result classifier that fails on any unmapped Lean error. No code changed; `tasks.md` not written.                                                   |
+| 2026-11-18 | Kiro IDE | Spec                        | Added a scope clarification to `requirements.md` (revision 3): D1, D5, and the `?` wildcard fix are in scope as defect corrections. Updated `design.md` section 16 to match. No code changed.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-11-18 | Kiro IDE | Spec                        | Wrote `tasks.md` for `proofgate-verification-hardening` (18 top-level tasks in 9 phases; the first version of this row said 17 tasks in 8 phases, which was a counting error). The order runs the new suite against unfixed code first so the known defects (`?` wildcard, prefix-scoped S3 access, policy variables) show up as failures, then fixes them one task each. CI timing and the final Lean-checked count are left as an explicit task that needs a CI run. No implementation started.                                                                                              |
+| 2026-11-18 | Kiro IDE | Spec                        | Revised `tasks.md` after user review: corrected the `verify:demo` success condition (exit code 1 with `PG-IAM-004` is the expected result), made D5 red-first with its own Extractor-level tests, replaced the runtime launch counter for the Extractor layer with an import-boundary test, fixed the task and phase counts, set the routine extra-seed limit to 5,000 Cases and 2,000 Lean Cases, and added five checkpoints. No implementation started.                                                                                                                                      |
+| 2026-11-18 | Kiro IDE | Hook, steering | Created the project hook `.kiro/hooks/proofgate-quality-gate.json` (v1 schema, trigger `PostTaskExec`, 900 s timeout) and `.kiro/scripts/proofgate-quality-gate.sh`; documented it in `development.md`. The trigger name was taken from the Kiro hooks documentation. The hook was verified by running the script directly with shims and with real commands; it has not yet fired from a real Kiro spec task. Problems found: `pnpm quality` fails because Biome checks `.kiro` (see report), and formatting the `.kiro` Markdown with Biome broke the `inclusion: manual` front matter of `kiroween.md`, which was then restored by hand. |
+| 2026-11-18 | Kiro IDE | AGENTS.md, Serena MCP | Created `AGENTS.md` (rules and pointers only, no duplication of steering) and updated the Serena project memories: rewrote `core`, `conventions`, `task_completion`, `suggested_commands`, and added `kiro/workflow` and `specs/proofgate-verification-hardening`. Memory content records the oracle design, known defects, hook behavior, and the Biome front matter problem. Nothing was committed. |
+| 2026-11-18 | Kiro IDE | Hook, steering | Applied the user's decision to exclude `.kiro` from Biome (`biome.json`: added `!!**/.kiro`). Reason: Biome's Markdown formatter breaks the `inclusion: manual` front matter. After the change `pnpm quality` passes, and the full quality gate script passes end to end on Node 26.13.1 (about 19 s). The hook has still not fired from a real Kiro spec task. |
