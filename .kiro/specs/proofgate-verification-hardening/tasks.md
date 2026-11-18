@@ -54,43 +54,43 @@ These are the only definitions of success for the demo commands. Use them in Tas
 
 ## Phase 1: Support code (no production changes yet)
 
-- [ ] 1. Configuration, PRNG, and coverage helpers
-  - [ ] 1.1 Create `tests/pbt/support/prng.ts`: `mulberry32` and a sub-seed function for `(seed, index)`.
+- [x] 1. Configuration, PRNG, and coverage helpers
+  - [x] 1.1 Create `tests/pbt/support/prng.ts`: `mulberry32` and a sub-seed function for `(seed, index)`.
     - _Requirements: 1.1, 5.1_ · _Property: P1_
-  - [ ] 1.2 Create `tests/pbt/support/config.ts`: read the variables in design 4.1 with strict validation (non-numeric or negative values fail with a message). Default seed is a constant.
+  - [x] 1.2 Create `tests/pbt/support/config.ts`: read the variables in design 4.1 with strict validation (non-numeric or negative values fail with a message). Default seed is a constant.
     - _Requirements: 5.1, 5.2, 8.3_ · _Design: 4.1_
-  - [ ] 1.3 Create `tests/pbt/support/coverage.ts`: counters per category, tag, AWS-valid form, tag-with-explained-TS-unsafe, and Lean-checked set. Provide a check that fails if a required counter is zero, and a printer for the run summary.
+  - [x] 1.3 Create `tests/pbt/support/coverage.ts`: counters per category, tag, AWS-valid form, tag-with-explained-TS-unsafe, and Lean-checked set. Provide a check that fails if a required counter is zero, and a printer for the run summary.
     - _Requirements: 8.5_ · _Property: P26_ · _Design: 5.2_
-  - [ ] 1.4 Write unit tests for 1.1 to 1.3 (determinism, invalid configuration, counters).
+  - [x] 1.4 Write unit tests for 1.1 to 1.3 (determinism, invalid configuration, counters).
     - _Property: P1, P26_
 
-- [ ] 2. Independent oracle
-  - [ ] 2.1 Write the AWS decision comments first.
+- [x] 2. Independent oracle
+  - [x] 2.1 Write the AWS decision comments first.
     - Create `tests/pbt/support/oracle.ts` skeleton with the English header listing coverage limits (Explicit Deny, SCP, permissions boundary, session policy, resource policy, Condition, policy variables, cross-account, S3 actions beyond the supported set).
     - _Requirements: 2.5, 13.5_ · _Design: 4.3, 8.2_
-  - [ ] 2.2 Create `tests/pbt/support/glob.ts`.
+  - [x] 2.2 Create `tests/pbt/support/glob.ts`.
     - Token compilation (literal, `OneAny`, `OneNoColon`, `StarAny`, `StarNoColon`) per design 4.3.1, `matches`, and the memoized intersection of two token sequences per design 4.3.2. Import nothing from `@proofgate/*` except types if needed.
     - _Requirements: 2.2, 13.1_ · _Property: P16_
-  - [ ] 2.3 Implement `oracle.ts`: verdict for any Valid StackModel and config. PassRole per design 4.3.3, Lambda control, trust (`lambda.amazonaws.com` only), S3 access by intersection, `allowedPassRoleTargets`, Action names case-insensitive, Resources case-sensitive. Each rule cites `// Decision 8.2: <item>`.
+  - [x] 2.3 Implement `oracle.ts`: verdict for any Valid StackModel and config. PassRole per design 4.3.3, Lambda control, trust (`lambda.amazonaws.com` only), S3 access by intersection, `allowedPassRoleTargets`, Action names case-insensitive, Resources case-sensitive. Each rule cites `// Decision 8.2: <item>`.
     - _Requirements: 2.1, 2.2, 13.1, 13.2, 13.5_ · _Design: 4.3, 8.2_
-  - [ ] 2.4 Write example tests for the oracle using the D1 table (design 6.2) and the PassRole, trust, and wildcard rows of design 8.2.
+  - [x] 2.4 Write example tests for the oracle using the D1 table (design 6.2) and the PassRole, trust, and wildcard rows of design 8.2.
     - Include a test that fails if `oracle.ts` or `glob.ts` imports from `@proofgate/core`.
     - _Requirements: 2.2, 13_ · _Property: P2, P16_
-  - [ ] 2.5 Write property-style tests for `glob.ts`.
+  - [x] 2.5 Write property-style tests for `glob.ts`.
     - Intersection symmetry; `matches(p, s)` equals non-empty intersection of `p` with the literal `s`; `*` and `?` identities.
     - _Property: P16_
 
-- [ ] 3. Case generator
-  - [ ] 3.1 Create `tests/pbt/support/model-gen.ts`: `Case` type, categories, tags, witness.
+- [x] 3. Case generator
+  - [x] 3.1 Create `tests/pbt/support/model-gen.ts`: `Case` type, categories, tags, witness.
     - AWS-valid forms of design 4.2.1, noise per 4.2.2, safe derivation, and the fixed boundary list including the ten D1 regressions of design 6.2 (D1-9 is extractor-level and is covered in task 8).
     - _Requirements: 1.1 to 1.5_ · _Design: 4.2_
-  - [ ] 3.2 Add the conservative stream (design 4.2.3) with stratified allocation: about 35% `unsafe`, 35% `safe`, 15% `conservative` spread over the four tags with some two-tag Cases, the rest boundary.
+  - [x] 3.2 Add the conservative stream (design 4.2.3) with stratified allocation: about 35% `unsafe`, 35% `safe`, 15% `conservative` spread over the four tags with some two-tag Cases, the rest boundary.
     - _Requirements: 1.4, 8.4_
-  - [ ] 3.3 Create `tests/pbt/model-properties.test.ts` for generator self-consistency.
+  - [x] 3.3 Create `tests/pbt/model-properties.test.ts` for generator self-consistency.
     - Invariants I1 to I5, no tags on non-conservative Cases, O1 equals O2 for every Case (a difference is a harness error), determinism, bounds (roles at most 4, Statements per role at most 6, buckets at most 2).
     - A sample of Cases rendered as templates is accepted by `extractStack`.
     - _Requirements: 1.6, 2.1_ · _Property: P1, P2, P3, P4_
-  - [ ] 3.4 Add metamorphic tests (inert Statement or role, permutation, Allow monotonicity) using TS and O2.
+  - [x] 3.4 Add metamorphic tests (inert Statement or role, permutation, Allow monotonicity) using TS and O2.
     - _Requirements: 2.4_ · _Property: P14, P15_
 
 ## Phase 2: Lean batch runner, comparison, shrinking

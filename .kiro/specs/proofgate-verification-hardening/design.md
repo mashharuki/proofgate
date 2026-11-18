@@ -180,7 +180,7 @@ A conservative Case starts from an AWS-valid unsafe Case. It then **replaces the
 | `ARN_CASE`       | PassRole role-name part, or the bucket segment of the S3 Resource, differs only in letter case                                    | does not match (Resource is case-sensitive, D2) |
 | `ARN_STAR_SPAN`  | S3 Resource where a `*` that is not last in its segment would have to cross a colon, for example `arn:aws:s3:*protected-bucket/*` | does not match (D3)                             |
 
-`witness` lists the `sourcePath` of every Statement that carries a tagged form (or, for `TRUST_STAR`, the role's trust path).
+`witness` has two lists. `paths` holds the `sourcePath` of every Statement that carries a tagged form. `roles` holds the Logical ID of a role whose trust is the principal `*` (`TRUST_STAR`), because the trust policy path does not appear in a violation's `sourcePaths`.
 
 ### 4.3 Oracle (Requirements 2, 13, 14)
 
@@ -243,7 +243,7 @@ Rules per category. "Allowed TS verdicts" is what the harness accepts. Lean is c
 | `boundary`     | label  | equals label | equals label                                           | equals TS |
 | `conservative` | safe   | safe         | safe, or unsafe **if explained**                       | equals TS |
 
-**Explained** means: the TS violation's `sourcePaths` contain at least one path from the Case's `witness`, and `tags` is non-empty. A violation that does not touch a witness path means ProofGate found a path that no tagged feature accounts for, which is a failure. TS safe on a conservative Case is accepted (AWS-correct).
+**Explained** means: `tags` is non-empty, and the TS violation's `sourcePaths` contain at least one path from `witness.paths`, or the violation's target role is one of `witness.roles`. A violation that does not touch a witness path means ProofGate found a path that no tagged feature accounts for, which is a failure. TS safe on a conservative Case is accepted (AWS-correct).
 
 Conservative Cases with `TS=unsafe` and `Lean=unsafe` are the only place in which unsafe is accepted for an AWS-safe label. Lean unsafe with TS safe, or the reverse, is always a failure.
 
