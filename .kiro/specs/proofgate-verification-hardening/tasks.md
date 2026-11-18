@@ -123,15 +123,15 @@ These are the only definitions of success for the demo commands. Use them in Tas
 ## Phase 3: Model-level suite, red first
 
 - [ ] 6. Model-level agreement test
-  - [ ] 6.1 Create `tests/pbt/model-agreement.test.ts`.
+  - [x] 6.1 Create `tests/pbt/model-agreement.test.ts`.
     - Generate the default 2,000 Cases, check coverage counters, run O1 vs O2, then TS comparison for all Cases, then one Lean batch for the Lean-checked set (boundary and conservative always included), then per-category comparison. Explicit test timeouts (Lean 120 s, others 60 s). Print the run summary.
     - _Requirements: 1, 2, 3, 4, 8.5_ · _Property: P5 to P12, P26_
-  - [ ] 6.2 Run the suite against the **unfixed** production code and record the result.
+  - [x] 6.2 Run the suite against the **unfixed** production code and record the result.
     - **The Model-level suite is expected to detect exactly two known defects:** the `?` wildcard gap and the D1 prefix-scoped S3 access gap. Save each reduced Counterexample JSON under `tests/pbt/regressions/` with the AWS label and a short English note. Record in the usage log what was found, including anything unexpected.
     - **D5 (policy variables) is not detected by the Model-level suite**, because a `StackModel` cannot represent a policy variable. D5 is detected by the Extractor-level red tests of Task 9.
     - If the suite finds anything beyond these two defects, stop and report before fixing.
     - _Requirements: 5.4, 5.7, 7.5_
-  - [ ] 6.3 Create `tests/pbt/regressions.test.ts` and add the Model-level regression files: D1-1 to D1-8, D1-10 (design 6.2) and the reduced `?` Counterexample. D1-9 (policy variable) is an Extractor-level and validator test and is added in Task 9.
+  - [x] 6.3 Create `tests/pbt/regressions.test.ts` and add the Model-level regression files: D1-1 to D1-8, D1-10 (design 6.2) and the reduced `?` Counterexample. D1-9 (policy variable) is an Extractor-level and validator test and is added in Task 9.
     - Replays each through O2, TS, and one Lean batch.
     - _Requirements: 5.11_ · _Design: 6.2_
   - [ ] 6.4 **CHECKPOINT 2.** Report the red-first result: which Counterexamples were found, their reduced JSON, and whether anything unexpected appeared. Stop and wait for the user before starting Phase 4.

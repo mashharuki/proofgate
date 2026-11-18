@@ -1,0 +1,46 @@
+{
+  "name": "reduced-question-wildcard-passrole",
+  "note": "Reduced from generated case 1341 (seed 1347571526). The single-character wildcard in iam:PassRol? must match iam:PassRole. Found by the model-level run against unfixed code.",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-a"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Role1",
+        "roleName": "r1x-batch",
+        "trustServices": ["ec2.amazonaws.com", "lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["*"],
+            "resources": ["arn:aws:s3:::protected-*/*"],
+            "sourcePath": "Resources.Role1.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Role2",
+        "roleName": "r2x-data",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["lambda:*Function*"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Role2.Properties.Policies[0].PolicyDocument.Statement[1]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRol?"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Role2.Properties.Policies[0].PolicyDocument.Statement[3]"
+          }
+        ]
+      }
+    ]
+  }
+}

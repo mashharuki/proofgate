@@ -1,5 +1,6 @@
 import type { Violation } from "@proofgate/model";
 import { describe, expect, it } from "vitest";
+import { selectLeanCases } from "./support/agreement.js";
 import { explainedTags, isExplained, judgeCase, tsVerdict } from "./support/compare.js";
 import { DEFAULT_SEED } from "./support/config.js";
 import { HarnessError } from "./support/lean-batch.js";
@@ -232,5 +233,20 @@ describe("report formatting", () => {
     expect(formatHarnessError(9, 4, "O1 differs from O2")).toContain(
       "HARNESS ERROR (not a product defect)",
     );
+  });
+});
+
+// Leanへ渡すCaseの選択（design 9.2）。境界Caseとconservative Caseは必ず含めます。
+describe("Lean case selection", () => {
+  it("returns every Case when the limit covers them all", () => {
+    expect(selectLeanCases(all, all.length)).toHaveLength(all.length);
+  });
+
+  it("always keeps boundary and conservative Cases when sampling", () => {
+    const picked = selectLeanCases(all, 100);
+    const mandatory = all.filter((c) => c.category === "boundary" || c.category === "conservative");
+    for (const c of mandatory) expect(picked).toContain(c);
+    // 抽出は元の順序を保ちます。
+    expect(picked.map((c) => c.id)).toEqual([...picked.map((c) => c.id)].sort((a, b) => a - b));
   });
 });
