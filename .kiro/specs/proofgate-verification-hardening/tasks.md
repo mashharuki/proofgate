@@ -35,19 +35,19 @@ These are the only definitions of success for the demo commands. Use them in Tas
 ## Phase 0: Baseline and measurement
 
 - [ ] 0. Baseline and feasibility spike
-  - [ ] 0.1 Record the baseline.
+  - [x] 0.1 Record the baseline.
     - Run `pnpm quality`, `pnpm typecheck`, `pnpm test`, `pnpm pack:check`, `pnpm synth`, `pnpm verify:demo` on the unchanged tree. Judge each by the Command success criteria. Record pass or fail and the wall time of `pnpm test` in the usage log.
     - `pnpm verify:demo` exiting with code 1 and printing `PG-IAM-004` is the **expected** result. Do not report it as a failure. Also run the two `synth:proofgate` commands separately and record that `safe-app` exits 0 and `vulnerable-app` exits 1 with `PG-IAM-004`.
     - If any command misses its success condition, stop and report. Do not proceed.
     - _Requirements: 7.1, 7.2, 7.3, 8.2_
-  - [ ] 0.2 Measure Lean batch time with a throwaway script outside the repository.
+  - [x] 0.2 Measure Lean batch time with a throwaway script outside the repository.
     - Reproduce the measurement of design 2.1 for 1,000 and 2,000 Cases of 16 and 32 paths, locally. Record the wall times.
     - _Requirements: 8.2, 8.4_ · _Design: 2.1, 9.2_
-  - [ ] 0.3 Check concurrency.
+  - [x] 0.3 Check concurrency.
     - Run the existing integration tests and a batch `lake env lean` at the same time. Confirm no `.lake` lock or stale-build conflict.
     - If there is a conflict, record it. The PBT Lean test will then be serialized (task 4.4).
     - _Design: 9.4_
-  - [ ] 0.4 Check the CI measurement plan.
+  - [x] 0.4 Check the CI measurement plan.
     - CI timing is only available after the harness exists (task 15.3). Write down in the usage log that the final Lean-checked count is open until then.
     - _Design: 9.2_
   - [ ] 0.5 **CHECKPOINT 1.** Report the baseline results (using the Command success criteria), the measured Lean times, and the concurrency finding. Stop and wait for the user.
