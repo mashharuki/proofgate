@@ -80,16 +80,16 @@ The design lists five decisions. These tasks assume the recommended answer for D
 
 ## Phase 1: The package and the catalogue
 
-- [ ] 1. Package skeleton `examples/real-stacks`
-  - [ ] 1.1 Create the branch `realstacks/phase-1-catalogue`. Create `package.json` (private, name `@proofgate-cdk/real-stacks`, the same dependency versions as `examples/safe-app`), `tsconfig.json`, `cdk.json`, `src/config.ts`, `src/catalog.ts` (empty list), and `src/app.ts`.
+- [x] 1. Package skeleton `examples/real-stacks`
+  - [x] 1.1 Create the branch `realstacks/phase-1-catalogue`. Create `package.json` (private, name `@proofgate-cdk/real-stacks`, the same dependency versions as `examples/safe-app`), `tsconfig.json`, `cdk.json`, `src/config.ts`, `src/catalog.ts` (empty list), and `src/app.ts`.
     - `app.ts` reads the context value `pattern`. A missing or unknown id is an error that lists the valid ids. No default. `PROOFGATE=1` registers the plugin with the protected bucket from `config.ts`.
     - _Requirements: 1.1, 1.5_ · _Property: P2_ · _Design: 3, 3.2_
-  - [ ] 1.2 Run `pnpm install --offline --no-frozen-lockfile`, then check the lockfile diff: only an importer entry for the new package may appear. Then `pnpm install --frozen-lockfile --offline` must pass.
+  - [x] 1.2 Run `pnpm install --offline --no-frozen-lockfile`, then check the lockfile diff: only an importer entry for the new package may appear. Then `pnpm install --frozen-lockfile --offline` must pass.
     - If an external package entry changes, stop and report.
     - _Requirements: 8.2_ · _Property: P9_
-  - [ ] 1.3 Tests for the selection rule (a small file under `tests/`): a missing id, an unknown id, and a valid id. The test calls the selection function, not `cdk`.
+  - [x] 1.3 Tests for the selection rule (a small file under `tests/`): a missing id, an unknown id, and a valid id. The test calls the selection function, not `cdk`.
     - _Property: P2_
-  - [ ] 1.4 Run the quality gate. Knip and jscpd must pass; if Knip needs an entry for `scripts/*.mjs`, add it to `knip.json` and say so in the usage log.
+  - [x] 1.4 Run the quality gate. Knip and jscpd must pass; if Knip needs an entry for `scripts/*.mjs`, add it to `knip.json` and say so in the usage log.
 
 - [ ] 2. Shared helpers and Patterns RS-01 to RS-04 (literal roles)
   - [ ] 2.1 `src/helpers.ts`: a literal role, a data role with a bucket grant, a developer role with PassRole and Lambda statements. Keep the Pattern files short so that jscpd stays quiet.
