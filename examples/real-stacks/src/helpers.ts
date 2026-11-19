@@ -1,6 +1,7 @@
 import type { App } from "aws-cdk-lib";
 import { Stack } from "aws-cdk-lib";
 import { PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { Code, Function as LambdaFunction, Runtime } from "aws-cdk-lib/aws-lambda";
 import type { Construct } from "constructs";
 import { PROTECTED_BUCKET_ARN } from "./config.js";
 
@@ -66,4 +67,13 @@ export function developerRole(
   style: Style = "default",
 ): Role {
   return roleWith(scope, "DeveloperRole", { service: "ec2.amazonaws.com" }, statements, style);
+}
+
+/** ネットワークやアセットを使わない、インラインコードのLambda関数です。 */
+export function inlineFunction(scope: Construct, id: string): LambdaFunction {
+  return new LambdaFunction(scope, id, {
+    runtime: Runtime.NODEJS_22_X,
+    handler: "index.handler",
+    code: Code.fromInline("exports.handler = async () => ({});"),
+  });
 }

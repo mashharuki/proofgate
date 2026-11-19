@@ -3,9 +3,14 @@ import { rs01 } from "./patterns/rs-01.js";
 import { rs02 } from "./patterns/rs-02.js";
 import { rs03 } from "./patterns/rs-03.js";
 import { rs04 } from "./patterns/rs-04.js";
+import { rs05 } from "./patterns/rs-05.js";
+import { rs06 } from "./patterns/rs-06.js";
+import { rs07 } from "./patterns/rs-07.js";
+import { rs08 } from "./patterns/rs-08.js";
+import { rs09 } from "./patterns/rs-09.js";
 
 /** Patternの一覧です（IDの昇順）。各Patternのファイルをここへ登録します。 */
-const catalog: readonly Pattern[] = [rs01, rs02, rs03, rs04];
+const catalog: readonly Pattern[] = [rs01, rs02, rs03, rs04, rs05, rs06, rs07, rs08, rs09];
 
 /**
  * 名前でPatternを選びます。未指定や未知の名前は、既定値へ逃がさずエラーにします。

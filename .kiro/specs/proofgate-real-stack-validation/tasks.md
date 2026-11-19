@@ -97,8 +97,8 @@ The design lists five decisions. These tasks assume the recommended answer for D
   - [x] 2.2 `src/patterns/rs-01.ts` to `rs-04.ts` as in design section 4. Each file states the id, the title, a two or three sentence English description, the ground truth, the scope, and a comment (Japanese) with the reasoning for the ground truth. Register them in `catalog.ts`.
     - _Requirements: 1.2, 1.4_
 
-- [ ] 3. Patterns RS-05 to RS-09 (ordinary CDK helpers)
-  - [ ] 3.1 `rs-05.ts` to `rs-09.ts` as in design section 4: Lambda with `grantRead`, role with `grantReadWrite`, Step Functions with `LambdaInvoke`, ECS Fargate task with `grantReadWrite`, EventBridge rule with a Lambda target. Inline Lambda code only. Register them in `catalog.ts`.
+- [x] 3. Patterns RS-05 to RS-09 (ordinary CDK helpers)
+  - [x] 3.1 `rs-05.ts` to `rs-09.ts` as in design section 4: Lambda with `grantRead`, role with `grantReadWrite`, Step Functions with `LambdaInvoke`, ECS Fargate task with `grantReadWrite`, EventBridge rule with a Lambda target. Inline Lambda code only. Register them in `catalog.ts`.
     - If a construct needs something that is not available offline, change the Pattern, record it, and keep its ground truth.
     - _Requirements: 1.2, 1.3, 1.4_
 
