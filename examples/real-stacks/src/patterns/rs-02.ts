@@ -1,12 +1,4 @@
-import {
-  ALL_PROTECTED_OBJECTS,
-  createFunction,
-  DATA_ROLE_ARN,
-  dataRole,
-  developerRole,
-  passRole,
-  stackOf,
-} from "../helpers.js";
+import { escalationPath, stackOf } from "../helpers.js";
 import type { Pattern } from "../pattern.js";
 
 /**
@@ -21,8 +13,6 @@ export const rs02: Pattern = {
   groundTruth: "unsafe",
   inScope: true,
   build(app) {
-    const stack = stackOf(app);
-    dataRole(stack, [ALL_PROTECTED_OBJECTS]);
-    developerRole(stack, [passRole([DATA_ROLE_ARN]), createFunction()]);
+    escalationPath(stackOf(app));
   },
 };

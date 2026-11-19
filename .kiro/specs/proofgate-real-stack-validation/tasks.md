@@ -50,7 +50,7 @@ The design lists five decisions. These tasks assume the recommended answer for D
 | Phase | Branch | Tasks | State |
 | --- | --- | --- | --- |
 | 0 | `realstacks/phase-0-spikes` | 0 | done, Checkpoint 1 passed |
-| 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | not started |
+| 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | done |
 | 2 | `realstacks/phase-2-predictions` | 6 | not started |
 | 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | not started; Checkpoint 2 (decision gate) at Task 11 |
 | 4 | `realstacks/phase-4-after-gate` | 12, 13, 14, 15 | not started; only after the user's decision |
@@ -102,18 +102,18 @@ The design lists five decisions. These tasks assume the recommended answer for D
     - If a construct needs something that is not available offline, change the Pattern, record it, and keep its ground truth.
     - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ] 4. Patterns RS-10 to RS-14
-  - [ ] 4.1 `rs-10.ts`: CodeBuild project with `iam:PassRole *` and `lambda:CreateFunction *`, plus a literal data role in the same stack.
-  - [ ] 4.2 `rs-11.ts`: the literal unsafe pair of RS-02 plus an unrelated Lambda with `grantRead`.
-  - [ ] 4.3 `rs-12.ts`: a role whose statement resource contains a policy variable.
-  - [ ] 4.4 `rs-13.ts`: two stacks, the developer role in one and the data role in the other, `inScope: false`.
-  - [ ] 4.5 `rs-14.ts`: as RS-02, with `Validations.of(app).acknowledge({ id: 'ProofGate::PG-IAM-004', reason })` in `build`. Ground truth unsafe, `inScope: false`, `boundary: 'acknowledged'`. Also give RS-13 `boundary: 'cross-template'`.
+- [x] 4. Patterns RS-10 to RS-14
+  - [x] 4.1 `rs-10.ts`: CodeBuild project with `iam:PassRole *` and `lambda:CreateFunction *`, plus a literal data role in the same stack.
+  - [x] 4.2 `rs-11.ts`: the literal unsafe pair of RS-02 plus an unrelated Lambda with `grantRead`.
+  - [x] 4.3 `rs-12.ts`: a role whose statement resource contains a policy variable.
+  - [x] 4.4 `rs-13.ts`: two stacks, the developer role in one and the data role in the other, `inScope: false`.
+  - [x] 4.5 `rs-14.ts`: as RS-02, with `Validations.of(app).acknowledge({ id: 'ProofGate::PG-IAM-004', reason })` in `build`. Ground truth unsafe, `inScope: false`, `boundary: 'acknowledged'`. Also give RS-13 `boundary: 'cross-template'`.
   - _Requirements: 1.2, 1.4, 5.1_
 
-- [ ] 5. Every Pattern synthesizes without ProofGate
-  - [ ] 5.1 For every Pattern, run the real `cdk synth -c pattern=<id>` (plain, no `PROOFGATE`). All must exit 0 without credentials, Docker, or network. Record the time of each.
+- [x] 5. Every Pattern synthesizes without ProofGate
+  - [x] 5.1 For every Pattern, run the real `cdk synth -c pattern=<id>` (plain, no `PROOFGATE`). All must exit 0 without credentials, Docker, or network. Record the time of each.
     - _Requirements: 1.3_ · _Property: P1_
-  - [ ] 5.2 Run the quality gate. Commit the phase. Do not run ProofGate on any Pattern yet: the predictions come first.
+  - [x] 5.2 Run the quality gate. Commit the phase. Do not run ProofGate on any Pattern yet: the predictions come first.
 
 ## Phase 2: Predictions
 

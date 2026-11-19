@@ -77,3 +77,12 @@ export function inlineFunction(scope: Construct, id: string): LambdaFunction {
     code: Code.fromInline("exports.handler = async () => ({});"),
   });
 }
+
+/**
+ * 権限昇格経路の4条件がそろう、リテラルのロールの組を作ります（RS-02、RS-11、RS-14で共用）。
+ * 開発者ロールがデータロールを渡してLambdaを作成でき、データロールは保護対象バケットの全オブジェクトを読めます。
+ */
+export function escalationPath(scope: Construct): void {
+  dataRole(scope, [ALL_PROTECTED_OBJECTS]);
+  developerRole(scope, [passRole([DATA_ROLE_ARN]), createFunction()]);
+}
