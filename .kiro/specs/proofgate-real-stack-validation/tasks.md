@@ -126,10 +126,10 @@ The design lists five decisions. These tasks assume the recommended answer for D
 
 ## Phase 3: Runner, measurement, and the decision gate
 
-- [ ] 7. Classification function
-  - [ ] 7.1 Create the branch `realstacks/phase-3-runner`. Write `scripts/classify.mjs` as in design section 5.2 (six classes, and an exception for a combination that fits no class).
+- [x] 7. Classification function
+  - [x] 7.1 Create the branch `realstacks/phase-3-runner`. Write `scripts/classify.mjs` as in design section 5.2 (six classes, and an exception for a combination that fits no class).
     - _Requirements: 4.1_ · _Design: 5.2_
-  - [ ] 7.2 Unit tests under `tests/` for every class and for the exception, including: unsafe in scope with `PG-IAM-003` only (rejected as unsupported, path not visible), unsafe in scope accepted (false negative), safe with `PG-IAM-004` (false positive), unsafe out of scope accepted (outside the boundary), and both rule ids together.
+  - [x] 7.2 Unit tests under `tests/` for every class and for the exception, including: unsafe in scope with `PG-IAM-003` only (rejected as unsupported, path not visible), unsafe in scope accepted (false negative), safe with `PG-IAM-004` (false positive), unsafe out of scope accepted (outside the boundary), and both rule ids together.
     - _Requirements: 4.1, 4.3_ · _Property: P5_
 
 - [ ] 8. The runner
