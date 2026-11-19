@@ -51,7 +51,7 @@ The design lists five decisions. These tasks assume the recommended answer for D
 | --- | --- | --- | --- |
 | 0 | `realstacks/phase-0-spikes` | 0 | done, Checkpoint 1 passed |
 | 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | done |
-| 2 | `realstacks/phase-2-predictions` | 6 | not started |
+| 2 | `realstacks/phase-2-predictions` | 6 | done (predictions fixed in commit 6cf7b0d) |
 | 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | not started; Checkpoint 2 (decision gate) at Task 11 |
 | 4 | `realstacks/phase-4-after-gate` | 12, 13, 14, 15 | not started; only after the user's decision |
 | 5 | `realstacks/phase-5-record` | 16 | not started; Checkpoint 3 |
@@ -117,10 +117,10 @@ The design lists five decisions. These tasks assume the recommended answer for D
 
 ## Phase 2: Predictions
 
-- [ ] 6. Write and fix the predictions before any measurement
-  - [ ] 6.1 Create the branch `realstacks/phase-2-predictions`. Write `examples/real-stacks/data/predictions.json` from the appendix of `requirements.md`: for each Pattern the ground truth, the scope, the predicted Result, the predicted reasons, and `basis` (`"probe (extractor only)"` for RS-05 to RS-09 and RS-12, `"spike (plugin, in process)"` for RS-11 and RS-14, `"reasoning"` for the others).
+- [x] 6. Write and fix the predictions before any measurement
+  - [x] 6.1 Create the branch `realstacks/phase-2-predictions`. Write `examples/real-stacks/data/predictions.json` from the appendix of `requirements.md`: for each Pattern the ground truth, the scope, the predicted Result, the predicted reasons, and `basis` (`"probe (extractor only)"` for RS-05 to RS-09 and RS-12, `"spike (plugin, in process)"` for RS-11 and RS-14, `"reasoning"` for the others).
     - _Requirements: 2.1, 2.3_ · _Design: 6_
-  - [ ] 6.2 Commit `predictions.json` **alone**, in its own commit. Check with `git show --stat` that the commit contains only that file, and with `git ls-files` that no runner, no classifier, and no `expected-results.json` exists yet.
+  - [x] 6.2 Commit `predictions.json` **alone**, in its own commit. Check with `git show --stat` that the commit contains only that file, and with `git ls-files` that no runner, no classifier, and no `expected-results.json` exists yet.
     - From now on `predictions.json` is never edited. A wrong prediction is recorded in `expected-results.json` and in the usage log, not here.
     - _Requirements: 2.1_ · _Property: P6_
 
