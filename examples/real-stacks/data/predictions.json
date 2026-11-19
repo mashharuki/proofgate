@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "description": "Predictions written BEFORE any Pattern was run with ProofGate. Never edit this file; a wrong prediction is recorded in expected-results.json.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-01",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "accepted",
+      "predictedReasons": [],
+      "basis": "reasoning",
+      "note": "Literal roles; the data role reaches another bucket. The extractor reads everything and finds no path."
+    },
+    {
+      "id": "RS-02",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-004",
+      "predictedReasons": [],
+      "basis": "reasoning",
+      "note": "Literal roles with all four conditions. The same shape as the demo vulnerable app."
+    },
+    {
+      "id": "RS-03",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-004",
+      "predictedReasons": [],
+      "basis": "reasoning",
+      "note": "Prefix grant, a ? in the PassRole role name, and split Lambda statements. Each form was fixed in 1.0."
+    },
+    {
+      "id": "RS-04",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-004",
+      "predictedReasons": [],
+      "basis": "reasoning",
+      "note": "The same path as RS-02, written as inline policies of the roles."
+    },
+    {
+      "id": "RS-05",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "probe (extractor only)",
+      "note": "grantRead gives a managed policy on the execution role and a resource built from CloudFormation functions."
+    },
+    {
+      "id": "RS-06",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "probe (extractor only)",
+      "note": "grantReadWrite gives a resource built from CloudFormation functions."
+    },
+    {
+      "id": "RS-07",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "Condition is not supported in trust policies",
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "probe (extractor only)",
+      "note": "The state machine role has a managed policy, a trust condition, and non-literal resources."
+    },
+    {
+      "id": "RS-08",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "probe (extractor only)",
+      "note": "grantReadWrite on the task role gives a non-literal resource."
+    },
+    {
+      "id": "RS-09",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "probe (extractor only)",
+      "note": "The execution role of the target function has a managed policy."
+    },
+    {
+      "id": "RS-10",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": ["Action and Resource must be literal strings or arrays of strings"],
+      "predictedPathVisibleInResult": false,
+      "basis": "probe (extractor only)",
+      "note": "The CodeBuild project policy has non-literal resources, so no model is built. It must not be accepted. The path is expected not to be visible in the Result."
+    },
+    {
+      "id": "RS-11",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "Action and Resource must be literal strings or arrays of strings"
+      ],
+      "predictedPathVisibleInResult": false,
+      "basis": "spike (plugin, in process)",
+      "note": "The unrelated grantRead function makes the whole template unreadable, so the literal path is not reported as PG-IAM-004. An early spike of Task 0.3 showed this for a stack of this shape."
+    },
+    {
+      "id": "RS-12",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-003",
+      "predictedReasons": [
+        "IAM policy variables in Resource are not supported",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "basis": "reasoning",
+      "note": "The policy variable is rejected. Because it is the only statement, the finding that refuses a vacuous proof is expected as well, as in the tests of the earlier spec."
+    },
+    {
+      "id": "RS-13",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "cross-template",
+      "predictedResult": "accepted",
+      "predictedReasons": [],
+      "basis": "reasoning",
+      "note": "Each template is checked alone: the developer role has no target, the data role has no principal."
+    },
+    {
+      "id": "RS-14",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "acknowledged",
+      "predictedResult": "accepted",
+      "predictedReasons": [],
+      "basis": "spike (plugin, in process)",
+      "note": "The acknowledgement silences the finding (observed in Task 0.5 for the same stack as RS-02)."
+    }
+  ]
+}
