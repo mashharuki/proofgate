@@ -107,7 +107,7 @@ The protected bucket is `arn:aws:s3:::proofgate-protected-data` in every Pattern
 | RS-01 | two `iam.Role`, `addToPolicy` with literal ARNs. Dev: `iam:PassRole` for the data role, `lambda:CreateFunction`. Data role: `s3:GetObject` on a different bucket | safe: the data role cannot reach the protected bucket |
 | RS-02 | as RS-01, data role has `s3:GetObject` on `bucket/*` | unsafe: all four conditions hold |
 | RS-03 | as RS-02, but the data role has a prefix grant only (`bucket/reports/*`), the PassRole Resource ends in a `?` pattern for the role name, and Lambda control is `UpdateFunctionConfiguration` and `UpdateFunctionCode` in two statements | unsafe: each of these forms was fixed in 1.0 |
-| RS-04 | as RS-02, but the statements are separate `iam.Policy` objects attached with `attachToRole` | unsafe: the path is the same, the template shape differs (`AWS::IAM::Policy` with `Roles`) |
+| RS-04 | as RS-02, but the permissions are passed as the Role's `inlinePolicies` | unsafe: the path is the same, the template shape differs (`Policies` on `AWS::IAM::Role`, not an `AWS::IAM::Policy`); see section 18 |
 | RS-05 | `lambda.Function` (inline code) and `bucket.grantRead(fn)` on a CDK-created bucket | safe: no PassRole, no Lambda control by anyone |
 | RS-06 | `iam.Role` and `bucket.grantReadWrite(role)` | safe: no PassRole |
 | RS-07 | `sfn.StateMachine` with `tasks.LambdaInvoke` | safe |
@@ -291,3 +291,7 @@ These facts were measured in throwaway scripts that were deleted afterwards.
 - The consistency test (section 7) checks that every Pattern with `inScope: false` carries a `boundary` value.
 - The runner needs no special handling: the Pattern calls `acknowledge` in its `build`, and the gated run reports an empty `pluginReports`.
 - Property P3 is unchanged (it speaks of unsafe Patterns that are in scope). A property P12 is added: for every Pattern with `inScope: false`, the table says why (`boundary`).
+
+## 18. Correction found during Task 2: RS-04
+
+The first definition of RS-04 was "separate `iam.Policy` objects attached to the roles", expected to give `AWS::IAM::Policy` with `Roles`. Synthesizing showed that CDK's `addToPolicy` already produces an `AWS::IAM::Policy` with `Roles` (the `DefaultPolicy`), so RS-02, RS-03 and the first RS-04 all had that shape. To exercise the extractor's other path (the `Policies` list inside an `AWS::IAM::Role`), RS-04 now uses the Role's `inlinePolicies`. The helpers take a style (`default` or `inline`) for this. Ground truth and the predicted Result are unchanged.

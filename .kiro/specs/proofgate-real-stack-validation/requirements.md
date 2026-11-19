@@ -155,7 +155,7 @@ Ground truth: S = safe (no path), U = unsafe (a path exists). Predictions marked
 | RS-01 | Two `iam.Role`s with literal policies: the developer can pass the data role and create Lambda functions, but the data role has no access to the protected bucket | S | accepted |
 | RS-02 | Developer role and data role with literal ARNs through `addToPolicy`: `iam:PassRole`, `lambda:CreateFunction`, and `s3:GetObject` on `bucket/*` | U | `PG-IAM-004` |
 | RS-03 | As RS-02, but the data role has only a prefix grant (`bucket/reports/*`), the PassRole Resource uses a `?` in the role name, and Lambda control is `UpdateFunctionConfiguration` plus `UpdateFunctionCode` in two statements | U | `PG-IAM-004` |
-| RS-04 | As RS-02, but the policies are separate `iam.Policy` objects attached to the roles (`AWS::IAM::Policy` with `Roles`) | U | `PG-IAM-004` |
+| RS-04 | As RS-02, but the permissions are passed as the Role's `inlinePolicies` (the template has the `Policies` property on `AWS::IAM::Role` instead of separate `AWS::IAM::Policy` resources) | U | `PG-IAM-004` |
 | RS-05 | Lambda function with `bucket.grantRead` | S | `PG-IAM-003`: managed policy, non-literal Resource (probe) |
 | RS-06 | `iam.Role` with `bucket.grantReadWrite` | S | `PG-IAM-003`: non-literal Resource (probe) |
 | RS-07 | Step Functions state machine with `LambdaInvoke` | S | `PG-IAM-003`: managed policy, trust Condition, non-literal Resource (probe) |
@@ -187,3 +187,4 @@ Ground truth: S = safe (no path), U = unsafe (a path exists). Predictions marked
 - Revision 1: first draft with the evidence from the probe, 9 requirements, and 13 Patterns.
 - Revision 2: recorded the user's decisions and added Requirement 10 (decision gate).
 - Revision 3: added Pattern RS-14 (an acknowledged finding) at the user's decision after the spike of Task 0.5, and the acknowledgement to the definition of the modeled scope. The catalogue now has 14 Patterns. The decision gate (Requirement 10.2) is unchanged, and RS-14 does not count as a false negative because it is classified as outside the documented boundary.
+- Revision 3b (during Task 2): corrected the definition of RS-04. The original text assumed that a separate `iam.Policy` object gives another template shape; synthesizing showed that `addToPolicy` already creates an `AWS::IAM::Policy` with `Roles`, so the original RS-04 would have repeated RS-02. RS-04 now uses `inlinePolicies`. Ground truth and predicted Result are unchanged.

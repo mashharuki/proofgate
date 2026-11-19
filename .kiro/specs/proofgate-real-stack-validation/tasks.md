@@ -91,10 +91,10 @@ The design lists five decisions. These tasks assume the recommended answer for D
     - _Property: P2_
   - [x] 1.4 Run the quality gate. Knip and jscpd must pass; if Knip needs an entry for `scripts/*.mjs`, add it to `knip.json` and say so in the usage log.
 
-- [ ] 2. Shared helpers and Patterns RS-01 to RS-04 (literal roles)
-  - [ ] 2.1 `src/helpers.ts`: a literal role, a data role with a bucket grant, a developer role with PassRole and Lambda statements. Keep the Pattern files short so that jscpd stays quiet.
+- [x] 2. Shared helpers and Patterns RS-01 to RS-04 (literal roles)
+  - [x] 2.1 `src/helpers.ts`: a literal role, a data role with a bucket grant, a developer role with PassRole and Lambda statements. Keep the Pattern files short so that jscpd stays quiet.
     - _Requirements: 1.1_ · _Design: 3_
-  - [ ] 2.2 `src/patterns/rs-01.ts` to `rs-04.ts` as in design section 4. Each file states the id, the title, a two or three sentence English description, the ground truth, the scope, and a comment (Japanese) with the reasoning for the ground truth. Register them in `catalog.ts`.
+  - [x] 2.2 `src/patterns/rs-01.ts` to `rs-04.ts` as in design section 4. Each file states the id, the title, a two or three sentence English description, the ground truth, the scope, and a comment (Japanese) with the reasoning for the ground truth. Register them in `catalog.ts`.
     - _Requirements: 1.2, 1.4_
 
 - [ ] 3. Patterns RS-05 to RS-09 (ordinary CDK helpers)
