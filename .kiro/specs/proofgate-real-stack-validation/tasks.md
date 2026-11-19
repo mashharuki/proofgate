@@ -62,17 +62,17 @@ The design lists five open decisions. These tasks assume the recommended answer 
   - [x] 0.1 Create the branch `realstacks/phase-0-spikes` from the current branch `realstacks/spec` and commit the spec documents (`requirements.md`, `design.md`, `tasks.md`) and the usage-log rows written so far, as one commit.
     - Update the commit rule in `AGENTS.md` and `.kiro/steering/development.md` so that commits on `realstacks/phase-*` are allowed like those on `hardening/phase-*`. Keep push and merge rules unchanged.
     - _Requirements: 9.1_
-  - [ ] 0.2 Record the baseline on the unchanged tree: `pnpm quality`, `typecheck`, `test`, `pack:check`, `synth`, both `synth:proofgate` commands, and `verify:demo`, judged by the Command success criteria. Record the exit codes and times in the usage log.
+  - [x] 0.2 Record the baseline on the unchanged tree: `pnpm quality`, `typecheck`, `test`, `pack:check`, `synth`, both `synth:proofgate` commands, and `verify:demo`, judged by the Command success criteria. Record the exit codes and times in the usage log.
     - If a command misses its condition, stop and report.
     - _Requirements: 8.1_
-  - [ ] 0.3 Spike: the report format and the failure shape.
+  - [x] 0.3 Spike: the report format and the failure shape.
     - In a throwaway script (deleted afterwards), run the real `ProofGateValidator` in process for the three stacks of design section 2.2 and read `validation-report.json`. Record in the usage log: the file's fields (rule name, description, resource locations), and how to get rule ids and reasons from it.
     - Check that a stack with two templates passes both templates to the plugin (needed for RS-13).
     - _Requirements: 3.1_ · _Design: 2.2, 5.1_
-  - [ ] 0.4 Spike: can the constructs of RS-10, RS-12, and RS-13 be synthesized without credentials, Docker, or network?
+  - [x] 0.4 Spike: can the constructs of RS-10, RS-12, and RS-13 be synthesized without credentials, Docker, or network?
     - CodeBuild with a GitHub source, a `PolicyStatement` whose resource string contains `${aws:username}`, and two stacks in one app. Record what works and what must change in the Pattern (design section 4, note on RS-12).
     - _Requirements: 1.3_
-  - [ ] 0.5 Spike for decision D1: acknowledgement of a finding.
+  - [x] 0.5 Spike for decision D1: acknowledgement of a finding.
     - Read the CDK validation API in the installed `aws-cdk-lib` and find how a finding is acknowledged. Then, in a throwaway script, acknowledge the `PG-IAM-004` finding of the literal unsafe stack and see whether `synth` still fails. Record the answer without opinion: yes or no, and how.
     - Do not change the plugin.
     - _Design: 2.4, 12 (D1)_
