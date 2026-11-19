@@ -132,14 +132,14 @@ The design lists five decisions. These tasks assume the recommended answer for D
   - [x] 7.2 Unit tests under `tests/` for every class and for the exception, including: unsafe in scope with `PG-IAM-003` only (rejected as unsupported, path not visible), unsafe in scope accepted (false negative), safe with `PG-IAM-004` (false positive), unsafe out of scope accepted (outside the boundary), and both rule ids together.
     - _Requirements: 4.1, 4.3_ · _Property: P5_
 
-- [ ] 8. The runner
-  - [ ] 8.1 `scripts/run.mjs`, in process: for each Pattern, plain synthesis (a failure is a harness error, exit 2), gated synthesis with the real plugin, read `validation-report.json` as found in Task 0.3, compute the Result (`accepted`, `PG-IAM-003`, `PG-IAM-004`, or both), the unsupported reasons, and the construct locations. Temporary output directories are removed.
+- [x] 8. The runner
+  - [x] 8.1 `scripts/run.mjs`, in process: for each Pattern, plain synthesis (a failure is a harness error, exit 2), gated synthesis with the real plugin, read `validation-report.json` as found in Task 0.3, compute the Result (`accepted`, `PG-IAM-003`, `PG-IAM-004`, or both), the unsupported reasons, and the construct locations. Temporary output directories are removed.
     - _Requirements: 3.1, 3.4_ · _Design: 5.1_
-  - [ ] 8.2 Modes: `--print` prints the observed results as JSON and compares nothing; the default compares with `data/expected-results.json` and prints the Pattern, what was expected, and what happened for each difference (exit 1); `--cli sample` (default) and `--cli all` as in design section 5.3; `--only <id>`.
+  - [x] 8.2 Modes: `--print` prints the observed results as JSON and compares nothing; the default compares with `data/expected-results.json` and prints the Pattern, what was expected, and what happened for each difference (exit 1); `--cli sample` (default) and `--cli all` as in design section 5.3; `--only <id>`.
     - _Requirements: 3.2_
-  - [ ] 8.3 Add the root script `pnpm real-stacks` that runs the runner. This is a change to the root `package.json` scripts only.
+  - [x] 8.3 Add the root script `pnpm real-stacks` that runs the runner. This is a change to the root `package.json` scripts only.
     - _Requirements: 3.1_ · _Design: 12 (D3)_
-  - [ ] 8.4 Run the quality gate. The runner does not exist in any package's `files`.
+  - [x] 8.4 Run the quality gate. The runner does not exist in any package's `files`.
     - _Property: P9_
 
 - [ ] 9. Real `cdk synth` sample

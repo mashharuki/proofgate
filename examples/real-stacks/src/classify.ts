@@ -5,7 +5,6 @@
 
 /** ProofGateを有効にして合成したときの結果の取りうる値です。 */
 export const RESULTS = ["accepted", "PG-IAM-003", "PG-IAM-004", "PG-IAM-003+PG-IAM-004"] as const;
-type Result = (typeof RESULTS)[number];
 
 /** 分類の名前です。 */
 export const CLASSES = [

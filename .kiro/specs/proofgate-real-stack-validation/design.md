@@ -295,3 +295,8 @@ These facts were measured in throwaway scripts that were deleted afterwards.
 ## 18. Correction found during Task 2: RS-04
 
 The first definition of RS-04 was "separate `iam.Policy` objects attached to the roles", expected to give `AWS::IAM::Policy` with `Roles`. Synthesizing showed that CDK's `addToPolicy` already produces an `AWS::IAM::Policy` with `Roles` (the `DefaultPolicy`), so RS-02, RS-03 and the first RS-04 all had that shape. To exercise the extractor's other path (the `Policies` list inside an `AWS::IAM::Role`), RS-04 now uses the Role's `inlinePolicies`. The helpers take a style (`default` or `inline`) for this. Ground truth and the predicted Result are unchanged.
+
+## 19. Deviation found during Task 7 and 8: TypeScript instead of `.mjs`
+
+The design placed the runner and the classifier in `scripts/run.mjs` and `scripts/classify.mjs`. They are written in TypeScript as `src/runner.ts` and `src/classify.ts` instead. `pnpm typecheck` and Knip cover them, the unit test imports a typed module, and the runner is built to `dist/runner.js` by the package's `check` script (`pnpm real-stacks`). The behavior in sections 5 and 7 is unchanged. Knip has a workspace entry for `src/runner.ts`.
+

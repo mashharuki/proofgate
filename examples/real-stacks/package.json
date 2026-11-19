@@ -7,7 +7,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "synth": "cdk synth --quiet",
-    "synth:proofgate": "PROOFGATE=1 cdk synth --quiet"
+    "synth:proofgate": "PROOFGATE=1 cdk synth --quiet",
+    "check": "tsc -p tsconfig.json && node dist/runner.js"
   },
   "dependencies": {
     "@proofgate-cdk/cdk-plugin": "workspace:*",

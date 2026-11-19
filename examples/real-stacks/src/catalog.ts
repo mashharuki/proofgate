@@ -15,7 +15,7 @@ import { rs13 } from "./patterns/rs-13.js";
 import { rs14 } from "./patterns/rs-14.js";
 
 /** Patternの一覧です（IDの昇順）。各Patternのファイルをここへ登録します。 */
-const catalog: readonly Pattern[] = [
+export const catalog: readonly Pattern[] = [
   rs01,
   rs02,
   rs03,
