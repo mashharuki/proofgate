@@ -1,6 +1,6 @@
 # Tasks: proofgate-real-stack-validation
 
-Status: DRAFT, awaiting approval. No task has been started. No code has been changed for this spec.
+Status: APPROVED by the user's go-ahead ("you may proceed with the tasks"). In progress. The box of each task shows its state.
 
 Structure: **17 top-level tasks (Task 0 to Task 16) in 6 phases (Phase 0 to Phase 5).**
 
@@ -49,7 +49,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
 
 | Phase | Branch | Tasks | State |
 | --- | --- | --- | --- |
-| 0 | `realstacks/phase-0-spikes` | 0 | not started |
+| 0 | `realstacks/phase-0-spikes` | 0 | in progress |
 | 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | not started |
 | 2 | `realstacks/phase-2-predictions` | 6 | not started |
 | 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | not started; Checkpoint 2 (decision gate) at Task 11 |
@@ -59,7 +59,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
 ## Phase 0: Spikes and baseline
 
 - [ ] 0. Baseline and feasibility spikes
-  - [ ] 0.1 Create the branch `realstacks/phase-0-spikes` from the current branch `realstacks/spec` and commit the spec documents (`requirements.md`, `design.md`, `tasks.md`) and the usage-log rows written so far, as one commit.
+  - [x] 0.1 Create the branch `realstacks/phase-0-spikes` from the current branch `realstacks/spec` and commit the spec documents (`requirements.md`, `design.md`, `tasks.md`) and the usage-log rows written so far, as one commit.
     - Update the commit rule in `AGENTS.md` and `.kiro/steering/development.md` so that commits on `realstacks/phase-*` are allowed like those on `hardening/phase-*`. Keep push and merge rules unchanged.
     - _Requirements: 9.1_
   - [ ] 0.2 Record the baseline on the unchanged tree: `pnpm quality`, `typecheck`, `test`, `pack:check`, `synth`, both `synth:proofgate` commands, and `verify:demo`, judged by the Command success criteria. Record the exit codes and times in the usage log.

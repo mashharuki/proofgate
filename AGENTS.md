@@ -27,7 +27,7 @@ Run `nvm use` first (`.nvmrc` pins Node.js 26.13.1). A shell with an older Node.
 - TypeScript and Lean must give the same verdict. A disagreement stays a rejection (`PG-IAM-003`).
 - Do not describe the Lean check as an independent proof of CloudFormation or IAM semantics. It checks four Booleans computed by TypeScript.
 - Do not weaken, skip, or delete an existing test or assertion without the user's approval.
-- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` of the active spec; elsewhere, commit only when asked.
+- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` (finished spec) and `realstacks/phase-*` (active spec `proofgate-real-stack-validation`); elsewhere, commit only when asked.
 - Stop at every checkpoint in `tasks.md` and wait for the user.
 - A change to a matching rule may only add findings or rejections. Turning unsafe into safe needs the user's approval.
 - Do not edit generated output: `dist/`, `cdk.out/`, `.lake/`, `Generated.lean`, `.pack/`.
