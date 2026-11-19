@@ -52,7 +52,7 @@ The design lists five decisions. These tasks assume the recommended answer for D
 | 0 | `realstacks/phase-0-spikes` | 0 | done, Checkpoint 1 passed |
 | 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | done |
 | 2 | `realstacks/phase-2-predictions` | 6 | done (predictions fixed in commit 6cf7b0d) |
-| 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | not started; Checkpoint 2 (decision gate) at Task 11 |
+| 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | measured; waiting at Checkpoint 2 (decision gate, Task 11.2) |
 | 4 | `realstacks/phase-4-after-gate` | 12, 13, 14, 15 | not started; only after the user's decision |
 | 5 | `realstacks/phase-5-record` | 16 | not started; Checkpoint 3 |
 
@@ -142,27 +142,27 @@ The design lists five decisions. These tasks assume the recommended answer for D
   - [x] 8.4 Run the quality gate. The runner does not exist in any package's `files`.
     - _Property: P9_
 
-- [ ] 9. Real `cdk synth` sample
-  - [ ] 9.1 In the runner, run the real CLI for RS-01, RS-02, and RS-05 with and without `PROOFGATE=1`. Check exit codes 0, 1, 1 and the rule id in the output. `--cli all` runs the same check for every Pattern.
+- [x] 9. Real `cdk synth` sample
+  - [x] 9.1 In the runner, run the real CLI for RS-01, RS-02, and RS-05 with and without `PROOFGATE=1`. Check exit codes 0, 1, 1 and the rule id in the output. `--cli all` runs the same check for every Pattern.
     - _Requirements: 2.3_ · _Property: P8_ · _Design: 5.3_
 
-- [ ] 10. Measure, review, and record
-  - [ ] 10.1 Run `pnpm real-stacks -- --print` and save the observed results. Do not look at the predictions while classifying.
+- [x] 10. Measure, review, and record
+  - [x] 10.1 Run `pnpm real-stacks -- --print` and save the observed results. Do not look at the predictions while classifying.
     - _Requirements: 4.1_
-  - [ ] 10.2 Compare with `predictions.json`. For each Pattern where the observed Result or the reasons differ, write a `deviation` that says what was predicted, what happened, and why. Wrong predictions are recorded in the usage log. If a result looks like a defect (a false negative or false positive), stop and tell the user before going on (Requirement 7.1).
+  - [x] 10.2 Compare with `predictions.json`. For each Pattern where the observed Result or the reasons differ, write a `deviation` that says what was predicted, what happened, and why. Wrong predictions are recorded in the usage log. If a result looks like a defect (a false negative or false positive), stop and tell the user before going on (Requirement 7.1).
     - _Requirements: 2.2, 7.1_
-  - [ ] 10.3 Write `data/expected-results.json` from the reviewed results (Result, class, reasons, `deviation`, and a `knownDefects` list that is expected to be empty). Then the default `pnpm real-stacks` must exit 0.
+  - [x] 10.3 Write `data/expected-results.json` from the reviewed results (Result, class, reasons, `deviation`, and a `knownDefects` list that is expected to be empty). Then the default `pnpm real-stacks` must exit 0.
     - _Requirements: 3.1, 4.1_
-  - [ ] 10.4 Write `tests/real-stacks-table.test.ts` as in design section 7: the table is consistent with the catalogue ids, the allowed values, the classifier, the rule that an unsafe in-scope Pattern is never filed as accepted unless it is in `knownDefects`, and the rule that every Pattern with `inScope: false` has a `boundary` value. It reads files only and runs in milliseconds.
+  - [x] 10.4 Write `tests/real-stacks-table.test.ts` as in design section 7: the table is consistent with the catalogue ids, the allowed values, the classifier, the rule that an unsafe in-scope Pattern is never filed as accepted unless it is in `knownDefects`, and the rule that every Pattern with `inScope: false` has a `boundary` value. It reads files only and runs in milliseconds.
     - _Requirements: 4.1, 4.3_ · _Property: P5_
-  - [ ] 10.5 Measure: three runs of the default `pnpm real-stacks` (time each), and one run of `--cli all` (time and results). The default run must finish within 60 s.
+  - [x] 10.5 Measure: three runs of the default `pnpm real-stacks` (time each), and one run of `--cli all` (time and results). The default run must finish within 60 s.
     - _Requirements: 3.3_ · _Property: P7_
-  - [ ] 10.6 Run the quality gate, and check that `pnpm test` still passes with the new table test.
-  - [ ] 10.7 Check each Pattern with ground truth unsafe and in scope against Property P3 and Requirement 5.2: what Result is seen, and whether the path is visible in it.
+  - [x] 10.6 Run the quality gate, and check that `pnpm test` still passes with the new table test.
+  - [x] 10.7 Check each Pattern with ground truth unsafe and in scope against Property P3 and Requirement 5.2: what Result is seen, and whether the path is visible in it.
     - _Requirements: 5.1, 5.2_ · _Property: P3_
 
 - [ ] 11. The decision gate
-  - [ ] 11.1 Compute the three criteria of Requirement 10.2 from the table: any false negative or false positive; any literal-only Pattern (RS-01 to RS-04) decided wrongly or rejected as unsupported; the number of RS-05 to RS-09 rejected as unsupported (poor if 4 or more).
+  - [x] 11.1 Compute the three criteria of Requirement 10.2 from the table: any false negative or false positive; any literal-only Pattern (RS-01 to RS-04) decided wrongly or rejected as unsupported; the number of RS-05 to RS-09 rejected as unsupported (poor if 4 or more).
     - _Requirements: 10.2_
   - [ ] 11.2 **CHECKPOINT 2, the decision gate.** Stop and report: the table, the three criteria with their values, the evidence, the wrong predictions, the time of the runner, and the options (a) to (d) of Requirement 10.3 with their costs. Say openly whether the result is "poor" by the definition. Make no change to the README, the changelog, the version, the tag, or npm. Wait for the user's decision.
     - _Requirements: 10.1, 10.3, 10.4, 10.5_

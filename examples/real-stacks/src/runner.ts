@@ -33,6 +33,7 @@ interface Expected {
   readonly result: string;
   readonly class: string;
   readonly reasons: string[];
+  readonly locations: string[];
 }
 
 interface ReportViolation {
@@ -47,6 +48,8 @@ interface Report {
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SAMPLE = ["RS-01", "RS-02", "RS-05"];
 const UNSUPPORTED_PREFIX = "Unsupported IAM syntax: ";
+/** テンプレート全体に対する指摘（空虚な証明の拒否）は、構成要素のパスを持ちません。 */
+const NO_CONSTRUCT = "(no construct path)";
 
 interface Synthesis {
   readonly threw: boolean;
@@ -119,7 +122,9 @@ function observe(pattern: Pattern): Observed {
   );
   const locations = unique(
     violations.flatMap((violation) =>
-      (violation.violatingConstructs ?? []).map((construct) => construct.constructPath ?? ""),
+      (violation.violatingConstructs ?? []).map(
+        (construct) => construct.constructPath || NO_CONSTRUCT,
+      ),
     ),
   );
   return {
@@ -193,6 +198,12 @@ function differences(observed: Observed, expected: Expected | undefined): string
   if (observed.reasons.join(" | ") !== expectedReasons) {
     found.push(
       `reasons: expected [${expectedReasons}], observed [${observed.reasons.join(" | ")}]`,
+    );
+  }
+  const expectedLocations = [...expected.locations].sort().join(" | ");
+  if (observed.locations.join(" | ") !== expectedLocations) {
+    found.push(
+      `locations: expected [${expectedLocations}], observed [${observed.locations.join(" | ")}]`,
     );
   }
   return found.map((line) => `${observed.id}: ${line}`);
