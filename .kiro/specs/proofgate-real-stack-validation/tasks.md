@@ -52,8 +52,8 @@ The design lists five decisions. These tasks assume the recommended answer for D
 | 0 | `realstacks/phase-0-spikes` | 0 | done, Checkpoint 1 passed |
 | 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | done |
 | 2 | `realstacks/phase-2-predictions` | 6 | done (predictions fixed in commit 6cf7b0d) |
-| 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | measured; waiting at Checkpoint 2 (decision gate, Task 11.2) |
-| 4 | `realstacks/phase-4-after-gate` | 12, 13, 14, 15 | not started; only after the user's decision |
+| 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | done; Checkpoint 2 passed with decision (b) |
+| 4 | `realstacks/phase-4-after-gate` | 12, 13, 14, 15 | **paused** until the follow-up spec `proofgate-cdk-construct-support` has run (see "Decision at Checkpoint 2") |
 | 5 | `realstacks/phase-5-record` | 16 | not started; Checkpoint 3 |
 
 ## Phase 0: Spikes and baseline
@@ -161,15 +161,28 @@ The design lists five decisions. These tasks assume the recommended answer for D
   - [x] 10.7 Check each Pattern with ground truth unsafe and in scope against Property P3 and Requirement 5.2: what Result is seen, and whether the path is visible in it.
     - _Requirements: 5.1, 5.2_ · _Property: P3_
 
-- [ ] 11. The decision gate
+- [x] 11. The decision gate
   - [x] 11.1 Compute the three criteria of Requirement 10.2 from the table: any false negative or false positive; any literal-only Pattern (RS-01 to RS-04) decided wrongly or rejected as unsupported; the number of RS-05 to RS-09 rejected as unsupported (poor if 4 or more).
     - _Requirements: 10.2_
-  - [ ] 11.2 **CHECKPOINT 2, the decision gate.** Stop and report: the table, the three criteria with their values, the evidence, the wrong predictions, the time of the runner, and the options (a) to (d) of Requirement 10.3 with their costs. Say openly whether the result is "poor" by the definition. Make no change to the README, the changelog, the version, the tag, or npm. Wait for the user's decision.
+  - [x] 11.2 **CHECKPOINT 2, the decision gate.** Stop and report: the table, the three criteria with their values, the evidence, the wrong predictions, the time of the runner, and the options (a) to (d) of Requirement 10.3 with their costs. Say openly whether the result is "poor" by the definition. Make no change to the README, the changelog, the version, the tag, or npm. Wait for the user's decision.
     - _Requirements: 10.1, 10.3, 10.4, 10.5_
+
+## Decision at Checkpoint 2
+
+The measurement met criterion 3 of Requirement 10.2 (5 of 5 ordinary-helper Patterns rejected as unsupported), so the result is "poor" by definition. The user chose option (b): start a follow-up spec that widens what ProofGate can read, the spec `proofgate-cdk-construct-support`.
+
+What this means for the tasks below (a proposal that the user still has to confirm, because Requirement 10.4 forbids acting on a poor result without the user's decision):
+
+- **`pnpm real-stacks`, the 14 Patterns, `predictions.json`, and `expected-results.json` are kept as they are.** They are the baseline of 1.0.1 and the acceptance test of the follow-up spec. The table is edited only by the follow-up spec, one reviewed deviation at a time.
+- **Task 12 (message hints) waits.** The hints should describe what remains unsupported after the follow-up, not what is supported today.
+- **Task 13 (result documents) waits** and then reports both states: the 1.0.1 baseline measured here and the state after the follow-up. The baseline stays in the document even if the follow-up improves it.
+- **Task 14 (README, changelog, version)** waits for the same reason. Nothing is published before the follow-up and the user's decision.
+- **Task 15 (final verification) and Task 16 (record)** run after the follow-up spec, or when the user decides to stop it.
+- If the follow-up is stopped (its time-box ends without a result the user accepts), the other options (a) and (d) of Requirement 10.3 are still open and these tasks are resumed with that decision.
 
 ## Phase 4: After the decision gate (only with the user's decision)
 
-Do not start this phase before the user has decided at Checkpoint 2. If the user chooses a different course (for example a follow-up spec that widens support), these tasks are changed first and the change is approved.
+Do not start this phase before the user has decided at Checkpoint 2. The user chose a follow-up spec that widens support (option (b)); this phase is therefore paused as described above, and its tasks are changed and approved before they are resumed.
 
 - [ ] 12. Message hints (additive)
   - [ ] 12.1 Create the branch `realstacks/phase-4-after-gate`. Write tests first for a pure function `hintFor(reason)` in `packages/cdk-plugin` (the table of design section 8, and "no hint" for other reasons), and for the validator: the violation `description` still begins with `Unsupported IAM syntax: <reason>` and ends with the hint. Run them against the unchanged code and record that they fail.
