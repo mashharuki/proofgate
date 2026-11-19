@@ -1,12 +1,12 @@
 # Design: proofgate-real-stack-validation
 
-Status: APPROVED (revision 1), because the user asked for the tasks next; decision D1 (Pattern RS-14) is still open and is handled at Checkpoint 1 of `tasks.md`. No code has been changed for this spec.
+Status: APPROVED (revision 2). RS-14 was added at the user's decision (D1) after the spike of Task 0.5. No code has been changed for this spec.
 
 Requirements: [requirements.md](./requirements.md) (revision 2, approved).
 
 ## 1. Summary
 
-Add one private CDK app, `examples/real-stacks`, that can build any of 13 realistic Patterns by name. A runner synthesizes every Pattern twice (without and with ProofGate), reads what the real plugin reports, classifies the outcome, and compares it with an expected-results table kept in the repository. Predictions are written and committed before the first measurement. After the measurement the work stops at a decision gate (Requirement 10) before anything changes in the README, the version, or npm.
+Add one private CDK app, `examples/real-stacks`, that can build any of 14 realistic Patterns by name. A runner synthesizes every Pattern twice (without and with ProofGate), reads what the real plugin reports, classifies the outcome, and compares it with an expected-results table kept in the repository. Predictions are written and committed before the first measurement. After the measurement the work stops at a decision gate (Requirement 10) before anything changes in the README, the version, or npm.
 
 Message improvements are additive. They live in the validator's `description` and `fix` text, never in the extractor's `reason` strings, because existing tests assert those strings exactly.
 
@@ -32,7 +32,7 @@ What this shows:
 
 - A failed validation is an exception (`UnscopedValidationError`, "Validation failed. A copy of this report can be found in: `<outdir>/validation-report.json`"). The runner can catch it and read the report file. The report format is verified in Task 1; I did not read the file's content in the probe.
 - The printed report names the CloudFormation resource and the construct path, for example `S/Fn/ServiceRole/DefaultPolicy/Resource (FnServiceRoleDefaultPolicyC6A839BF)`. The location is already useful.
-- In-process synthesis is fast: 13 Patterns twice should take well under 20 s. The CLI takes about 1.6 s per plain `cdk synth` and 1.9 to 4 s with ProofGate, which would give 45 s or more for 26 CLI runs. That is too close to the 60 s limit, so the CLI is used for a sample only (section 5.3).
+- In-process synthesis is fast: 14 Patterns twice should take well under 20 s. The CLI takes about 1.6 s per plain `cdk synth` and 1.9 to 4 s with ProofGate, which would give 45 s or more for 26 CLI runs. That is too close to the 60 s limit, so the CLI is used for a sample only (section 5.3).
 
 ### 2.3 Messages a user sees today
 
@@ -76,7 +76,7 @@ docs/
 - The package is `private`, is not in any `files` array, and is not packed.
 - A root script `pnpm real-stacks` runs the runner.
 - Knip: `examples/*` already has `src/app.ts` as entry, so `catalog.ts`, `helpers.ts`, and the patterns are reachable through imports. `scripts/*.mjs` is outside Knip's `project`; if Knip complains, the config gets an explicit entry for it, which is a change to `knip.json` and will be reported.
-- jscpd: thirteen similar files would trigger duplicate-code detection (`minLines` 8). `helpers.ts` holds the repeated parts: a literal role, a data role with a bucket grant, a developer role with PassRole and Lambda statements. Each Pattern file only states what differs.
+- jscpd: fourteen similar files would trigger duplicate-code detection (`minLines` 8). `helpers.ts` holds the repeated parts: a literal role, a data role with a bucket grant, a developer role with PassRole and Lambda statements. Each Pattern file only states what differs.
 
 ### 3.1 A Pattern
 
@@ -86,7 +86,8 @@ interface Pattern {
   readonly title: string;
   readonly description: string;            // English, two or three sentences
   readonly groundTruth: "safe" | "unsafe"; // under AWS semantics, decided by review
-  readonly inScope: boolean;               // false when the path leaves the modeled scope (RS-13)
+  readonly inScope: boolean;               // false when the path leaves the modeled scope (RS-13) or the author silences the finding (RS-14)
+  readonly boundary?: "cross-template" | "acknowledged"; // why it is not in scope, when inScope is false
   readonly build: (app: App) => void;      // adds one or more stacks to the app
 }
 ```
@@ -116,6 +117,7 @@ The protected bucket is `arn:aws:s3:::proofgate-protected-data` in every Pattern
 | RS-11 | the literal pair of RS-02 and an unrelated Lambda with `bucket.grantRead` in the same stack | unsafe: the literal pair is a path |
 | RS-12 | a role whose statement has `Resource` `bucket/${aws:username}/*`, written through `PolicyStatement` | safe: no PassRole |
 | RS-13 | stack A: dev role with PassRole for the literal ARN `arn:aws:iam::123456789012:role/data-role` and `lambda:CreateFunction`. Stack B: the data role with that name, Lambda trust, `bucket/*` | unsafe, `inScope: false`: the path crosses two templates, outside the modeled scope |
+| RS-14 | as RS-02, and `Validations.of(app).acknowledge({ id: "ProofGate::PG-IAM-004", reason: "..." })` | unsafe, `inScope: false`, `boundary: "acknowledged"`: the path is inside the template but the author silences the finding; observed to work on the app, the stack, and the role (section 16) |
 
 Notes:
 
@@ -158,7 +160,7 @@ Requirement 2.3 asks that the final Result comes from `cdk synth`. The in-proces
 
 | Part | Estimate | Basis |
 | --- | --- | --- |
-| 13 Patterns, in process, plain and gated | about 10 s | probe: 0.2 to 0.5 s per run, 2.2 s for the first Lean start |
+| 14 Patterns, in process, plain and gated | about 10 s | probe: 0.2 to 0.5 s per run, 2.2 s for the first Lean start |
 | CLI sample of 3 Patterns, plain and gated | about 12 s | existing demos: 1.6 s plain, 1.9 to 4 s gated |
 | Total | about 25 s | within the 60 s limit |
 
@@ -226,7 +228,7 @@ After the measurement the work stops. The report contains the table, the three c
 
 | ID | Question | Recommendation |
 | --- | --- | --- |
-| D1 | Add Pattern RS-14: a stack in which the developer acknowledges the `PG-IAM-004` finding with CDK's acknowledge mechanism? The requirements list is approved with 13 Patterns, so this needs your agreement. | Yes, as a measurement only. Verify in Task 1 whether an acknowledgement removes the finding. If it does, the README and `docs/ASSUMPTIONS.md` must say that ProofGate guards against mistakes, not against the author of the stack. Do not change the plugin in this spec. |
+| D1 | Add Pattern RS-14 (an acknowledged finding)? | **Decided: yes** (by the user, after the spike of Task 0.5). Measurement only; the plugin is not changed. The README and `docs/ASSUMPTIONS.md` must say that ProofGate guards against mistakes, not against the author of the stack, which is decided at the gate (Task 14). |
 | D2 | Should the message hints (section 8) be written only after the gate? | Yes, because a poor result may change what the messages should say. |
 | D3 | Name of the root script: `pnpm real-stacks`. | Accept. |
 | D4 | Locations of the result documents: `docs/REAL_STACKS.md` and `docs/REAL_STACKS.en.md`. | Accept. |
@@ -247,6 +249,7 @@ After the measurement the work stops. The report contains the table, the three c
 | P9 | No external dependency, toolchain pin, or published tarball content changes. | 8.2, 8.3 |
 | P10 | A message hint never changes which Patterns, regression Cases, or generated Cases are accepted or rejected (differential before and after). | 7.4 |
 | P11 | A Pattern with a policy variable is reported with the policy variable message. | 4.2 |
+| P12 | Every Pattern with `inScope: false` has a `boundary` value in the table (`cross-template` or `acknowledged`). | 4.4 |
 
 These give evidence from a sample. They do not show that ProofGate works on "typical" projects.
 
@@ -279,3 +282,12 @@ These facts were measured in throwaway scripts that were deleted afterwards.
 - **Constructs offline.** CodeBuild with a GitHub source, a `PolicyStatement` with a resource string containing `${aws:username}`, two stacks, and `Role.fromRoleArn` all synthesize without credentials, Docker, or network, each in a few milliseconds up to 0.4 s. CDK passes the policy variable through unchanged. The CodeBuild role gets a separate default policy whose log-group resources are `Fn::Join` values, and the two statements added with `addToRolePolicy` are literal.
 - **Mixed stack (RS-11 shape).** For a stack with a literal escalation path and a `grantRead` Lambda, the report had only `PG-IAM-003` findings (two violations: managed policy, non-literal `Resource`) and no `PG-IAM-004`. The path is not visible in the Result. This confirms the prediction for RS-11 from an early look, so the basis of the RS-11 prediction is "spike (plugin, in process)", not "reasoning".
 - **Acknowledgement (decision D1).** CDK's `Validations.of(scope).acknowledge({ id: "ProofGate::PG-IAM-004", reason })` removes the finding: with the acknowledgement on the app, on the stack, or on the violating role, `synth` no longer throws and the report has no violation. The same works for `ProofGate::PG-IAM-003` on an unsupported stack. Without the `ProofGate::` prefix (`PG-IAM-004`), the acknowledgement does not work. The CDK declaration says "currently only annotation warnings can be suppressed", but for plugin violations the observed behavior is that they can be suppressed. A person who writes the stack can therefore silence ProofGate with one line, in the same code. This is observed behavior of one CDK version (2.277.0).
+
+## 17. Revision 2: Pattern RS-14
+
+- RS-14 is the fourteenth Pattern. Its ground truth is unsafe. It is classified `outside the documented boundary` when the Result is `accepted`, like RS-13, but with `boundary: "acknowledged"` instead of `"cross-template"`, so that the two causes stay visible in the table and in the documents.
+- It is **not** a false negative, because the stack's author removed the finding with a CDK feature; ProofGate was told to stay silent. It is nevertheless the result that matters most for how the 1.0 release is described, so the report of the decision gate lists it separately.
+- The classification function (section 5.2) gets no new class. Its rule for `outside the documented boundary` reads "ground truth unsafe, not in scope, and the Result is `accepted`", which RS-14 satisfies.
+- The consistency test (section 7) checks that every Pattern with `inScope: false` carries a `boundary` value.
+- The runner needs no special handling: the Pattern calls `acknowledge` in its `build`, and the gated run reports an empty `pluginReports`.
+- Property P3 is unchanged (it speaks of unsafe Patterns that are in scope). A property P12 is added: for every Pattern with `inScope: false`, the table says why (`boundary`).

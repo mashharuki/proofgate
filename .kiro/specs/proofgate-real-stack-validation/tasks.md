@@ -2,15 +2,15 @@
 
 Status: APPROVED by the user's go-ahead ("you may proceed with the tasks"). In progress. The box of each task shows its state.
 
-Structure: **17 top-level tasks (Task 0 to Task 16) in 6 phases (Phase 0 to Phase 5).**
+Structure: **17 top-level tasks (Task 0 to Task 16) in 6 phases (Phase 0 to Phase 5).** The catalogue has 14 Patterns (RS-14 was added at Checkpoint 1).
 
-Requirements: [requirements.md](./requirements.md) (revision 2). Design: [design.md](./design.md) (revision 1). Properties `P1` to `P11` are defined in design section 13.
+Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 2). Properties `P1` to `P12` are defined in design section 13.
 
 ## Assumptions made when writing these tasks
 
-The design lists five open decisions. These tasks assume the recommended answer for D2 to D5 and leave D1 open:
+The design lists five decisions. These tasks assume the recommended answer for D2 to D5. D1 was decided by the user at Checkpoint 1:
 
-- D1 (Pattern RS-14, an acknowledged finding): **open**. Task 0.4 checks it read-only. Task 4.5 adds RS-14 only if the user agrees at Checkpoint 1.
+- D1 (Pattern RS-14, an acknowledged finding): **decided: add it**. Task 4.5 builds it.
 - D2: the message hints are written after the decision gate (Task 12).
 - D3: the root script is `pnpm real-stacks`.
 - D4: the result documents are `docs/REAL_STACKS.md` (Japanese) and `docs/REAL_STACKS.en.md` (English).
@@ -49,7 +49,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
 
 | Phase | Branch | Tasks | State |
 | --- | --- | --- | --- |
-| 0 | `realstacks/phase-0-spikes` | 0 | in progress |
+| 0 | `realstacks/phase-0-spikes` | 0 | done, Checkpoint 1 passed |
 | 1 | `realstacks/phase-1-catalogue` | 1, 2, 3, 4, 5 | not started |
 | 2 | `realstacks/phase-2-predictions` | 6 | not started |
 | 3 | `realstacks/phase-3-runner` | 7, 8, 9, 10, 11 | not started; Checkpoint 2 (decision gate) at Task 11 |
@@ -58,7 +58,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
 
 ## Phase 0: Spikes and baseline
 
-- [ ] 0. Baseline and feasibility spikes
+- [x] 0. Baseline and feasibility spikes
   - [x] 0.1 Create the branch `realstacks/phase-0-spikes` from the current branch `realstacks/spec` and commit the spec documents (`requirements.md`, `design.md`, `tasks.md`) and the usage-log rows written so far, as one commit.
     - Update the commit rule in `AGENTS.md` and `.kiro/steering/development.md` so that commits on `realstacks/phase-*` are allowed like those on `hardening/phase-*`. Keep push and merge rules unchanged.
     - _Requirements: 9.1_
@@ -76,7 +76,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
     - Read the CDK validation API in the installed `aws-cdk-lib` and find how a finding is acknowledged. Then, in a throwaway script, acknowledge the `PG-IAM-004` finding of the literal unsafe stack and see whether `synth` still fails. Record the answer without opinion: yes or no, and how.
     - Do not change the plugin.
     - _Design: 2.4, 12 (D1)_
-  - [ ] 0.6 **CHECKPOINT 1.** Report the baseline, the report format, the construct findings, and the answer to D1. Ask the user whether RS-14 is added. Stop and wait.
+  - [x] 0.6 **CHECKPOINT 1.** Report the baseline, the report format, the construct findings, and the answer to D1. Ask the user whether RS-14 is added. Stop and wait. (Done: the user said to add RS-14.)
 
 ## Phase 1: The package and the catalogue
 
@@ -102,12 +102,12 @@ The design lists five open decisions. These tasks assume the recommended answer 
     - If a construct needs something that is not available offline, change the Pattern, record it, and keep its ground truth.
     - _Requirements: 1.2, 1.3, 1.4_
 
-- [ ] 4. Patterns RS-10 to RS-13
+- [ ] 4. Patterns RS-10 to RS-14
   - [ ] 4.1 `rs-10.ts`: CodeBuild project with `iam:PassRole *` and `lambda:CreateFunction *`, plus a literal data role in the same stack.
   - [ ] 4.2 `rs-11.ts`: the literal unsafe pair of RS-02 plus an unrelated Lambda with `grantRead`.
   - [ ] 4.3 `rs-12.ts`: a role whose statement resource contains a policy variable.
   - [ ] 4.4 `rs-13.ts`: two stacks, the developer role in one and the data role in the other, `inScope: false`.
-  - [ ] 4.5 **Only if the user agreed at Checkpoint 1:** `rs-14.ts`, a stack in which the developer acknowledges the `PG-IAM-004` finding, using what Task 0.5 found. Ground truth unsafe. Otherwise mark this task as skipped by the user's decision.
+  - [ ] 4.5 `rs-14.ts`: as RS-02, with `Validations.of(app).acknowledge({ id: 'ProofGate::PG-IAM-004', reason })` in `build`. Ground truth unsafe, `inScope: false`, `boundary: 'acknowledged'`. Also give RS-13 `boundary: 'cross-template'`.
   - _Requirements: 1.2, 1.4, 5.1_
 
 - [ ] 5. Every Pattern synthesizes without ProofGate
@@ -118,7 +118,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
 ## Phase 2: Predictions
 
 - [ ] 6. Write and fix the predictions before any measurement
-  - [ ] 6.1 Create the branch `realstacks/phase-2-predictions`. Write `examples/real-stacks/data/predictions.json` from the appendix of `requirements.md`: for each Pattern the ground truth, the scope, the predicted Result, the predicted reasons, and `basis` (`"probe (extractor only)"` for RS-05 to RS-09 and RS-12, `"reasoning"` for the others; RS-14 only if it exists).
+  - [ ] 6.1 Create the branch `realstacks/phase-2-predictions`. Write `examples/real-stacks/data/predictions.json` from the appendix of `requirements.md`: for each Pattern the ground truth, the scope, the predicted Result, the predicted reasons, and `basis` (`"probe (extractor only)"` for RS-05 to RS-09 and RS-12, `"spike (plugin, in process)"` for RS-11 and RS-14, `"reasoning"` for the others).
     - _Requirements: 2.1, 2.3_ · _Design: 6_
   - [ ] 6.2 Commit `predictions.json` **alone**, in its own commit. Check with `git show --stat` that the commit contains only that file, and with `git ls-files` that no runner, no classifier, and no `expected-results.json` exists yet.
     - From now on `predictions.json` is never edited. A wrong prediction is recorded in `expected-results.json` and in the usage log, not here.
@@ -153,7 +153,7 @@ The design lists five open decisions. These tasks assume the recommended answer 
     - _Requirements: 2.2, 7.1_
   - [ ] 10.3 Write `data/expected-results.json` from the reviewed results (Result, class, reasons, `deviation`, and a `knownDefects` list that is expected to be empty). Then the default `pnpm real-stacks` must exit 0.
     - _Requirements: 3.1, 4.1_
-  - [ ] 10.4 Write `tests/real-stacks-table.test.ts` as in design section 7: the table is consistent with the catalogue ids, the allowed values, the classifier, and the rule that an unsafe in-scope Pattern is never filed as accepted unless it is in `knownDefects`. It reads files only and runs in milliseconds.
+  - [ ] 10.4 Write `tests/real-stacks-table.test.ts` as in design section 7: the table is consistent with the catalogue ids, the allowed values, the classifier, the rule that an unsafe in-scope Pattern is never filed as accepted unless it is in `knownDefects`, and the rule that every Pattern with `inScope: false` has a `boundary` value. It reads files only and runs in milliseconds.
     - _Requirements: 4.1, 4.3_ · _Property: P5_
   - [ ] 10.5 Measure: three runs of the default `pnpm real-stacks` (time each), and one run of `--cli all` (time and results). The default run must finish within 60 s.
     - _Requirements: 3.3_ · _Property: P7_
@@ -242,6 +242,7 @@ Task 6 (predictions) must be committed before Task 8 (the runner) exists, and Ta
 | P9 | 1.2, 8.4, 15.2 |
 | P10 | 12.3 |
 | P11 | 4.3, 10.3 |
+| P12 | 10.4 |
 
 ## Requirement coverage map
 

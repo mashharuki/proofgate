@@ -1,6 +1,6 @@
 # Requirements: proofgate-real-stack-validation
 
-Status: APPROVED (revision 2). `design.md` is written and `tasks.md` is written and awaiting approval. No code has been changed for this spec.
+Status: APPROVED (revision 3). Pattern RS-14 was added at the user's decision. `design.md` and `tasks.md` are written. No code has been changed for this spec.
 
 ## Introduction
 
@@ -28,7 +28,7 @@ Six of the eight patterns are rejected as unsupported (`PG-IAM-003`). Only templ
 - **Pattern**: one realistic CDK stack, identified as `RS-01`, `RS-02`, and so on.
 - **Ground truth**: whether a `PG-IAM-004` escalation path exists in a Pattern under the AWS rules recorded in `.kiro/specs/proofgate-verification-hardening/design.md` section 8, decided by review when the Pattern is written and recorded before ProofGate runs.
 - **Result**: the outcome of `cdk synth` with ProofGate enabled: accepted (exit 0), `PG-IAM-003`, or `PG-IAM-004`.
-- **Modeled scope**: what `docs/ASSUMPTIONS.md` and `docs/SUPPORTED_IAM.md` say ProofGate inspects. Cross-stack references, roles that are not in the template, SCPs, and conditions are outside it.
+- **Modeled scope**: what `docs/ASSUMPTIONS.md` and `docs/SUPPORTED_IAM.md` say ProofGate inspects. Cross-stack references, roles that are not in the template, SCPs, and conditions are outside it. So is a finding that the author of the stack silences with CDK's `acknowledge` (observed in the spike of Task 0.5), because that is a decision of the person that ProofGate checks, not a property of the template.
 - **False negative**: ground truth unsafe, inside the modeled scope, Result accepted.
 - **False positive**: ground truth safe, Result `PG-IAM-004`.
 - **Rejected as unsupported**: Result `PG-IAM-003` caused by a construct the extractor does not model. It is a usability limit, not a defect.
@@ -78,7 +78,7 @@ Six of the eight patterns are rejected as unsupported (`PG-IAM-003`). Only templ
 1. EACH Result SHALL be classified as one of: correct detection, correct acceptance, rejected as unsupported, false negative, false positive, or outside the documented boundary.
 2. THE report SHALL list, for each rejected Pattern, the unsupported reasons and the location that ProofGate reports, so that the usefulness of the messages can be judged.
 3. THE number of false negatives and false positives SHALL be zero for the Patterns of the appendix. IF one is found, THEN it is a defect and Requirement 7 applies.
-4. A Result where a path exists only through something outside the modeled scope (a role that is not in the template, a reference to another stack) SHALL be classified as outside the documented boundary and SHALL be described in the report. It SHALL NOT be hidden.
+4. A Result where a path exists only through something outside the modeled scope (a role that is not in the template, a reference to another stack, a finding that the stack's author acknowledged in CDK) SHALL be classified as outside the documented boundary and SHALL be described in the report. It SHALL NOT be hidden.
 
 ### Requirement 5: Fail Closed under realistic input
 
@@ -165,6 +165,7 @@ Ground truth: S = safe (no path), U = unsafe (a path exists). Predictions marked
 | RS-11 | The literal pair of RS-02 plus an unrelated Lambda with `bucket.grantRead` in the same stack | U | `PG-IAM-003` only; the path is not visible in the Result |
 | RS-12 | A role whose policy uses a policy variable (`bucket/${aws:username}/*`) | S | `PG-IAM-003` with the policy-variable message |
 | RS-13 | The developer role in one stack, passing a role by literal ARN that is defined in another stack or imported with `Role.fromRoleArn` | U (outside the modeled scope) | accepted; classified as outside the documented boundary |
+| RS-14 | As RS-02, and the stack's author acknowledges the finding with `Validations.of(...).acknowledge({ id: 'ProofGate::PG-IAM-004', reason })` | U (outside the modeled scope: the finding is silenced by the author) | accepted (spike); classified as outside the documented boundary |
 
 ## Out of scope
 
@@ -185,3 +186,4 @@ Ground truth: S = safe (no path), U = unsafe (a path exists). Predictions marked
 
 - Revision 1: first draft with the evidence from the probe, 9 requirements, and 13 Patterns.
 - Revision 2: recorded the user's decisions and added Requirement 10 (decision gate).
+- Revision 3: added Pattern RS-14 (an acknowledged finding) at the user's decision after the spike of Task 0.5, and the acknowledgement to the definition of the modeled scope. The catalogue now has 14 Patterns. The decision gate (Requirement 10.2) is unchanged, and RS-14 does not count as a false negative because it is classified as outside the documented boundary.
