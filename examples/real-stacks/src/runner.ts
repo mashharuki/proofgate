@@ -115,10 +115,13 @@ function observe(pattern: Pattern): Observed {
   const reasons = unique(
     violations
       .filter((violation) => violation.ruleName === "PG-IAM-003")
-      .map((violation) =>
-        violation.description.startsWith(UNSUPPORTED_PREFIX)
-          ? violation.description.slice(UNSUPPORTED_PREFIX.length)
-          : violation.description,
+      .map(
+        (violation) =>
+          // ヒント（" Hint: "の後）は比べず、理由の文だけを表と比べます。
+          (violation.description.startsWith(UNSUPPORTED_PREFIX)
+            ? violation.description.slice(UNSUPPORTED_PREFIX.length)
+            : violation.description
+          ).split(" Hint: ")[0] as string,
       ),
   );
   const locations = unique(

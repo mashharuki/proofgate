@@ -13,6 +13,36 @@ import type {
   PolicyViolationBeta1,
 } from "aws-cdk-lib";
 
+/**
+ * 未対応構文の理由に付ける、短いヒントです（spec proofgate-real-stack-validation, Task 12）。
+ * 文を足すだけで、理由の文と、受理・拒否の判定は変えません。ヒントは固定の区切り" Hint: "の後に置きます。
+ * Short hints for unsupported-syntax reasons. Additive only; the reason text and the verdict do not change.
+ * The order matters: the first entry whose key is contained in the reason wins.
+ */
+const HINTS: readonly (readonly [string, string])[] = [
+  [
+    "Managed policies",
+    "ProofGate reads only the AWS managed policy AWSLambdaBasicExecutionRole. Other managed policies cannot be checked yet.",
+  ],
+  [
+    "must be literal strings",
+    "ProofGate reads a Resource written as a literal, Fn::Join, the pseudo-parameters AWS::Partition, AWS::Region, AWS::AccountId, and AWS::URLSuffix, or Ref and Fn::GetAtt of a resource in the same template. Parameters, Fn::Sub, Fn::ImportValue, Fn::If, and other functions are not read. Action must be literal.",
+  ],
+  [
+    "IAM policy variables",
+    "IAM policy variables are not evaluated. Write the resource without the variable.",
+  ],
+];
+/** 権限Statementの`Condition`だけに付けるヒントです（信頼ポリシーの理由は別の文です）。 */
+const PERMISSION_CONDITION = "Condition is not supported";
+function withHint(text: string, reason: string): string {
+  const hint =
+    reason === PERMISSION_CONDITION
+      ? "A Condition on a permission statement is not evaluated, so ProofGate cannot tell when the statement applies."
+      : HINTS.find(([key]) => reason.includes(key))?.[1];
+  return hint === undefined ? text : `${text} Hint: ${hint}`;
+}
+
 /** CDKプラグインの設定です。leanDirectoryはテストや特殊な配置でだけ上書きします。 */
 export interface ProofGateValidatorProps extends ProofGateConfig {
   readonly leanDirectory?: string;
@@ -98,8 +128,11 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
       for (const finding of extraction.unsupported) {
         violations.push({
           ruleName: "PG-IAM-003",
-          description: `Unsupported IAM syntax: ${finding.reason}`,
-          fix: "Replace the unsupported IAM construct with literal Action/Resource values, or extend ProofGate before deployment.",
+          description: withHint(`Unsupported IAM syntax: ${finding.reason}`, finding.reason),
+          fix: withHint(
+            "Replace the unsupported IAM construct with literal Action/Resource values, or extend ProofGate before deployment.",
+            finding.reason,
+          ),
           violatingResources: [
             {
               resourceLogicalId: logicalIdFromPath(finding.sourcePath),
