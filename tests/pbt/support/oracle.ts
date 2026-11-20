@@ -83,13 +83,15 @@ function canPassRole(principal: RoleModel, target: RoleModel): boolean {
   );
 }
 
+// Lambda control: creating a function, or updating the configuration of an existing one.
+// UpdateFunctionConfiguration can change Role and Layers (AWS Lambda API reference, read 2026-11-20),
+// so with iam:PassRole a layer can run arbitrary code as the passed role without a code update.
+// A code update alone cannot change the role, so it is not Lambda control here.
+// 関数の作成、または既存の関数の設定の更新です。コードの更新だけでは実行ロールを変えられません。
 function canControlLambda(principal: RoleModel): boolean {
-  if (principal.statements.some((s) => allows(s, "lambda:createfunction"))) return true;
-  const configure = principal.statements.some((s) =>
-    allows(s, "lambda:updatefunctionconfiguration"),
+  return principal.statements.some(
+    (s) => allows(s, "lambda:createfunction") || allows(s, "lambda:updatefunctionconfiguration"),
   );
-  const code = principal.statements.some((s) => allows(s, "lambda:updatefunctioncode"));
-  return configure && code;
 }
 
 // Decision 8.2: Lambda trust principal. Only lambda.amazonaws.com (case-insensitive) is Lambda trust.
