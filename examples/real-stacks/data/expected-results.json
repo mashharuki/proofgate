@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "description": "Observed and reviewed results of the 14 Patterns, measured with the real plugin in process (aws-cdk-lib 2.277.0). The runner compares with this file. A Pattern whose result or reasons differ from predictions.json needs a deviation text. Rows RS-05 to RS-11 were updated on 2026-11-19 by spec proofgate-cdk-construct-support (Task 9.2), one reviewed row at a time; the 1.0.1 table is kept in expected-results-1.0.1.json.",
+  "knownDefects": [],
+  "patterns": [
+    {
+      "id": "RS-01",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    },
+    {
+      "id": "RS-02",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-03",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-04",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-05",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1 and R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-06",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-07",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1, R2, and R3; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-08",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-09",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-10",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/Build/Role/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-11",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1 and R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
+    },
+    {
+      "id": "RS-12",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "IAM policy variables in Resource are not supported",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": ["(no construct path)", "RealStack/Reader/DefaultPolicy/Resource"],
+      "deviation": null
+    },
+    {
+      "id": "RS-13",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "cross-template",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    },
+    {
+      "id": "RS-14",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "acknowledged",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    }
+  ]
+}

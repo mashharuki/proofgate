@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "description": "Observed results of the hold-out Patterns RS-15 to RS-22 with ProofGate 1.0.1, before any rule of proofgate-cdk-construct-support was implemented. Measured in process with `node dist/runner.js --holdout --cli none`. It is the baseline; the single run after the implementation is recorded separately. Never edit.",
+  "patterns": [
+    {
+      "id": "RS-15",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Api/CloudWatchRole/Resource",
+        "RealStack/Handler/ServiceRole/Resource"
+      ]
+    },
+    {
+      "id": "RS-16",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Producer/ServiceRole/DefaultPolicy/Resource",
+        "RealStack/Producer/ServiceRole/Resource"
+      ]
+    },
+    {
+      "id": "RS-17",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Worker/ServiceRole/DefaultPolicy/Resource",
+        "RealStack/Worker/ServiceRole/Resource"
+      ]
+    },
+    {
+      "id": "RS-18",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "(no construct path)",
+        "RealStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource",
+        "RealStack/OnUpload/ServiceRole/Resource",
+        "RealStack/Uploads/Notifications/HandlerPolicy/Resource"
+      ]
+    },
+    {
+      "id": "RS-19",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": ["(no construct path)", "RealStack/Worker/DefaultPolicy/Resource"]
+    },
+    {
+      "id": "RS-20",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Action and Resource must be literal strings or arrays of strings"],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "RealStack/DeveloperRole/DefaultPolicy/Resource",
+        "RealStack/Execution/DefaultPolicy/Resource"
+      ]
+    },
+    {
+      "id": "RS-21",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Action and Resource must be literal strings or arrays of strings"],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "RealStack/DeveloperRole/DefaultPolicy/Resource",
+        "RealStack/Execution/DefaultPolicy/Resource"
+      ]
+    },
+    {
+      "id": "RS-22",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    }
+  ]
+}

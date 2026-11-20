@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "description": "Hold-out predictions of the spec proofgate-cdk-construct-support, written BEFORE the Patterns RS-15 to RS-22 were run with ProofGate and before any rule R0 to R3 was implemented. The templates were synthesized without ProofGate and read to write these values. Never edit this file. predictedResultBaseline is for ProofGate 1.0.1 (this repository before the spec); predictedResultAfter is for the implementation of R0 to R3 of design.md.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-15",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "PG-IAM-003",
+      "basis": "reasoning from the synthesized template",
+      "note": "Two roles with managed policies. The Lambda role uses AWSLambdaBasicExecutionRole (readable after R2). The API Gateway CloudWatch role uses AmazonAPIGatewayPushToCloudWatchLogs, which is not in the table, so it stays rejected. Expected to remain a rejection of a safe stack."
+    },
+    {
+      "id": "RS-16",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "One managed policy (readable after R2) and an sqs statement whose Resource is Fn::GetAtt of the queue (read as a wildcard after R1). No PassRole."
+    },
+    {
+      "id": "RS-17",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "One managed policy and dynamodb statements whose Resource is Fn::GetAtt of the table. The same needs as RS-16."
+    },
+    {
+      "id": "RS-18",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "Two Lambda roles with the readable managed policy, and s3:PutBucketNotification on Fn::GetAtt of a generated-name bucket. No PassRole. The least certain of the safe accepted predictions (the custom resource role is new to the sample)."
+    },
+    {
+      "id": "RS-19",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "No managed policy. A kms statement whose Resource is Fn::GetAtt of the key. Uncertain: the stack has no S3 statement, so the rejection of a vacuous proof may apply."
+    },
+    {
+      "id": "RS-20",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the synthesized template",
+      "note": "PassRole Resource is Fn::GetAtt of the unnamed execution role (opaque name, matches itself). The execution role reads a bucket with the fixed protected name (read through Fn::GetAtt of the bucket and Fn::Join). It decides whether the opaque name of a role is right."
+    },
+    {
+      "id": "RS-21",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultBaseline": "PG-IAM-003",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "The layout of RS-20 with a bucket that has no name. The opaque bucket name must not intersect the literal protected bucket. It decides whether the opaque name of a bucket is right (a wildcard reading would report PG-IAM-004 here)."
+    },
+    {
+      "id": "RS-22",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "cross-template",
+      "predictedResultBaseline": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the synthesized template",
+      "note": "The passed role is imported by a literal ARN and is not in the template, so no path is visible. Outside the modeled scope, as RS-13."
+    }
+  ]
+}

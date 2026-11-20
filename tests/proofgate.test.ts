@@ -167,6 +167,9 @@ describe("CloudFormation extractor", () => {
     expect(result.model?.roles[0].trustServices).toEqual(["lambda.amazonaws.com"]);
   });
 
+  // R3 (spec proofgate-cdk-construct-support): an object Condition on an Allow trust statement is now read as absent
+  // (tests/construct-support-r2-r3.test.ts). This test keeps the fail-closed case that remains: a Condition that is not an object.
+  // R3により、Allowの信頼Statementのオブジェクトの Condition は無視します。ここでは、残る未対応の形（オブジェクトでないCondition）を確認します。
   it("fails closed on a Condition in the role trust policy", () => {
     const template = singleRoleTemplate() as {
       Resources: {
@@ -175,9 +178,8 @@ describe("CloudFormation extractor", () => {
         };
       };
     };
-    template.Resources.DataRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition = {
-      StringEquals: { "aws:SourceAccount": "123456789012" },
-    };
+    template.Resources.DataRole.Properties.AssumeRolePolicyDocument.Statement[0].Condition =
+      "not-an-object";
     const result = extractStack(template);
     expect(result.model).toBeUndefined();
     expect(result.unsupported).toContainEqual(

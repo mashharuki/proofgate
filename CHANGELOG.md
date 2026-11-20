@@ -8,6 +8,16 @@ All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@pr
 
 A role with no `RoleName` (the default in CDK) was not found as the target of a `iam:PassRole` Resource such as `arn:aws:iam::*:role/*` or `role/MyStack-*`. Only `*` matched, through the logical ID. A privilege-escalation path through such a role was missed. The role is now read as the opaque name `_generated_<LogicalId>`: a Resource with `*` or `?` in the role-name part matches, and a literal matches only that opaque name. The change can only add findings; a template that was accepted before may now report `PG-IAM-004`. See `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`.
 
+### Changed: more CDK templates are read
+
+ProofGate now reads three forms that CDK writes for ordinary constructs. Before, each of them made the template `PG-IAM-003`. Anything else stays `PG-IAM-003`.
+
+- `Resource` values built with `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt` of resources in the same template. An unnamed bucket or role is read as the opaque name `_generated_<LogicalId>`.
+- The managed policy `AWSLambdaBasicExecutionRole` in `ManagedPolicyArns` (no other managed policy).
+- A `Condition` object on an `Allow` statement of a trust policy is read as absent.
+
+Unknown parts of an `Allow` are read larger, never smaller, so a template that was rejected may now be accepted or report `PG-IAM-004`, and no `PG-IAM-004` of 1.0.1 disappears (checked against 1.0.1 over 3034 inputs). Assumption: the protected bucket is not an unnamed bucket of the same template (see `docs/ASSUMPTIONS.md`). On the 14 real-stack Patterns, RS-05 to RS-09 are now accepted and RS-10 and RS-11 report `PG-IAM-004`.
+
 ## 1.0.1 - 2026-11-18
 
 The first version published to npm. There is no change in behavior or in the code compared with 1.0.0; the packages were renamed.

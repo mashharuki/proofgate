@@ -7,7 +7,9 @@ ProofGate is a pre-deployment gate for AWS CDK. It extracts IAM information from
 This file lists only what an agent must not get wrong. The details are in these places and are not repeated here.
 
 - `.kiro/steering/`: product, tech, structure, security, development. `kiroween.md` is included manually.
-- `.kiro/specs/proofgate-verification-hardening/`: the active spec (`requirements.md`, `design.md`, `tasks.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
+- `.kiro/specs/proofgate-cdk-construct-support/`: the active spec (`requirements.md`, `design.md`, `tasks.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
+- `.kiro/specs/proofgate-real-stack-validation/`: the 14 realistic CDK Patterns and `pnpm real-stacks`. Its Phase 4 is done; results are in `docs/REAL_STACKS.md`.
+- `.kiro/specs/proofgate-verification-hardening/`: finished and merged.
 - `tests/pbt/`: generated tests (seeded generator, independent oracle, batched Lean runner, shrinker). How to run and replay them is in `.kiro/steering/development.md`.
 - `docs/`: supported IAM syntax, assumptions, and proofs (Japanese).
 - `.serena/memories/`: Serena project memory. Activate the project `proofgate`; the entry point is `mem:core`.
@@ -27,7 +29,7 @@ Run `nvm use` first (`.nvmrc` pins Node.js 26.13.1). A shell with an older Node.
 - TypeScript and Lean must give the same verdict. A disagreement stays a rejection (`PG-IAM-003`).
 - Do not describe the Lean check as an independent proof of CloudFormation or IAM semantics. It checks four Booleans computed by TypeScript.
 - Do not weaken, skip, or delete an existing test or assertion without the user's approval.
-- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` of the active spec; elsewhere, commit only when asked.
+- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` (finished spec) and `realstacks/phase-*` (spec `proofgate-real-stack-validation`), and `support/phase-*` (active spec `proofgate-cdk-construct-support`); elsewhere, commit only when asked.
 - Stop at every checkpoint in `tasks.md` and wait for the user.
 - A change to a matching rule may only add findings or rejections. Turning unsafe into safe needs the user's approval.
 - Do not edit generated output: `dist/`, `cdk.out/`, `.lake/`, `Generated.lean`, `.pack/`.

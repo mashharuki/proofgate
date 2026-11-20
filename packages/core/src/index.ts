@@ -81,12 +81,22 @@ function globsIntersect(a: readonly GlobToken[], b: readonly GlobToken[]): boole
  */
 function bucketAccessStatements(role: RoleModel, bucketArn: string): StatementModel[] {
   const objects = [...literalOf(`${bucketArn.replace(/\/$/, "")}/`), STAR];
+  // 名前のないバケットは、抽出器が不透明な名前`_generated_<LogicalId>`で表します（spec proofgate-cdk-construct-support, design 5）。
+  // 保護バケットの名前にワイルドカードがあると、実際の生成名がそれに一致しうるため、不透明な名前を`*`として読みます（過剰検出の側）。
+  // リテラルの保護バケットには、生成名は一致しません（ARN文字列のまま比べます）。
+  // An unnamed bucket is written as the opaque name `_generated_<LogicalId>`. If the protected bucket
+  // name has a wildcard, the real generated name may match it, so the opaque name is read as `*`.
+  const protectedHasWildcard = /[*?]/.test(bucketArn);
+  const pattern = (resource: string) =>
+    protectedHasWildcard ? resource.replace(GENERATED_NAME, "*") : resource;
   return role.statements.filter(
     (statement) =>
       allowsAction(statement, S3_DATA_ACTIONS) &&
-      statement.resources.some((resource) => globsIntersect(globOf(resource), objects)),
+      statement.resources.some((resource) => globsIntersect(globOf(pattern(resource)), objects)),
   );
 }
+/** 抽出器が名前のないリソースに付ける不透明な名前です（`@proofgate-cdk/extractor`の`GENERATED_PREFIX`と同じ形）。 */
+const GENERATED_NAME = /_generated_[A-Za-z0-9]+/g;
 /**
  * StatementのResourceが、指定した対象ロールを表しているかを判定します。
  */

@@ -12,6 +12,10 @@
     "examples/*": {
       "entry": ["src/app.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "examples/real-stacks": {
+      "entry": ["src/app.ts", "src/runner.ts"],
+      "project": ["src/**/*.ts"]
     }
   }
 }

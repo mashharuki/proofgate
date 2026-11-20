@@ -26,6 +26,8 @@ interface TrustRecipe {
   readonly awsPrincipal: boolean;
   /** Deny Statementに書くService名。無視されるはずです。 */
   readonly deniedServices: readonly string[];
+  /** trueなら、最初のAllow Statementへオブジェクトの`Condition`を付けます。無視されるはずです（R3）。 */
+  readonly condition?: boolean;
 }
 
 interface RoleRecipe {
@@ -33,7 +35,21 @@ interface RoleRecipe {
   readonly roleName: string | undefined;
   readonly trust: TrustRecipe;
   readonly policies: readonly (readonly StatementRecipe[])[];
+  /** AWSLambdaBasicExecutionRoleを、リテラルのARNまたはCDKのFn::Joinで付けるか（R2）。 */
+  readonly managed?: "string" | "join";
+  /** R1で読めるResourceを持つ、追加のインラインポリシー（最後のポリシーとして出力します）。 */
+  readonly resolvable?: ResolvableForm;
 }
+/** R1の形の名前です。期待値は、下の`RESOLVABLE`で独立に書きます。 */
+type ResolvableForm =
+  | "join-literals"
+  | "join-separator"
+  | "join-region"
+  | "getatt-bucket-unnamed"
+  | "getatt-bucket-named"
+  | "ref-bucket-named"
+  | "getatt-role"
+  | "getatt-other";
 
 interface AttachedRecipe {
   readonly logicalId: string;
@@ -69,7 +85,15 @@ type PoisonId =
   | "NON_DEFAULT_PATH"
   | "TRUST_NOT_PRINCIPAL"
   | "TRUST_CONDITION"
+  | "TRUST_CONDITION_ON_DENY"
+  | "MANAGED_POLICY_MIXED"
+  | "MANAGED_POLICY_LOOKALIKE"
   | "TRUST_NON_LITERAL"
+  | "RESOURCE_SUB"
+  | "RESOURCE_IMPORT_VALUE"
+  | "RESOURCE_UNKNOWN_ATTRIBUTE"
+  | "RESOURCE_NO_VALUE"
+  | "RESOURCE_MISSING_TARGET"
   | "MANAGED_POLICY_RESOURCE"
   | "OTHER_IAM_TYPE"
   | "MISSING_RESOURCES"
@@ -109,6 +133,54 @@ const renderStatement = (s: StatementRecipe): Json => ({
   Resource: s.resourceAsString && s.resources.length === 1 ? s.resources[0] : [...s.resources],
 });
 
+const BASIC_NAME = "service-role/AWSLambdaBasicExecutionRole";
+const BASIC_ARN = `arn:aws:iam::aws:policy/${BASIC_NAME}`;
+/** R1の形の、テンプレートの値と、期待する解決結果です（docs/SUPPORTED_IAM.mdとdesign 4.1から書きます）。 */
+const PARTITIONS = ["aws", "aws-cn", "aws-us-gov"];
+const RESOLVABLE: Record<ResolvableForm, { readonly value: unknown; readonly expected: string[] }> =
+  {
+    "join-literals": {
+      value: { "Fn::Join": ["", ["arn:aws:s3:::other-bucket", "/*"]] },
+      expected: ["arn:aws:s3:::other-bucket/*"],
+    },
+    "join-separator": {
+      value: { "Fn::Join": [":", ["arn", "aws", "s3", "", "", "other-bucket/k"]] },
+      expected: ["arn:aws:s3:::other-bucket/k"],
+    },
+    "join-region": {
+      value: {
+        "Fn::Join": [
+          "",
+          ["arn:aws:logs:", { Ref: "AWS::Region" }, ":", { Ref: "AWS::AccountId" }, ":*"],
+        ],
+      },
+      expected: ["arn:aws:logs:*:*:*"],
+    },
+    "getatt-bucket-unnamed": {
+      value: { "Fn::Join": ["", [{ "Fn::GetAtt": ["GenBucket", "Arn"] }, "/*"]] },
+      expected: PARTITIONS.map((p) => `arn:${p}:s3:::_generated_GenBucket/*`),
+    },
+    "getatt-bucket-named": {
+      value: { "Fn::GetAtt": ["NamedBucket", "Arn"] },
+      expected: PARTITIONS.map((p) => `arn:${p}:s3:::named-bucket`),
+    },
+    "ref-bucket-named": {
+      value: { "Fn::Join": ["", ["arn:aws:s3:::", { Ref: "NamedBucket" }, "/*"]] },
+      expected: ["arn:aws:s3:::named-bucket/*"],
+    },
+    "getatt-role": {
+      value: { "Fn::GetAtt": ["Role0", "Arn"] },
+      expected: [],
+    },
+    "getatt-other": { value: { "Fn::GetAtt": ["GenQueue", "Arn"] }, expected: ["*"] },
+  };
+/** `getatt-role`の期待値は、参照先のロールの名前に依存するため、ここで計算します。 */
+function expectedResolvable(form: ResolvableForm, recipe: TemplateRecipe): string[] {
+  if (form !== "getatt-role") return RESOLVABLE[form].expected;
+  const name = recipe.roles[0]?.roleName ?? "_generated_Role0";
+  return PARTITIONS.map((p) => `arn:${p}:iam::*:role/${name}`);
+}
+const RESOLVABLE_FORMS = Object.keys(RESOLVABLE) as ResolvableForm[];
 const serviceValue = (services: readonly string[]) =>
   services.length === 1 ? services[0] : [...services];
 
@@ -120,6 +192,11 @@ function renderTrust(trust: TrustRecipe): Json {
       Action: "sts:AssumeRole",
     },
   ];
+  if (trust.condition) {
+    (statements[0] as Json).Condition = {
+      ArnLike: { "aws:SourceArn": "arn:aws:lambda:*:*:function:*" },
+    };
+  }
   if (trust.star) statements.push({ Effect: "Allow", Principal: "*", Action: "sts:*" });
   if (trust.awsPrincipal) {
     statements.push({
@@ -143,11 +220,35 @@ function render(recipe: TemplateRecipe): Json {
   const roles: [string, unknown][] = recipe.roles.map((role) => {
     const properties: Json = { AssumeRolePolicyDocument: renderTrust(role.trust) };
     if (role.roleName !== undefined) properties.RoleName = role.roleName;
+    if (role.managed === "string") properties.ManagedPolicyArns = [BASIC_ARN];
+    if (role.managed === "join") {
+      properties.ManagedPolicyArns = [
+        { "Fn::Join": ["", ["arn:", { Ref: "AWS::Partition" }, `:iam::aws:policy/${BASIC_NAME}`]] },
+      ];
+    }
     if (role.policies.length > 0) {
       properties.Policies = role.policies.map((statements, index) => ({
         PolicyName: `inline-${index}`,
         PolicyDocument: { Version: "2012-10-17", Statement: statements.map(renderStatement) },
       }));
+    }
+    if (role.resolvable !== undefined) {
+      properties.Policies = [
+        ...((properties.Policies as Json[] | undefined) ?? []),
+        {
+          PolicyName: "resolvable",
+          PolicyDocument: {
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Effect: "Allow",
+                Action: "s3:GetObject",
+                Resource: RESOLVABLE[role.resolvable].value,
+              },
+            ],
+          },
+        },
+      ];
     }
     return [role.logicalId, { Type: "AWS::IAM::Role", Properties: properties }];
   });
@@ -169,6 +270,14 @@ function render(recipe: TemplateRecipe): Json {
     `Noise${i}`,
     { Type: i % 2 === 0 ? "AWS::S3::Bucket" : "AWS::Lambda::Function", Properties: { Tag: "x" } },
   ]);
+  // R1の参照先です。IAMではないので、Extractorはモデルに入れません。
+  if (recipe.roles.some((r) => r.resolvable !== undefined)) {
+    noise.push(
+      ["GenBucket", { Type: "AWS::S3::Bucket", Properties: {} }],
+      ["NamedBucket", { Type: "AWS::S3::Bucket", Properties: { BucketName: "named-bucket" } }],
+      ["GenQueue", { Type: "AWS::SQS::Queue", Properties: {} }],
+    );
+  }
   const ordered = recipe.attachedFirst
     ? [...attached, ...noise, ...roles]
     : [...roles, ...noise, ...attached];
@@ -207,13 +316,36 @@ function expectedModel(recipe: TemplateRecipe): StackModel {
           ),
         ),
       );
+    // AWSLambdaBasicExecutionRole (AWS documentation, v1): Allow logs:CreateLogGroup, CreateLogStream, PutLogEvents on "*".
+    const managed: StatementModel[] =
+      role.managed === undefined
+        ? []
+        : [
+            {
+              effect: "Allow",
+              actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+              resources: ["*"],
+              sourcePath: `Resources.${role.logicalId}.Properties.ManagedPolicyArns[0]`,
+            },
+          ];
+    const resolvable: StatementModel[] =
+      role.resolvable === undefined
+        ? []
+        : [
+            {
+              effect: "Allow",
+              actions: ["s3:GetObject"],
+              resources: expectedResolvable(role.resolvable, recipe),
+              sourcePath: `Resources.${role.logicalId}.Properties.Policies[${role.policies.length}].PolicyDocument.Statement[0]`,
+            },
+          ];
     const services = new Set(role.trust.services.map((s) => s.toLowerCase()));
     if (role.trust.star) services.add("*");
     return {
       logicalId: role.logicalId,
       roleName: role.roleName,
       trustServices: [...services].sort(),
-      statements: [...inline, ...attached],
+      statements: [...inline, ...resolvable, ...managed, ...attached],
     };
   });
   roles.sort((a, b) => (a.logicalId < b.logicalId ? -1 : 1));
@@ -236,7 +368,9 @@ type Applier = (template: Json, recipe: TemplateRecipe, t: PoisonTarget) => Pois
 
 const resourcesOf = (template: Json) => template.Resources as Record<string, Json>;
 const propertiesOf = (template: Json, id: string) => resourcesOf(template)[id]?.Properties as Json;
-const FN_JOIN = { "Fn::Join": ["", ["arn:aws:s3:::b/", { Ref: "AWS::AccountId" }]] };
+// R1 reads Ref AWS::AccountId as `*`, so the poison uses a Ref to a parameter, which stays unsupported.
+// R1はRef AWS::AccountIdを読むため、毒には読めないパラメータへのRefを使います。
+const FN_JOIN = { "Fn::Join": ["", ["arn:aws:s3:::b/", { Ref: "BucketParameter" }]] };
 const variableOf = (text: string) => `${text}\${aws:username}`;
 
 function inlineStatement(template: Json, recipe: TemplateRecipe, t: PoisonTarget) {
@@ -357,11 +491,65 @@ const APPLIERS: Record<PoisonId, Applier> = {
     const document = propertiesOf(template, role.logicalId).AssumeRolePolicyDocument as Json;
     (document.Statement as Json[])[0] = {
       ...((document.Statement as Json[])[0] as Json),
+      // R3: an object Condition on an Allow statement is read as absent, so the poison is a Condition that is not an object.
+      Condition: "not-an-object",
+    };
+    return forbid(
+      `Resources.${role.logicalId}.Properties.AssumeRolePolicyDocument.Statement[0].Condition`,
+    );
+  },
+  TRUST_CONDITION_ON_DENY: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    const document = propertiesOf(template, role.logicalId).AssumeRolePolicyDocument as Json;
+    (document.Statement as Json[])[0] = {
+      ...((document.Statement as Json[])[0] as Json),
+      Effect: "Deny",
       Condition: { StringEquals: { "sts:ExternalId": "x" } },
     };
     return forbid(
       `Resources.${role.logicalId}.Properties.AssumeRolePolicyDocument.Statement[0].Condition`,
     );
+  },
+  MANAGED_POLICY_MIXED: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    propertiesOf(template, role.logicalId).ManagedPolicyArns = [
+      BASIC_ARN,
+      "arn:aws:iam::aws:policy/AdministratorAccess",
+    ];
+    return forbid(`Resources.${role.logicalId}.Properties.ManagedPolicyArns`);
+  },
+  MANAGED_POLICY_LOOKALIKE: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    propertiesOf(template, role.logicalId).ManagedPolicyArns = [
+      "arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole",
+    ];
+    return forbid(`Resources.${role.logicalId}.Properties.ManagedPolicyArns`);
+  },
+  RESOURCE_SUB: (template, recipe, t) => {
+    const s = inlineStatement(template, recipe, t);
+    s.statement.Resource = { "Fn::Sub": "arn:aws:s3:::b/x" };
+    return forbid(s.path);
+  },
+  RESOURCE_IMPORT_VALUE: (template, recipe, t) => {
+    const s = inlineStatement(template, recipe, t);
+    s.statement.Resource = { "Fn::ImportValue": "SharedBucketArn" };
+    return forbid(s.path);
+  },
+  RESOURCE_UNKNOWN_ATTRIBUTE: (template, recipe, t) => {
+    const s = inlineStatement(template, recipe, t);
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    s.statement.Resource = { "Fn::GetAtt": [role.logicalId, "RoleId"] };
+    return forbid(s.path);
+  },
+  RESOURCE_NO_VALUE: (template, recipe, t) => {
+    const s = inlineStatement(template, recipe, t);
+    s.statement.Resource = { "Fn::Join": ["", ["arn:aws:s3:::b", { Ref: "AWS::NoValue" }]] };
+    return forbid(s.path);
+  },
+  RESOURCE_MISSING_TARGET: (template, recipe, t) => {
+    const s = inlineStatement(template, recipe, t);
+    s.statement.Resource = { "Fn::GetAtt": ["NoSuchBucket", "Arn"] };
+    return forbid(s.path);
   },
   TRUST_NON_LITERAL: (template, recipe, t) => {
     const role = recipe.roles[t.roleIndex] as RoleRecipe;
@@ -422,7 +610,15 @@ const NEEDS: Record<PoisonId, "inline" | "role" | "attached" | "none"> = {
   NON_DEFAULT_PATH: "role",
   TRUST_NOT_PRINCIPAL: "role",
   TRUST_CONDITION: "role",
+  TRUST_CONDITION_ON_DENY: "role",
+  MANAGED_POLICY_MIXED: "role",
+  MANAGED_POLICY_LOOKALIKE: "role",
   TRUST_NON_LITERAL: "role",
+  RESOURCE_SUB: "inline",
+  RESOURCE_IMPORT_VALUE: "inline",
+  RESOURCE_UNKNOWN_ATTRIBUTE: "inline",
+  RESOURCE_NO_VALUE: "inline",
+  RESOURCE_MISSING_TARGET: "inline",
   MANAGED_POLICY_RESOURCE: "none",
   OTHER_IAM_TYPE: "none",
   MISSING_RESOURCES: "none",
@@ -672,6 +868,24 @@ function shapesOf(recipe: TemplateRecipe): string[] {
     recipe.roles.some((r) => r.trust.awsPrincipal),
     "trust-aws-principal-ignored",
   );
+  add(
+    recipe.roles.some((r) => r.managed === "string"),
+    "managed-basic-string",
+  );
+  add(
+    recipe.roles.some((r) => r.managed === "join"),
+    "managed-basic-join",
+  );
+  add(
+    recipe.roles.some((r) => r.trust.condition === true),
+    "trust-condition-ignored",
+  );
+  for (const form of RESOLVABLE_FORMS) {
+    add(
+      recipe.roles.some((r) => r.resolvable === form),
+      `resolvable:${form}`,
+    );
+  }
   add(recipe.noise > 0, "noise-resource");
   add(
     recipe.roles.some((r) => r.roleName === undefined),
@@ -697,10 +911,34 @@ export function generateTemplateSpec(seed: number, index: number): TemplateSpec 
   const slot = index % 10;
   const round = Math.floor(index / 10);
   if (slot < 5) {
-    const recipe = ensureStatement(
+    const base = ensureStatement(
       randomRecipe(rng, { minRoles: 1, firstRoleNeedsPolicy: false, needAttached: false }),
       rng,
     );
+    // R2とR3の形は、別の乱数列から付けます。既存の断片の内容を変えないためです。
+    const extra = createRng(seed, index + 900_000);
+    const recipe: TemplateRecipe = {
+      ...base,
+      roles: base.roles.map((role, n) => ({
+        ...role,
+        // 先頭のロールには、round（index / 10）が偶数の断片で必ず付けて、網羅を決定的にします。
+        ...(extra.chance(0.35) || (n === 0 && round % 4 === 0)
+          ? { managed: round % 8 === 0 ? ("string" as const) : ("join" as const) }
+          : {}),
+        trust: {
+          ...role.trust,
+          ...(extra.chance(0.35) || (n === 0 && round % 4 === 1) ? { condition: true } : {}),
+        },
+        // R1の形（別の乱数列）。先頭のロールにはroundで順番に付けて、すべての形を決定的に網羅します。
+        ...(n === 0 && round % 2 === 0
+          ? {
+              resolvable: RESOLVABLE_FORMS[(round / 2) % RESOLVABLE_FORMS.length] as ResolvableForm,
+            }
+          : extra.chance(0.25)
+            ? { resolvable: extra.pick(RESOLVABLE_FORMS) }
+            : {}),
+      })),
+    };
     return { id: index, kind: "supported", recipe, shapes: shapesOf(recipe) };
   }
   if (slot < 9) {
@@ -759,6 +997,10 @@ export function requiredTemplateShapes(): string[] {
     "trust-mixed-case",
     "trust-deny-ignored",
     "trust-aws-principal-ignored",
+    "managed-basic-string",
+    "managed-basic-join",
+    "trust-condition-ignored",
+    ...RESOLVABLE_FORMS.map((form) => `resolvable:${form}`),
     "noise-resource",
     "no-role-name",
     "several-roles",
