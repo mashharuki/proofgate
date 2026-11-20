@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.js";
 import { ClassificationError, classify, RESULTS } from "./classify.js";
 import { createApp } from "./create-app.js";
+import { holdoutCatalog } from "./holdout/catalog.js";
 import type { Pattern } from "./pattern.js";
 
 /**
@@ -213,16 +214,20 @@ interface Options {
   readonly print: boolean;
   readonly only: string | undefined;
   readonly cli: "none" | "sample" | "all";
+  /** holdoutは、ホールドアウトのPatternを観測だけします（期待表はなく、--printと同じ出力です）。 */
+  readonly set: "main" | "holdout";
 }
 
 function parseArguments(argv: string[]): Options {
   let print = false;
   let only: string | undefined;
   let cli: Options["cli"] = "sample";
+  let set: Options["set"] = "main";
   for (let i = 0; i < argv.length; i++) {
     const argument = argv[i];
     if (argument === "--print") print = true;
     else if (argument === "--only") only = argv[++i];
+    else if (argument === "--holdout") set = "holdout";
     else if (argument === "--cli") {
       const mode = argv[++i];
       if (mode !== "none" && mode !== "sample" && mode !== "all") {
@@ -231,24 +236,25 @@ function parseArguments(argv: string[]): Options {
       cli = mode;
     } else if (argument !== "--") throw new HarnessError(`Unknown argument: ${String(argument)}`);
   }
-  return { print, only, cli };
+  return { print, only, cli, set };
 }
 
 function main(): number {
   const started = performance.now();
   const options = parseArguments(process.argv.slice(2));
-  const patterns = catalog.filter(
+  const patterns = (options.set === "holdout" ? holdoutCatalog : catalog).filter(
     (pattern) => options.only === undefined || pattern.id === options.only,
   );
   if (patterns.length === 0)
     throw new HarnessError(`No Pattern matches --only ${String(options.only)}`);
 
   // 期待表がなければ、Patternを実行する前に止めます（先に--printで観測して、確認します）。
-  const expected = options.print ? new Map<string, Expected>() : loadExpected();
+  const expected =
+    options.print || options.set === "holdout" ? new Map<string, Expected>() : loadExpected();
   const observedAll = patterns.map(observe);
   const problems: string[] = [];
 
-  if (options.print) {
+  if (options.print || options.set === "holdout") {
     console.log(JSON.stringify({ version: 1, patterns: observedAll }, null, 2));
   } else {
     for (const observed of observedAll) {
@@ -269,12 +275,13 @@ function main(): number {
       const observed = observedAll.find((entry) => entry.id === pattern.id);
       if (observed !== undefined) problems.push(...checkCli(pattern, observed));
     }
-    if (!options.print)
+    if (!options.print && options.set === "main")
       console.log(`cdk synth was run for ${chosen.map((p) => p.id).join(", ") || "no Pattern"}`);
   }
 
   const seconds = ((performance.now() - started) / 1000).toFixed(1);
-  if (!options.print) console.log(`${patterns.length} Patterns in ${seconds} s`);
+  if (!options.print && options.set === "main")
+    console.log(`${patterns.length} Patterns in ${seconds} s`);
   for (const problem of problems) console.error(`DIFFERENCE ${problem}`);
   return problems.length === 0 ? 0 : 1;
 }

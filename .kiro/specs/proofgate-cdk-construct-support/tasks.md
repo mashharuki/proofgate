@@ -1,15 +1,15 @@
 # Tasks: proofgate-cdk-construct-support
-Status: DRAFT, awaiting approval of this task list. No code has been changed for this spec.
+Status: APPROVED by the user. In progress. The box of each task shows its state.
 Requirements: [requirements.md](./requirements.md) (approved). Design: [design.md](./design.md) (approved). Properties `P1` to `P12` are defined in design section 12.
 Branches: stacked, one per phase, starting from `support/spec` (which is based on `realstacks/phase-3-runner`): `support/phase-0-holdout`, `support/phase-1-r0`, `support/phase-2-r3-r2`, `support/phase-3-r1`, `support/phase-4-verify`, `support/phase-5-docs`. Committing on these branches is allowed. Push and merge need the user's approval.
 Last day for code changes (Requirement 7.3, assumption D2): 2026-11-29. Code not finished by then is not merged and the result is reported as it is.
 Rules for every task: Fail Closed stays; an unknown part of an `Allow` is read larger, never smaller; no existing test or assertion is deleted, skipped, or weakened; Lean, `StackModel`, rule IDs, and the validator API do not change; no dependency change. After each task run the quality gate; if the hook reports a failure, the task is not complete.
 
 ## Phase 0: Hold-out Patterns (design section 9)
-- [ ] 0. Create branch `support/phase-0-holdout`.
-  - [ ] 0.1 Write the Patterns RS-15 to RS-22 under `examples/real-stacks/src/patterns/`, registered in a hold-out catalogue that the main runner does not include by default.
-  - [ ] 0.2 Write `holdout-predictions.json` (ground truth and predicted Result for each Pattern, before any implementation) and commit it **alone** in its own commit. It is never edited afterwards.
-  - [ ] 0.3 Run the hold-out Patterns on the unchanged code and record the baseline (not used to design rules). Add a usage-log row.
+- [x] 0. Create branch `support/phase-0-holdout`.
+  - [x] 0.1 Write the Patterns RS-15 to RS-22 under `examples/real-stacks/src/holdout/` (not `src/patterns/`, because `tests/real-stacks-table.test.ts` requires every file there to be in the main table), registered in `holdout/catalog.ts`. `createApp` can select them; the runner runs them with `--holdout`. Commit `787929d`.
+  - [x] 0.2 Write `holdout-predictions.json` (ground truth and predicted Result for each Pattern, before any implementation) and commit it **alone** in its own commit. It is never edited afterwards.
+  - [x] 0.3 Run the hold-out Patterns on the unchanged code and record the baseline (not used to design rules). Result: 8 of 8 baseline predictions matched, saved in `data/holdout-baseline-1.0.1.json`. Add a usage-log row.
 - [ ] 1. **Checkpoint 0.** Stop and wait for the user.
 
 ## Phase 1: R0, unnamed role as a PassRole target
