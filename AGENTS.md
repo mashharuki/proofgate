@@ -8,7 +8,7 @@ This file lists only what an agent must not get wrong. The details are in these 
 
 - `.kiro/steering/`: product, tech, structure, security, development. `kiroween.md` is included manually.
 - `.kiro/specs/proofgate-cdk-construct-support/`: the active spec (`requirements.md`, `design.md`, `tasks.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
-- `.kiro/specs/proofgate-real-stack-validation/`: the 14 realistic CDK Patterns and `pnpm real-stacks`. Its Phase 4 is paused until its tasks are revised and approved.
+- `.kiro/specs/proofgate-real-stack-validation/`: the 14 realistic CDK Patterns and `pnpm real-stacks`. Its Phase 4 is done; results are in `docs/REAL_STACKS.md`.
 - `.kiro/specs/proofgate-verification-hardening/`: finished and merged.
 - `tests/pbt/`: generated tests (seeded generator, independent oracle, batched Lean runner, shrinker). How to run and replay them is in `.kiro/steering/development.md`.
 - `docs/`: supported IAM syntax, assumptions, and proofs (Japanese).

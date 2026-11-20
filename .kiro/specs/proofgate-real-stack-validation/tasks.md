@@ -180,7 +180,7 @@ What this means for the tasks below (a proposal that the user still has to confi
 - **Task 15 (final verification) and Task 16 (record)** run after the follow-up spec, or when the user decides to stop it.
 - If the follow-up is stopped (its time-box ends without a result the user accepts), the other options (a) and (d) of Requirement 10.3 are still open and these tasks are resumed with that decision.
 
-## Proposed revision of Phase 4 (2026-11-19, AWAITING APPROVAL; the original tasks below stay until it is approved)
+## Revision of Phase 4 (2026-11-19, APPROVED by the user: narrowed hints, both tables, numbers-only README paragraph)
 
 The follow-up spec `proofgate-cdk-construct-support` has run (Tasks 0 to 10). With it, 14 of 14 Patterns give their target Result, and the hold-out set gave 8 of 8 as predicted. That changes what this phase should do:
 
@@ -193,39 +193,39 @@ The follow-up spec `proofgate-cdk-construct-support` has run (Tasks 0 to 10). Wi
 
 Do not start this phase before the user has decided at Checkpoint 2. The user chose a follow-up spec that widens support (option (b)); this phase is therefore paused as described above, and its tasks are changed and approved before they are resumed.
 
-- [ ] 12. Message hints (additive)
-  - [ ] 12.1 Create the branch `realstacks/phase-4-after-gate`. Write tests first for a pure function `hintFor(reason)` in `packages/cdk-plugin` (the table of design section 8, and "no hint" for other reasons), and for the validator: the violation `description` still begins with `Unsupported IAM syntax: <reason>` and ends with the hint. Run them against the unchanged code and record that they fail.
+- [x] 12. Message hints (additive). Done per the revision: hints for four reasons only (unlisted managed policy, unreadable Resource, permission Condition, policy variable), after the separator ` Hint: ` in `description` and `fix`; no `hintFor` export (tested through the validator in `tests/unsupported-hints.test.ts`, red first: 4 failed, 2 passed). The runner cuts the hint off, so the tables did not change. Generated tests pass with the default seed and seeds 12345 and 987654321.
+  - [x] 12.1 Create the branch `realstacks/phase-4-after-gate`. Write tests first for a pure function `hintFor(reason)` in `packages/cdk-plugin` (the table of design section 8, and "no hint" for other reasons), and for the validator: the violation `description` still begins with `Unsupported IAM syntax: <reason>` and ends with the hint. Run them against the unchanged code and record that they fail.
     - _Requirements: 7.4_
-  - [ ] 12.2 Implement `hintFor` and append the hint to the `description` and to `fix` of the unsupported-syntax violations. Do not change any `reason` string of the extractor. Keep the old sentence of `fix` unless no test asserts it.
+  - [x] 12.2 Implement `hintFor` and append the hint to the `description` and to `fix` of the unsupported-syntax violations. Do not change any `reason` string of the extractor. Keep the old sentence of `fix` unless no test asserts it.
     - _Requirements: 7.4_ · _Design: 8_
-  - [ ] 12.3 Differential check (Property P10): the Result of every Pattern, every regression JSON, and the generated Cases of the earlier spec (default seed and two other seeds) is the same before and after. Existing tests are unchanged and pass.
+  - [x] 12.3 Differential check (Property P10): the Result of every Pattern, every regression JSON, and the generated Cases of the earlier spec (default seed and two other seeds) is the same before and after. Existing tests are unchanged and pass.
     - _Requirements: 7.4, 8.1_ · _Property: P10_
-  - [ ] 12.4 Run the real-stack runner again and update the expected reasons if the compared text includes the hint. Run the quality gate.
+  - [x] 12.4 Run the real-stack runner again and update the expected reasons if the compared text includes the hint. Run the quality gate.
 
-- [ ] 13. Result documents
-  - [ ] 13.1 Write `docs/REAL_STACKS.md` (Japanese) and `docs/REAL_STACKS.en.md` (English): the table of Patterns (ground truth, prediction, Result, class, reasons), how to run `pnpm real-stacks`, the wrong predictions, and the sentence that the Patterns are a sample and not a claim about typical projects. Repeat the statement of what the Lean check proves from Requirement 6.5. Add nothing that says or implies more than the table shows.
+- [x] 13. Result documents. Done: `docs/REAL_STACKS.md`, `docs/REAL_STACKS.en.md` (tables generated from the data files).
+  - [x] 13.1 Write `docs/REAL_STACKS.md` (Japanese) and `docs/REAL_STACKS.en.md` (English): the table of Patterns (ground truth, prediction, Result, class, reasons), how to run `pnpm real-stacks`, the wrong predictions, and the sentence that the Patterns are a sample and not a claim about typical projects. Repeat the statement of what the Lean check proves from Requirement 6.5. Add nothing that says or implies more than the table shows.
     - _Requirements: 6.1, 6.2, 6.3, 6.5_
-  - [ ] 13.2 Add a link from `README.md` (Japanese, one sentence) to the documents. Do not remove or rewrite existing text.
+  - [x] 13.2 Add a link from `README.md` (Japanese, one sentence) to the documents. Do not remove or rewrite existing text.
     - _Requirements: 6.1_
 
-- [ ] 14. README position and changelog (as the user decided)
-  - [ ] 14.1 Apply what the user decided at the gate. If the results show that many realistic stacks are rejected, write that in plain words in the README and name the common causes (managed policies, non-literal `Resource`, trust conditions) (Requirement 6.4). Add additions only to existing Japanese documents.
-  - [ ] 14.2 Changelog and version: write an entry only if the user asks for one. Do not change the version, create a tag, or publish. If the user chooses another version, change it in the nine places listed in the earlier spec's record, and run the quality gate.
+- [x] 14. README position and changelog (as the user decided). Done: one README paragraph with the numbers (added after the existing scope paragraph, nothing removed); CHANGELOG entry under Unreleased; no version change, tag, or publish.
+  - [x] 14.1 Apply what the user decided at the gate. If the results show that many realistic stacks are rejected, write that in plain words in the README and name the common causes (managed policies, non-literal `Resource`, trust conditions) (Requirement 6.4). Add additions only to existing Japanese documents.
+  - [x] 14.2 Changelog and version: write an entry only if the user asks for one. Do not change the version, create a tag, or publish. If the user chooses another version, change it in the nine places listed in the earlier spec's record, and run the quality gate.
     - _Requirements: 6.4, 8.4_
 
-- [ ] 15. Final verification
-  - [ ] 15.1 On a clean build (delete `dist` and `cdk.out` of the packages and examples), run `pnpm quality`, `typecheck`, `test`, `pack:check`, `synth`, both `synth:proofgate` commands, `verify:demo`, and `pnpm real-stacks`, judged by the Command success criteria.
+- [x] 15. Final verification. Done on 2026-11-19 after deleting `dist` and `cdk.out`: quality, typecheck, test, pack:check pass; synth 0; safe-app gated 0; vulnerable-app gated 1 with `PG-IAM-004`; verify:demo 1 (expected); real-stacks 0. Against `origin/main`: changed existing test files are only the user-approved ones (`tests/proofgate.test.ts`, `tests/pbt/policy-variable.test.ts`, `tests/pbt/support/template-gen.ts`); no file deleted; no skip/only/todo; no toolchain or dependency version change (the lockfile only adds the private `examples/real-stacks` importer); Lean audit clean; one whitespace finding (blank line at the end of `design.md`) fixed; no credential pattern in added lines.
+  - [x] 15.1 On a clean build (delete `dist` and `cdk.out` of the packages and examples), run `pnpm quality`, `typecheck`, `test`, `pack:check`, `synth`, both `synth:proofgate` commands, `verify:demo`, and `pnpm real-stacks`, judged by the Command success criteria.
     - _Requirements: 8.1_
-  - [ ] 15.2 Check against `main`: no existing test file changed except additions, no file deleted, no `skip`/`only`/`todo`, no change of dependency, lockfile entry for an external package, toolchain pin, or tarball content (`pack:check` passes and lists the same four packages).
+  - [x] 15.2 Check against `main`: no existing test file changed except additions, no file deleted, no `skip`/`only`/`todo`, no change of dependency, lockfile entry for an external package, toolchain pin, or tarball content (`pack:check` passes and lists the same four packages).
     - _Requirements: 8.2, 8.3_ · _Property: P9_
-  - [ ] 15.3 Lean audit (no `sorry`, no `axiom`), `git diff --check`, and a scan of the added lines for credentials and tokens.
+  - [x] 15.3 Lean audit (no `sorry`, no `axiom`), `git diff --check`, and a scan of the added lines for credentials and tokens.
 
 ## Phase 5: Record and summary
 
-- [ ] 16. Kiro work record and write-up material
-  - [ ] 16.1 Review the usage log for this spec: each session has a row, wrong predictions and surprises are included, the probes are described as probes, and the result of the decision gate is recorded.
+- [x] 16. Kiro work record and write-up material. Done: `summary.md`; Serena memories and `AGENTS.md` were updated in the follow-up spec's Phase 5.
+  - [x] 16.1 Review the usage log for this spec: each session has a row, wrong predictions and surprises are included, the probes are described as probes, and the result of the decision gate is recorded.
     - _Requirements: 9.1, 9.2_
-  - [ ] 16.2 Write `summary.md` in the spec directory (English, for the submission): what was tried, what was found, what is not shown. Do not say that ProofGate works on typical projects beyond the table. Update the Serena memories and `AGENTS.md` if they became stale.
+  - [x] 16.2 Write `summary.md` in the spec directory (English, for the submission): what was tried, what was found, what is not shown. Do not say that ProofGate works on typical projects beyond the table. Update the Serena memories and `AGENTS.md` if they became stale.
     - _Requirements: 6.3, 9.3_
   - [ ] 16.3 **CHECKPOINT 3.** Report the files changed, the findings, the open risks, and the diff. Stop and wait. Do not push or merge.
 
