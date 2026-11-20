@@ -1,0 +1,44 @@
+{
+  "name": "r0-1-unnamed-prefix-star",
+  "note": "A role without RoleName gets a generated name. A PassRole Resource with a wildcard in the role-name part may match it, so this is a path (rule R0). Over-approximation: the real name may not start with MyStack-.",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:GetObject"],
+            "resources": ["arn:aws:s3:::protected-bucket/*"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::*:role/MyStack-*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:CreateFunction"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      }
+    ]
+  }
+}

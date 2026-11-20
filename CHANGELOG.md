@@ -2,6 +2,12 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
+## Unreleased
+
+### Fixed: a role without `RoleName` was never a `iam:PassRole` target for a wildcard
+
+A role with no `RoleName` (the default in CDK) was not found as the target of a `iam:PassRole` Resource such as `arn:aws:iam::*:role/*` or `role/MyStack-*`. Only `*` matched, through the logical ID. A privilege-escalation path through such a role was missed. The role is now read as the opaque name `_generated_<LogicalId>`: a Resource with `*` or `?` in the role-name part matches, and a literal matches only that opaque name. The change can only add findings; a template that was accepted before may now report `PG-IAM-004`. See `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md`.
+
 ## 1.0.1 - 2026-11-18
 
 The first version published to npm. There is no change in behavior or in the code compared with 1.0.0; the packages were renamed.
