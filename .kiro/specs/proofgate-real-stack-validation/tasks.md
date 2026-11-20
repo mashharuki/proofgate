@@ -227,7 +227,7 @@ Do not start this phase before the user has decided at Checkpoint 2. The user ch
     - _Requirements: 9.1, 9.2_
   - [x] 16.2 Write `summary.md` in the spec directory (English, for the submission): what was tried, what was found, what is not shown. Do not say that ProofGate works on typical projects beyond the table. Update the Serena memories and `AGENTS.md` if they became stale.
     - _Requirements: 6.3, 9.3_
-  - [ ] 16.3 **CHECKPOINT 3.** Report the files changed, the findings, the open risks, and the diff. Stop and wait. Do not push or merge.
+  - [x] 16.3 **CHECKPOINT 3.** Report the files changed, the findings, the open risks, and the diff. Stop and wait. Do not push or merge.
 
 ## Checkpoints
 
@@ -280,3 +280,5 @@ Task 6 (predictions) must be committed before Task 8 (the runner) exists, and Ta
 | 8 Existing behavior and release | 0.2, 1.2, 14.2, 15 |
 | 9 Kiro work record | 0.1, 16 |
 | 10 Decision gate | 11 |
+
+Merged to `main` on 2026-11-19 with the user's approval: PR #5, merge commit `56558a2`.
