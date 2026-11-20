@@ -19,7 +19,7 @@ Rules for every task: Fail Closed stays; an unknown part of an `Allow` is read l
   - [x] 2.3 Fix `allowsPassRoleTarget` in `packages/core/src/index.ts`. Check TypeScript and Lean agree on the new Cases. Properties P6, P10.
   - [x] 2.4 Add a regression JSON under `tests/pbt/regressions/`. Update `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md` for the rule.
   - [x] 2.5 Run the quality gate, `pnpm verify:demo`, and `pnpm real-stacks`. Record any row that changes. Add a usage-log row.
-- [ ] 3. **Checkpoint 1.** Stop and wait for the user. Steps 0 to 3 can be merged without Phase 3 (design section 10).
+- [x] 3. **Checkpoint 1.** Passed. R0 was merged to `main` alone as PR #4 (merge `21ffd71`, content cherry-picked onto a branch from `main`, plus a CHANGELOG entry under Unreleased). `main` was merged back into `support/phase-1-r0`. Steps 0 to 3 can be merged without Phase 3 (design section 10).
 
 ## Phase 2: R3 and R2
 - [ ] 4. Create branch `support/phase-2-r3-r2`.
