@@ -15,7 +15,9 @@ import type {
 
 /**
  * 未対応構文の理由に付ける、短いヒントです（spec proofgate-real-stack-validation, Task 12）。
- * 文を足すだけで、理由の文と、受理・拒否の判定は変えません。ヒントは固定の区切り" Hint: "の後に置きます。
+ * 文を足すだけで、理由の文と、受理・拒否の判定は変えません。ヒントは固定の区切りの後に置きます。
+ * 句点のない文（descriptionの理由）には". Hint: "、句点で終わる文（fix）には" Hint: "でつなぎます。
+ * The separator is ". Hint: " after a text without a final period (the reason), and " Hint: " after a sentence.
  * Short hints for unsupported-syntax reasons. Additive only; the reason text and the verdict do not change.
  * The order matters: the first entry whose key is contained in the reason wins.
  */
@@ -40,7 +42,8 @@ function withHint(text: string, reason: string): string {
     reason === PERMISSION_CONDITION
       ? "A Condition on a permission statement is not evaluated, so ProofGate cannot tell when the statement applies."
       : HINTS.find(([key]) => reason.includes(key))?.[1];
-  return hint === undefined ? text : `${text} Hint: ${hint}`;
+  if (hint === undefined) return text;
+  return `${text}${text.endsWith(".") ? "" : "."} Hint: ${hint}`;
 }
 
 /** CDKプラグインの設定です。leanDirectoryはテストや特殊な配置でだけ上書きします。 */
@@ -61,7 +64,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
   /** プラグイン名、ルールID、バージョンはCDKレポートに表示されます。 */
   public readonly name = "ProofGate";
   public readonly ruleIds = ["PG-IAM-003", "PG-IAM-004"];
-  public readonly version = "1.1.0";
+  public readonly version = "1.1.1";
   private readonly leanDirectory: string;
   // undefinedは未実行、nullは成功、文字列は失敗診断を表します。同じsynth中の再ビルドを避けます。
   private leanBuildError: string | null | undefined;
