@@ -2,6 +2,12 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
+## Unreleased
+
+### Fixed: the hint of an unsupported-syntax message now starts a new sentence
+
+In 1.1.0 the hint was appended directly after the reason, for example `... in the first vertical slice Hint: ...`. The description now reads `<reason>. Hint: <hint>`. The `fix` text keeps `Hint:` because its sentence already ends with a period. The reason text and every verdict are unchanged. Tools that split the description on `Hint:` should split on `. Hint: `.
+
 ## 1.1.0 - 2026-11-20
 
 The version is 1.1.0 because ProofGate reads more CDK templates than 1.0.1. The changes below can only add findings or make rejected templates readable; no finding of 1.0.1 disappears.

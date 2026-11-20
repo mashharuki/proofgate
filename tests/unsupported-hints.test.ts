@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest";
 
 // spec proofgate-real-stack-validation, Task 12 (revised): additive hints on PG-IAM-003 messages.
 // 未対応構文の指摘へ、短いヒントを追加します。reasonの文と、受理・拒否の判定は変えません。
-// The hint follows the fixed separator " Hint: " so that tools can cut it off.
+// The hint follows a fixed separator so that tools can cut it off: ". Hint: " in the description (the reason has
+// no final period), and " Hint: " in the fix (its sentence already ends with a period).
+// 区切りは、descriptionでは". Hint: "（理由の文に句点がないため）、fixでは" Hint: "（文が句点で終わるため）です。
 type Json = Record<string, unknown>;
 const role = (properties: Json, statement: Json = {}) => ({
   Resources: {
@@ -93,11 +95,12 @@ describe("hints on unsupported-syntax findings", () => {
         v.description.startsWith(`Unsupported IAM syntax: ${reason}`),
       );
       expect(found, reason).toBeDefined();
-      const [head, hint] = (found?.description ?? "").split(" Hint: ");
+      const [head, hint] = (found?.description ?? "").split(". Hint: ");
       expect(head).toBe(`Unsupported IAM syntax: ${reason}`);
       expect(hint).toContain(hintText);
-      expect(found?.fix.startsWith(OLD_FIX)).toBe(true);
+      expect(found?.fix.startsWith(`${OLD_FIX} Hint: `)).toBe(true);
       expect(found?.fix).toContain(hintText);
+      expect(found?.fix).not.toContain("..");
     });
   }
   it("adds no hint for other reasons", () => {
@@ -113,7 +116,7 @@ describe("hints on unsupported-syntax findings", () => {
   it("gives the vacuous-proof finding no hint, so it never mentions a policy variable", () => {
     for (const [, template] of cases) {
       for (const v of violationsFor(template)) {
-        if (v.description.includes("vacuous proof")) expect(v.description).not.toContain(" Hint: ");
+        if (v.description.includes("vacuous proof")) expect(v.description).not.toContain("Hint: ");
       }
     }
   });
