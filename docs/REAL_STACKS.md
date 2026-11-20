@@ -58,6 +58,38 @@ pnpm real-stacks --cli all   # 実際のcdk synthのCLIでも確かめます（�
 - RS-15は、API Gatewayのログ用ロールが、表にない管理ポリシー`AmazonAPIGatewayPushToCloudWatchLogs`を使うため、今も`PG-IAM-003`です。
 - RS-20とRS-21は、実装から完全には独立していません。値リゾルバの欠陥を見つけた単体テストが、この2つの構成を写しているためです。
 
+## npmの1.1.1を使った試用（2026-11-20）
+
+npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外の小さなCDKアプリで試しました（aws-cdk-lib 2.277.0、保護バケットは名前を固定した`arn:aws:s3:::proofgate-trial-customer-data`）。各構成の予想は実行の前に書きました。18構成すべてが予想どおりでした。ProofGateなしの`cdk synth`は、すべて成功しました。この試用アプリはリポジトリに含めていません。
+
+| 構成                 | 内容                                                                                                          | ProofGateあり                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `safe`               | `grantRead`で保護バケットを読むLambda                                                                         | 受理                              |
+| `risky`              | safeに、実行ロールを`role.roleArn`で渡せる`iam:PassRole`と`lambda:CreateFunction`を持つデプロイ用ロールを追加 | `PG-IAM-004`                      |
+| `apigw`              | REST API（CDKがログ用ロールに管理ポリシー`AmazonAPIGatewayPushToCloudWatchLogs`を付ける）                     | `PG-IAM-003`                      |
+| `apigw-no-log-role`  | apigwに`cloudWatchRole: false`                                                                                | 受理                              |
+| `parameter`          | バケット名をCloudFormationパラメータで受け取るStatement                                                       | `PG-IAM-003`                      |
+| `sqs`                | SQSのイベントソース                                                                                           | 受理                              |
+| `dynamodb`           | `grantReadWriteData`                                                                                          | 受理                              |
+| `stepfunctions`      | LambdaをStep Functionsから呼ぶ                                                                                | 受理                              |
+| `ecs`                | Fargateのタスクロールが保護バケットを読む                                                                     | 受理                              |
+| `all-risky`          | sqs、dynamodb、stepfunctions、ecs、riskyの全部                                                                | `PG-IAM-004`（経路は1本）         |
+| `pass-wildcard`      | `iam:PassRole`を`arn:aws:iam::*:role/*`で許可                                                                 | `PG-IAM-004`                      |
+| `pass-prefix`        | `iam:PassRole`を`role/TrialStack-*`（アカウントはトークン）で許可                                             | `PG-IAM-004`                      |
+| `grant-pass`         | `role.grantPassRole(deployer)`                                                                                | `PG-IAM-004`                      |
+| `update-pair`        | 作成ではなく、設定の更新とコードの更新                                                                        | `PG-IAM-004`                      |
+| `update-config-only` | 設定の更新だけ                                                                                                | 受理（見逃しの候補）              |
+| `admin-managed`      | デプロイ用ロールに`AdministratorAccess`                                                                       | `PG-IAM-003`                      |
+| `cross-stack`        | デプロイ用ロールを別スタックに置き、ARNをスタック間参照で渡す                                                 | `PG-IAM-003`（`Fn::ImportValue`） |
+| `acknowledged`       | riskyを`acknowledge`で抑止                                                                                    | 受理（範囲外）                    |
+
+この試用で分かったこと:
+
+- `update-config-only`は、今の規則の定義どおり受理されます。規則は、既存の関数の乗っ取りを「設定の更新とコードの更新の両方」がそろったときだけ数えるためです。ところがAWSのAPIリファレンスでは、`UpdateFunctionConfiguration`だけで実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのものも可）を変えられます。そのため、コードの更新なしで任意のコードを動かせる可能性があります。修正タスクとして扱います（`CHANGELOG.md`を参照）。
+- `ecs`のタスクロールは保護バケットを読めますが、指摘は出ません。`PG-IAM-004`が見るのはLambdaを使う経路だけで、`iam:PassRole`と`ecs:RunTask`のようなECSの経路は検査の対象外です。
+- `cross-stack`は、ARNをスタック間参照で渡したため`PG-IAM-003`になりました。ARNを文字列で直接書いた場合（RS-13）は受理されます。
+- 保護バケットには`bucketName`を付けて、リテラルのARNで指定しました。名前のないバケットを保護対象にすると経路を見逃します（`docs/ASSUMPTIONS.md`）。
+
 ## Leanの検査が示すこと
 
 Leanは、TypeScriptが計算した4つの事実（`canPassRole`、`canControlLambda`、`targetIsLambdaAssumable`、`targetCanAccess`）を検査します。CloudFormationテンプレートやIAM Statementの意味そのものを検証するものではありません。抽出器、値リゾルバ、管理ポリシーの表は信頼する実装です（`docs/ASSUMPTIONS.md`）。
