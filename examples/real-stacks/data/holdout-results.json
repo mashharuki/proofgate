@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "description": "The single run of the hold-out Patterns RS-15 to RS-22 after the implementation of R0 to R3 (spec proofgate-cdk-construct-support, Task 9.3), on 2026-11-19, with `node dist/runner.js --holdout --cli none`. Recorded as observed. Never edit.",
+  "patterns": [
+    {
+      "id": "RS-15",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Managed policies are not supported in the first vertical slice"],
+      "rules": ["PG-IAM-003"],
+      "locations": ["RealStack/Api/CloudWatchRole/Resource"]
+    },
+    {
+      "id": "RS-16",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-17",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-18",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-19",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-20",
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "rules": ["PG-IAM-004"],
+      "locations": ["RealStack/DeveloperRole/Resource"]
+    },
+    {
+      "id": "RS-21",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-22",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    }
+  ]
+}

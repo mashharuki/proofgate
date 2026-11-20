@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Observed and reviewed results of the 14 Patterns, measured with the real plugin in process (aws-cdk-lib 2.277.0). The runner compares with this file. A Pattern whose result or reasons differ from predictions.json needs a deviation text.",
+  "description": "Observed and reviewed results of the 14 Patterns, measured with the real plugin in process (aws-cdk-lib 2.277.0). The runner compares with this file. A Pattern whose result or reasons differ from predictions.json needs a deviation text. Rows RS-05 to RS-11 were updated on 2026-11-19 by spec proofgate-cdk-construct-support (Task 9.2), one reviewed row at a time; the 1.0.1 table is kept in expected-results-1.0.1.json.",
   "knownDefects": [],
   "patterns": [
     {
@@ -50,106 +50,73 @@
       "id": "RS-05",
       "groundTruth": "safe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Action and Resource must be literal strings or arrays of strings",
-        "Managed policies are not supported in the first vertical slice",
-        "No supported IAM policy statements were found; refusing a vacuous proof"
-      ],
-      "locations": [
-        "(no construct path)",
-        "RealStack/Reader/ServiceRole/DefaultPolicy/Resource",
-        "RealStack/Reader/ServiceRole/Resource"
-      ],
-      "deviation": null
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1 and R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-06",
       "groundTruth": "safe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Action and Resource must be literal strings or arrays of strings",
-        "No supported IAM policy statements were found; refusing a vacuous proof"
-      ],
-      "locations": ["(no construct path)", "RealStack/Worker/DefaultPolicy/Resource"],
-      "deviation": null
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-07",
       "groundTruth": "safe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Action and Resource must be literal strings or arrays of strings",
-        "Condition is not supported in trust policies",
-        "Managed policies are not supported in the first vertical slice",
-        "No supported IAM policy statements were found; refusing a vacuous proof"
-      ],
-      "locations": [
-        "(no construct path)",
-        "RealStack/Flow/Role/DefaultPolicy/Resource",
-        "RealStack/Flow/Role/Resource",
-        "RealStack/Worker/ServiceRole/Resource"
-      ],
-      "deviation": null
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1, R2, and R3; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-08",
       "groundTruth": "safe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Action and Resource must be literal strings or arrays of strings",
-        "No supported IAM policy statements were found; refusing a vacuous proof"
-      ],
-      "locations": ["(no construct path)", "RealStack/Task/TaskRole/DefaultPolicy/Resource"],
-      "deviation": null
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-09",
       "groundTruth": "safe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Managed policies are not supported in the first vertical slice",
-        "No supported IAM policy statements were found; refusing a vacuous proof"
-      ],
-      "locations": ["(no construct path)", "RealStack/Task/ServiceRole/Resource"],
-      "deviation": null
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-10",
       "groundTruth": "unsafe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": ["Action and Resource must be literal strings or arrays of strings"],
-      "locations": ["RealStack/Build/Role/DefaultPolicy/Resource"],
-      "pathVisibleInResult": false,
-      "deviation": null
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/Build/Role/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-11",
       "groundTruth": "unsafe",
       "inScope": true,
-      "result": "PG-IAM-003",
-      "class": "rejected as unsupported",
-      "reasons": [
-        "Action and Resource must be literal strings or arrays of strings",
-        "Managed policies are not supported in the first vertical slice"
-      ],
-      "locations": [
-        "RealStack/Unrelated/ServiceRole/DefaultPolicy/Resource",
-        "RealStack/Unrelated/ServiceRole/Resource"
-      ],
-      "pathVisibleInResult": false,
-      "deviation": null
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": "The prediction was for 1.0.1, which gave PG-IAM-003. Spec proofgate-cdk-construct-support makes the template readable with rule R1 and R2; the Result is the target of its Requirement 1. The 1.0.1 row is kept in expected-results-1.0.1.json."
     },
     {
       "id": "RS-12",

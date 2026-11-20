@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "description": "Observed and reviewed results of the 14 Patterns, measured with the real plugin in process (aws-cdk-lib 2.277.0). The runner compares with this file. A Pattern whose result or reasons differ from predictions.json needs a deviation text.",
+  "knownDefects": [],
+  "patterns": [
+    {
+      "id": "RS-01",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    },
+    {
+      "id": "RS-02",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-03",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-04",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": [],
+      "locations": ["RealStack/DeveloperRole/Resource"],
+      "pathVisibleInResult": true,
+      "deviation": null
+    },
+    {
+      "id": "RS-05",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Reader/ServiceRole/DefaultPolicy/Resource",
+        "RealStack/Reader/ServiceRole/Resource"
+      ],
+      "deviation": null
+    },
+    {
+      "id": "RS-06",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": ["(no construct path)", "RealStack/Worker/DefaultPolicy/Resource"],
+      "deviation": null
+    },
+    {
+      "id": "RS-07",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Condition is not supported in trust policies",
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Flow/Role/DefaultPolicy/Resource",
+        "RealStack/Flow/Role/Resource",
+        "RealStack/Worker/ServiceRole/Resource"
+      ],
+      "deviation": null
+    },
+    {
+      "id": "RS-08",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": ["(no construct path)", "RealStack/Task/TaskRole/DefaultPolicy/Resource"],
+      "deviation": null
+    },
+    {
+      "id": "RS-09",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": ["(no construct path)", "RealStack/Task/ServiceRole/Resource"],
+      "deviation": null
+    },
+    {
+      "id": "RS-10",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Action and Resource must be literal strings or arrays of strings"],
+      "locations": ["RealStack/Build/Role/DefaultPolicy/Resource"],
+      "pathVisibleInResult": false,
+      "deviation": null
+    },
+    {
+      "id": "RS-11",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Action and Resource must be literal strings or arrays of strings",
+        "Managed policies are not supported in the first vertical slice"
+      ],
+      "locations": [
+        "RealStack/Unrelated/ServiceRole/DefaultPolicy/Resource",
+        "RealStack/Unrelated/ServiceRole/Resource"
+      ],
+      "pathVisibleInResult": false,
+      "deviation": null
+    },
+    {
+      "id": "RS-12",
+      "groundTruth": "safe",
+      "inScope": true,
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "IAM policy variables in Resource are not supported",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "locations": ["(no construct path)", "RealStack/Reader/DefaultPolicy/Resource"],
+      "deviation": null
+    },
+    {
+      "id": "RS-13",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "cross-template",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    },
+    {
+      "id": "RS-14",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "boundary": "acknowledged",
+      "result": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": [],
+      "locations": [],
+      "deviation": null
+    }
+  ]
+}
