@@ -98,7 +98,7 @@ describe("hints on unsupported-syntax findings", () => {
       const [head, hint] = (found?.description ?? "").split(". Hint: ");
       expect(head).toBe(`Unsupported IAM syntax: ${reason}`);
       expect(hint).toContain(hintText);
-      expect(found?.fix.startsWith(`${OLD_FIX} Hint: `)).toBe(true);
+      expect(found?.fix?.startsWith(`${OLD_FIX} Hint: `)).toBe(true);
       expect(found?.fix).toContain(hintText);
       expect(found?.fix).not.toContain("..");
     });

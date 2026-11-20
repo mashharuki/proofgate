@@ -1,5 +1,5 @@
 // 差分確認（spec proofgate-cdk-construct-support, Task 9.1, Properties P1 and P2）です。
-// 1.0.1の抽出器と評価器、今の抽出器と評価器を、同じ入力に適用して比べます。
+// 古い版（--oldで指定。最初は1.0.1）の抽出器と評価器、今の抽出器と評価器を、同じ入力に適用して比べます。
 // Differential check of the 1.0.1 extractor and evaluator against the current ones (Task 9.1).
 //
 // 使い方 / Usage (see tasks.md, Task 9.1):
@@ -141,8 +141,8 @@ const section = (title, lines, limit = Number.POSITIVE_INFINITY) => {
   for (const line of lines.slice(0, limit)) console.log(`- ${line}`);
   if (lines.length > limit) console.log(`- ... ${lines.length - limit} more`);
 };
-console.log(`# Differential: 1.0.1 (${oldRoot}) against the current code, ${inputs} inputs`);
-section("P1: findings of 1.0.1 that disappeared (must be 0)", lost);
+console.log(`# Differential: old version (${oldRoot}) against the current code, ${inputs} inputs`);
+section("P1: findings of the old version that disappeared (must be 0)", lost);
 const readableNonFragment = readable.filter((l) => !l.startsWith("fragment "));
 section("P2: PG-IAM-003 -> readable (real stacks and regressions)", readableNonFragment);
 const readableFragments = readable.filter((l) => l.startsWith("fragment "));

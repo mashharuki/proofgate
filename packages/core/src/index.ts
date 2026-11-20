@@ -131,20 +131,20 @@ const S3_DATA_ACTIONS = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:
 
 /**
  * 任意コードを対象ロールで実行できるLambda操作の根拠を返します。
- * 新規作成は単独で成立します。既存関数の悪用には、ロール設定とコードの両方の更新を要求します。
+ * 新規作成、または既存関数の設定の更新です。設定の更新では実行ロール（Role）とレイヤー（Layers）を変えられるため、
+ * コードを更新する権限がなくても、レイヤーのコードを対象ロールで実行できます（AWS Lambda APIリファレンス、
+ * UpdateFunctionConfiguration、2026-11-20に確認）。コードの更新だけでは実行ロールを変えられないため、数えません。
+ * Creating a function, or updating the configuration of an existing one: UpdateFunctionConfiguration can change
+ * Role and Layers, so a layer can run code as the passed role without UpdateFunctionCode.
  */
 function lambdaControlStatements(role: RoleModel): StatementModel[] {
   const create = role.statements.filter((statement) =>
     allowsAction(statement, ["lambda:CreateFunction"]),
   );
   if (create.length > 0) return create;
-  const configure = role.statements.filter((statement) =>
+  return role.statements.filter((statement) =>
     allowsAction(statement, ["lambda:UpdateFunctionConfiguration"]),
   );
-  const code = role.statements.filter((statement) =>
-    allowsAction(statement, ["lambda:UpdateFunctionCode"]),
-  );
-  return configure.length > 0 && code.length > 0 ? [...new Set([...configure, ...code])] : [];
 }
 
 interface CandidatePath {
