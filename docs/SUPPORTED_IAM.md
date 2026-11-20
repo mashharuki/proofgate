@@ -10,7 +10,7 @@
 - 文字列または文字列配列で指定された`Action`、`Resource`
 - Action・Resource文字列内の`*`によるglob matching
 - Action・Resource文字列内の`?`（任意の1文字）によるglob matching
-- `iam:PassRole`、Lambdaの作成、または設定更新とコード更新の組み合わせ、S3オブジェクトの読み取り・書き込み・削除Action
+- `iam:PassRole`、Lambdaの作成、または既存のLambda関数の設定更新（`lambda:UpdateFunctionConfiguration`。1.1.1までは設定更新とコード更新の組み合わせを要求していました）、S3オブジェクトの読み取り・書き込み・削除Action
 - 保護対象バケットへのアクセスは、ポリシーのResourceが表すARN集合と、保護対象バケット内のオブジェクト集合が交わるかで判定します。`bucket/reports/*`のような一部のプレフィックスや、単一オブジェクトへのアクセスも、保護対象バケットへのアクセスとみなします。バケットレベルのARNだけでは、オブジェクト操作へのアクセスとはみなしません
 
 ProofGateは次の場合に`PG-IAM-003`を報告し、Fail Closedで拒否します。
@@ -62,3 +62,7 @@ English: `ManagedPolicyArns` is read for one managed policy only, `AWSLambdaBasi
 パーティションを`*`にしないのは、評価器の`*`がコロンをまたぐためです。`arn:*:s3:::x/*`は保護バケットのオブジェクトと必ず交わり、すべてのバケットが誤検出になります。
 
 English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to the three documented partitions `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt Arn` of buckets and roles of the same template. `Ref` or `Fn::GetAtt` of any other resource of the template is read as `*`. An unnamed bucket or role is written as the opaque name `_generated_<LogicalId>`. An unnamed bucket does not meet a literal protected bucket; if the protected name has `*` or `?`, the opaque name is read as `*`. Anything else (a parameter, `Fn::Sub`, `Fn::ImportValue`, `Fn::If`, a missing target, an attribute other than `Arn` of a bucket or a role, `AWS::StackName`, `AWS::NoValue`) rejects the value with `PG-IAM-003`. The partition is not read as `*` because the evaluator's `*` crosses colons, so `arn:*:s3:::x/*` would always meet the protected objects.
+
+Lambdaの制御は、`lambda:CreateFunction`、または`lambda:UpdateFunctionConfiguration`です。`UpdateFunctionConfiguration`は、実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのレイヤーも可）を変えられます（AWS Lambda APIリファレンス、2026-11-20に確認）。そのため、`iam:PassRole`と組み合わせると、コードを更新する権限がなくても、レイヤーのコードを渡したロールで実行できます。`lambda:UpdateFunctionCode`だけでは実行ロールを変えられないため、Lambdaの制御とはみなしません。この変更は指摘を増やす方向だけに働きます。
+
+English: Lambda control is `lambda:CreateFunction` or `lambda:UpdateFunctionConfiguration`. A configuration update can change the execution role (`Role`) and the layers (`Layers`, also from other accounts; AWS Lambda API reference, checked 2026-11-20), so together with `iam:PassRole` it can run layer code as the passed role without a code update. `lambda:UpdateFunctionCode` alone cannot change the role and is not Lambda control. Up to 1.1.1 a configuration update counted only together with a code update. The change can only add findings.

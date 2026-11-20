@@ -9,7 +9,7 @@ Individually reasonable IAM statements can combine into a privilege-escalation p
 The first rule (`PG-IAM-004`) detects this path to a protected S3 bucket:
 
 1. A principal holds `iam:PassRole` for a target role.
-2. The same principal can create a Lambda function, or update both its role configuration and its code.
+2. The same principal can create a Lambda function, or update the configuration of an existing one (`lambda:UpdateFunctionConfiguration` can change `Role` and `Layers`; up to 1.1.1 both a configuration and a code update were required).
 3. The target role trusts the Lambda service.
 4. The target role can access a protected S3 bucket.
 

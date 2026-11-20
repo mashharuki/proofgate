@@ -2,6 +2,12 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
+## Unreleased
+
+### Fixed: a configuration update alone is Lambda control
+
+Up to 1.1.1, taking over an existing Lambda function counted only with both `lambda:UpdateFunctionConfiguration` and `lambda:UpdateFunctionCode`. But `UpdateFunctionConfiguration` alone can change the execution role (`Role`) and the layers (`Layers`, also from other accounts), so together with `iam:PassRole` it can run code as the passed role. It now counts on its own. `lambda:UpdateFunctionCode` alone still does not (it cannot change the role). Found in a trial of 1.1.1 from npm. The change can only add findings: a template that was accepted may now report `PG-IAM-004` (checked against 1.1.1 over 3034 inputs: no finding lost).
+
 ## 1.1.1 - 2026-11-20
 
 ### Fixed: the hint of an unsupported-syntax message now starts a new sentence

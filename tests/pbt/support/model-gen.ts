@@ -148,6 +148,8 @@ function lambdaStatements(rng: Rng): Chosen<StatementSpec[]> {
       form: "lambda:config-code-split",
     },
     { value: [single("lambda:UpdateFunction*")], form: "lambda:config-code-one" },
+    // A configuration update alone is Lambda control (it can change Role and Layers).
+    { value: [single("lambda:UpdateFunctionConfiguration")], form: "lambda:config-only" },
   ]);
 }
 
@@ -196,7 +198,7 @@ function inertStatement(rng: Rng): StatementSpec {
 // ---------------------------------------------------------------------------------------------
 
 type PassMode = "valid" | "broken" | "alias" | "arnCase";
-type LambdaMode = "valid" | "none" | "only-code" | "only-config";
+type LambdaMode = "valid" | "none" | "only-code";
 type TrustMode = "valid" | "broken" | "star";
 type AccessMode =
   | "valid"
@@ -248,7 +250,6 @@ const BREAKS: readonly Partial<Plan>[] = [
   { pass: "broken" },
   { lambda: "none" },
   { lambda: "only-code" },
-  { lambda: "only-config" },
   { trust: "broken" },
   { access: "other-bucket" },
   { access: "bucket-level" },
@@ -338,8 +339,6 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
     principalStatements.push(...lambda.value);
   } else if (plan.lambda === "only-code") {
     principalStatements.push({ actions: ["lambda:UpdateFunctionCode"], resources: ["*"] });
-  } else if (plan.lambda === "only-config") {
-    principalStatements.push({ actions: ["lambda:UpdateFunctionConfiguration"], resources: ["*"] });
   }
   for (let i = rng.int(0, 2); i > 0; i--) principalStatements.push(inertStatement(rng));
   if (principalStatements.length > 2) forms.push("split-statements");
@@ -687,6 +686,7 @@ const REQUIRED_FORMS: readonly string[] = [
   "lambda:create-glob",
   "lambda:config-code-split",
   "lambda:config-code-one",
+  "lambda:config-only",
   "accessact:get",
   "accessact:put-star",
   "accessact:service-star",
