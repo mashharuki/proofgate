@@ -180,6 +180,15 @@ What this means for the tasks below (a proposal that the user still has to confi
 - **Task 15 (final verification) and Task 16 (record)** run after the follow-up spec, or when the user decides to stop it.
 - If the follow-up is stopped (its time-box ends without a result the user accepts), the other options (a) and (d) of Requirement 10.3 are still open and these tasks are resumed with that decision.
 
+## Proposed revision of Phase 4 (2026-11-19, AWAITING APPROVAL; the original tasks below stay until it is approved)
+
+The follow-up spec `proofgate-cdk-construct-support` has run (Tasks 0 to 10). With it, 14 of 14 Patterns give their target Result, and the hold-out set gave 8 of 8 as predicted. That changes what this phase should do:
+
+- Task 12 (message hints): narrow the hint table to the reasons that are still reachable in the sample: an unlisted managed policy (hint: only `AWSLambdaBasicExecutionRole` is read; RS-15), a non-readable `Resource` (hint: the list of readable intrinsics), a permission-statement `Condition`, and a policy variable (RS-12). Additive to `description` and `fix` only; `reason` strings unchanged; tests first. Alternative: drop Task 12 (YAGNI). The user chooses.
+- Task 13 (result documents): `docs/REAL_STACKS.md` (Japanese) and `docs/REAL_STACKS.en.md` show both tables, 1.0.1 and current, plus the hold-out run, the wrong predictions, and the limit on independence of RS-20 and RS-21. The Lean statement of Requirement 6.5 stays.
+- Task 14 (README position): one plain paragraph with the numbers of the tables only. The CHANGELOG entry was already written under Unreleased by the follow-up spec; no version change, tag, or publish.
+- Tasks 15 and 16: unchanged.
+
 ## Phase 4: After the decision gate (only with the user's decision)
 
 Do not start this phase before the user has decided at Checkpoint 2. The user chose a follow-up spec that widens support (option (b)); this phase is therefore paused as described above, and its tasks are changed and approved before they are resumed.

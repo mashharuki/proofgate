@@ -64,7 +64,9 @@ Part of `pnpm test`. They compare an independent oracle, the TypeScript evaluato
 
 The spec `proofgate-verification-hardening` is built on stacked branches, one per phase: `hardening/phase-0-baseline` to `hardening/phase-5-extractor`, and later phases on the same pattern. Committing on these branches is allowed. Push and merge need the user's approval. Stop at each checkpoint listed in `tasks.md`.
 
-The spec `proofgate-real-stack-validation` uses the same way of working with the branches `realstacks/phase-0-spikes`, `realstacks/phase-1-catalogue`, and so on (see its `tasks.md`).
+The spec `proofgate-real-stack-validation` uses the same way of working with the branches `realstacks/phase-0-spikes`, `realstacks/phase-1-catalogue`, and so on (see its `tasks.md`). The spec `proofgate-cdk-construct-support` uses `support/phase-0-holdout` to `support/phase-5-docs`, stacked on `realstacks/phase-3-runner`.
+
+Real-stack runner: `pnpm real-stacks` (exit 0 match, 1 difference, 2 harness error; `--cli all` also runs the real `cdk synth`; `--holdout` observes the hold-out Patterns, which are run only once per spec).
 
 ## Spec task quality gate (Kiro hook)
 

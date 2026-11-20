@@ -43,11 +43,11 @@ Rules for every task: Fail Closed stays; an unknown part of an `Allow` is read l
   - [x] 9.2 Acceptance run: update the expected table of the real-stack runner one reviewed row at a time and compare with Requirement 1 (P8). Any difference from the target is listed for the user's approval. Done: 7 rows updated with a deviation text each; 1.0.1 table kept as `data/expected-results-1.0.1.json`; 14 of 14 match, no difference from the target; `--cli all` agrees (56.5 s).
   - [x] 9.3 Hold-out run, once (P9). Report every Result, including Patterns still rejected. Do not change a rule after seeing it without recording that as a new decision. Done once: 8 of 8 match `holdout-predictions.json` (RS-15 `PG-IAM-003` for the managed policy `AmazonAPIGatewayPushToCloudWatchLogs`; RS-16 to RS-19 and RS-21 accepted; RS-20 `PG-IAM-004`; RS-22 accepted, outside the boundary). Saved as `data/holdout-results.json`. No rule was changed after the run. Limit on independence: the R1 unit tests that found the partition defect in Phase 3 copy the layouts of RS-20 and RS-21, so these two are not fully independent of the implementation.
   - [x] 9.4 Run the gate, `pnpm verify:demo`, `pnpm synth`, `pnpm pack:check`. Done: gate passes, `synth` exit 0, `verify:demo` exit 1 with `PG-IAM-004` (expected).
-- [ ] 10. **Checkpoint 4.** Stop and wait for the user.
+- [x] 10. **Checkpoint 4.** Passed. The user approved the three changed fixtures of Task 7.2 and Phase 5.
 
 ## Phase 5: Documents
-- [ ] 11. Create branch `support/phase-5-docs`.
-  - [ ] 11.1 Update `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md`, `docs/architecture.md` with the new reading and the trust assumptions of design section 6. Wording: the Lean check covers the generated finite model, not CloudFormation or IAM semantics.
-  - [ ] 11.2 Resume the paused Phase 4 of `proofgate-real-stack-validation` (message hints, result docs). README and CHANGELOG entry. Version and publish only on the user's instruction.
-  - [ ] 11.3 Update Serena memories and `AGENTS.md` for both follow-up specs. Add the final usage-log row.
+- [x] 11. Create branch `support/phase-5-docs`.
+  - [x] 11.1 Update `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md`, `docs/architecture.md` with the new reading and the trust assumptions of design section 6. Wording: the Lean check covers the generated finite model, not CloudFormation or IAM semantics. Done: `docs/architecture.md` (ja + en); `SUPPORTED_IAM.md` and `ASSUMPTIONS.md` were updated in Phases 1 to 3.
+  - [ ] 11.2 Resume the paused Phase 4 of `proofgate-real-stack-validation` (message hints, result docs). README and CHANGELOG entry. Version and publish only on the user's instruction. Partly done: CHANGELOG entry under Unreleased (no version change). That spec's Phase 4 requires its tasks to be revised and approved before resuming; a proposed revision is written in its `tasks.md` and awaits the user's approval.
+  - [x] 11.3 Update Serena memories and `AGENTS.md` for both follow-up specs. Add the final usage-log row. Done: `mem:core` updated, new `mem:specs/proofgate-real-stack-validation` and `mem:specs/proofgate-cdk-construct-support`; `AGENTS.md`, steering `development.md` and `structure.md`.
 - [ ] 12. **Checkpoint 5.** Stop and wait for the user. Push, merge, tag, release, and `npm publish` need explicit approval.
