@@ -29,3 +29,6 @@ ProofGateは抽出した有限モデルについて、次の4条件を同時に�
 Extractorは、未対応の構文を安全とみなさず拒否します。AWSへのデプロイは、意図的にこのリポジトリのデモとテストの対象外にしています。
 
 ResourceにIAMポリシー変数（`${aws:username}`など）を含むStatementは、変数を評価せず`PG-IAM-003`で拒否します。これは以前より多くの入力を拒否する変更です。
+名前のないロール（`RoleName`なし）は、不透明な名前`_generated_<LogicalId>`として扱います。ロール名部分にワイルドカードを含む`iam:PassRole`のResourceは、実際の生成名に一致しうるものとして対象にします。実際の生成名がそのPatternに一致しない場合でも指摘が出ます（過剰検出）。生成名の形式はAWSが規定していないため、この読み方は仮定です。
+
+English: a role without `RoleName` is read as the opaque name `_generated_<LogicalId>`. A `iam:PassRole` Resource with a wildcard in the role-name part counts as a possible match, even if the real generated name would not match (over-approximation). AWS does not specify the format of generated names, so this reading is an assumption.

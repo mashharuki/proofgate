@@ -97,13 +97,23 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
   );
   return statement.resources.some((resourcePattern) => {
     if (directIdentifiers.some((identifier) => matches(resourcePattern, identifier))) return true;
-    if (!target.roleName) return false;
     const roleMarker = ":role/";
     const markerIndex = resourcePattern.indexOf(roleMarker);
     if (markerIndex < 0) return false;
+    const scope = resourcePattern.slice(0, markerIndex + roleMarker.length);
+    if (!target.roleName) {
+      // 名前のないロール: CloudFormationが付ける名前は合成時に不明なため、不透明な名前
+      // `_generated_<LogicalId>`として読みます（spec proofgate-cdk-construct-support, R0）。
+      // ロール名部分にワイルドカードがあるPatternは、実際の生成名に一致しうるので対象にします
+      // （過剰検出の側です）。リテラルは、不透明な名前そのもの（role.roleArnなど）のときだけ一致します。
+      // A role without RoleName: its real name is unknown at synthesis, so it is read as the opaque
+      // name `_generated_<LogicalId>`. A pattern with a wildcard in the role-name part may match the
+      // real generated name and counts (over-approximation); a literal counts only if it is the opaque name.
+      if (/[*?]/.test(resourcePattern.slice(scope.length))) return true;
+      return matches(resourcePattern, `${scope}_generated_${target.logicalId}`);
+    }
     // partitionやアカウント部分はPolicy側の値を保ち、ロール名部分だけを検査対象へ置き換えます。
-    const candidateWithSameArnScope = `${resourcePattern.slice(0, markerIndex + roleMarker.length)}${target.roleName}`;
-    return matches(resourcePattern, candidateWithSameArnScope);
+    return matches(resourcePattern, `${scope}${target.roleName}`);
   });
 }
 
