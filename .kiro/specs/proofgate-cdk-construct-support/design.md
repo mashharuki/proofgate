@@ -1,6 +1,6 @@
 # Design: proofgate-cdk-construct-support
 
-Status: DRAFT, awaiting approval. `tasks.md` is intentionally not written yet. No code has been changed for this spec.
+Status: APPROVED by the user ("承認します"). Assumptions D1 to D5 of section 11 stand. `tasks.md` is written. No code has been changed for this spec yet.
 
 Requirements: [requirements.md](./requirements.md) (approved by the user, with the target Results of Requirement 1 confirmed; the answers to open questions 2 to 5 are still missing and are handled as assumptions in section 11).
 
