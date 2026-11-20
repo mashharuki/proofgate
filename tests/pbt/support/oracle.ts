@@ -43,13 +43,25 @@ const allows = (statement: StatementModel, action: string) =>
 // Partition and account are not constrained because they are unknown at synthesis time.
 function passRoleResourceMatches(resource: string, target: RoleModel): boolean {
   if (/^\*+$/.test(resource)) return true;
-  if (target.roleName === undefined) return false;
   const parts = resource.split(":");
   const [prefix, , service, region] = parts;
   const rest = parts.slice(5).join(":");
   if (parts.length < 6 || prefix !== "arn" || service !== "iam" || region !== "") return false;
   if (!rest.startsWith("role/")) return false;
   const namePattern = rest.slice("role/".length);
+  // spec proofgate-cdk-construct-support, rule R0 (design 2.3 and 5). A role without RoleName gets a
+  // name from CloudFormation that is unknown at synthesis. It is read as the opaque name
+  // "_generated_<LogicalId>". A pattern whose role-name part has a wildcard may match the real
+  // generated name, so it counts; a plain literal name cannot be the generated one, so it only
+  // counts if it is the opaque name itself (an exact reference such as role.roleArn).
+  // 名前のないロールは、CloudFormationが付ける未知の名前を、不透明な名前として読みます。
+  if (target.roleName === undefined) {
+    if (/[*?]/.test(namePattern)) return true;
+    return matchTokens(
+      compileGlob(namePattern, { colonAware: false }),
+      `_generated_${target.logicalId}`,
+    );
+  }
   return matchTokens(compileGlob(namePattern, { colonAware: false }), target.roleName);
 }
 
