@@ -58,6 +58,38 @@ They were not used to design the rules. Ground truth and predictions were commit
 - RS-15 still gives `PG-IAM-003`: the API Gateway logging role uses the managed policy `AmazonAPIGatewayPushToCloudWatchLogs`, which is not in the table.
 - RS-20 and RS-21 are not fully independent of the implementation: the unit tests that found a defect of the value resolver copy their layouts.
 
+## Trial with 1.1.1 from npm (2026-11-20)
+
+`@proofgate-cdk/cdk-plugin@1.1.1` was installed from npm in a small CDK app outside the repository (aws-cdk-lib 2.277.0; protected bucket with a fixed name, `arn:aws:s3:::proofgate-trial-customer-data`). The expected result of each variant was written before it was run. All 18 variants gave the expected result. Every `cdk synth` without ProofGate passed. The trial app is not part of the repository.
+
+| Variant              | Content                                                                                           | With ProofGate                   |
+| -------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `safe`               | a Lambda function reads the protected bucket through `grantRead`                                  | accepted                         |
+| `risky`              | safe plus a deploy role with `iam:PassRole` on `role.roleArn` and `lambda:CreateFunction`         | `PG-IAM-004`                     |
+| `apigw`              | a REST API (CDK gives its logging role the managed policy `AmazonAPIGatewayPushToCloudWatchLogs`) | `PG-IAM-003`                     |
+| `apigw-no-log-role`  | apigw with `cloudWatchRole: false`                                                                | accepted                         |
+| `parameter`          | a statement whose bucket name is a CloudFormation parameter                                       | `PG-IAM-003`                     |
+| `sqs`                | an SQS event source                                                                               | accepted                         |
+| `dynamodb`           | `grantReadWriteData`                                                                              | accepted                         |
+| `stepfunctions`      | a Step Functions state machine invokes the function                                               | accepted                         |
+| `ecs`                | a Fargate task role reads the protected bucket                                                    | accepted                         |
+| `all-risky`          | sqs, dynamodb, stepfunctions, ecs, and risky together                                             | `PG-IAM-004` (one path)          |
+| `pass-wildcard`      | `iam:PassRole` on `arn:aws:iam::*:role/*`                                                         | `PG-IAM-004`                     |
+| `pass-prefix`        | `iam:PassRole` on `role/TrialStack-*` (account as a token)                                        | `PG-IAM-004`                     |
+| `grant-pass`         | `role.grantPassRole(deployer)`                                                                    | `PG-IAM-004`                     |
+| `update-pair`        | configuration update and code update instead of creation                                          | `PG-IAM-004`                     |
+| `update-config-only` | configuration update only                                                                         | accepted (likely missed path)    |
+| `admin-managed`      | `AdministratorAccess` on the deploy role                                                          | `PG-IAM-003`                     |
+| `cross-stack`        | the deploy role in another stack, the ARN passed by a cross-stack reference                       | `PG-IAM-003` (`Fn::ImportValue`) |
+| `acknowledged`       | risky, silenced with `acknowledge`                                                                | accepted (outside the boundary)  |
+
+What the trial showed:
+
+- `update-config-only` is accepted, as the current rule defines: taking over an existing function counts only with both a configuration update and a code update. But the AWS API reference shows that `UpdateFunctionConfiguration` alone can change the execution role (`Role`) and the layers (`Layers`, also from other accounts), so arbitrary code may run without a code update. This is handled as a fix task (see `CHANGELOG.md`).
+- The `ecs` task role can read the protected bucket, and nothing is reported. `PG-IAM-004` covers paths through Lambda only; an ECS path such as `iam:PassRole` with `ecs:RunTask` is not checked.
+- `cross-stack` gives `PG-IAM-003` because the ARN is passed by a cross-stack reference. With the ARN written as a literal (RS-13), the template is accepted.
+- The protected bucket has a `bucketName` and is given as a literal ARN. An unnamed protected bucket makes ProofGate miss the path (`docs/ASSUMPTIONS.md`).
+
 ## What the Lean check shows
 
 Lean checks four facts that TypeScript computes (`canPassRole`, `canControlLambda`, `targetIsLambdaAssumable`, `targetCanAccess`). It does not verify the CloudFormation template or the IAM statements. The extractor, the value resolver, and the managed-policy table are trusted code (`docs/ASSUMPTIONS.md`).
