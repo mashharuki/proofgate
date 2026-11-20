@@ -26,6 +26,8 @@ interface TrustRecipe {
   readonly awsPrincipal: boolean;
   /** Deny Statementに書くService名。無視されるはずです。 */
   readonly deniedServices: readonly string[];
+  /** trueなら、最初のAllow Statementへオブジェクトの`Condition`を付けます。無視されるはずです（R3）。 */
+  readonly condition?: boolean;
 }
 
 interface RoleRecipe {
@@ -33,6 +35,8 @@ interface RoleRecipe {
   readonly roleName: string | undefined;
   readonly trust: TrustRecipe;
   readonly policies: readonly (readonly StatementRecipe[])[];
+  /** AWSLambdaBasicExecutionRoleを、リテラルのARNまたはCDKのFn::Joinで付けるか（R2）。 */
+  readonly managed?: "string" | "join";
 }
 
 interface AttachedRecipe {
@@ -69,6 +73,9 @@ type PoisonId =
   | "NON_DEFAULT_PATH"
   | "TRUST_NOT_PRINCIPAL"
   | "TRUST_CONDITION"
+  | "TRUST_CONDITION_ON_DENY"
+  | "MANAGED_POLICY_MIXED"
+  | "MANAGED_POLICY_LOOKALIKE"
   | "TRUST_NON_LITERAL"
   | "MANAGED_POLICY_RESOURCE"
   | "OTHER_IAM_TYPE"
@@ -109,6 +116,8 @@ const renderStatement = (s: StatementRecipe): Json => ({
   Resource: s.resourceAsString && s.resources.length === 1 ? s.resources[0] : [...s.resources],
 });
 
+const BASIC_NAME = "service-role/AWSLambdaBasicExecutionRole";
+const BASIC_ARN = `arn:aws:iam::aws:policy/${BASIC_NAME}`;
 const serviceValue = (services: readonly string[]) =>
   services.length === 1 ? services[0] : [...services];
 
@@ -120,6 +129,11 @@ function renderTrust(trust: TrustRecipe): Json {
       Action: "sts:AssumeRole",
     },
   ];
+  if (trust.condition) {
+    (statements[0] as Json).Condition = {
+      ArnLike: { "aws:SourceArn": "arn:aws:lambda:*:*:function:*" },
+    };
+  }
   if (trust.star) statements.push({ Effect: "Allow", Principal: "*", Action: "sts:*" });
   if (trust.awsPrincipal) {
     statements.push({
@@ -143,6 +157,12 @@ function render(recipe: TemplateRecipe): Json {
   const roles: [string, unknown][] = recipe.roles.map((role) => {
     const properties: Json = { AssumeRolePolicyDocument: renderTrust(role.trust) };
     if (role.roleName !== undefined) properties.RoleName = role.roleName;
+    if (role.managed === "string") properties.ManagedPolicyArns = [BASIC_ARN];
+    if (role.managed === "join") {
+      properties.ManagedPolicyArns = [
+        { "Fn::Join": ["", ["arn:", { Ref: "AWS::Partition" }, `:iam::aws:policy/${BASIC_NAME}`]] },
+      ];
+    }
     if (role.policies.length > 0) {
       properties.Policies = role.policies.map((statements, index) => ({
         PolicyName: `inline-${index}`,
@@ -207,13 +227,25 @@ function expectedModel(recipe: TemplateRecipe): StackModel {
           ),
         ),
       );
+    // AWSLambdaBasicExecutionRole (AWS documentation, v1): Allow logs:CreateLogGroup, CreateLogStream, PutLogEvents on "*".
+    const managed: StatementModel[] =
+      role.managed === undefined
+        ? []
+        : [
+            {
+              effect: "Allow",
+              actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+              resources: ["*"],
+              sourcePath: `Resources.${role.logicalId}.Properties.ManagedPolicyArns[0]`,
+            },
+          ];
     const services = new Set(role.trust.services.map((s) => s.toLowerCase()));
     if (role.trust.star) services.add("*");
     return {
       logicalId: role.logicalId,
       roleName: role.roleName,
       trustServices: [...services].sort(),
-      statements: [...inline, ...attached],
+      statements: [...inline, ...managed, ...attached],
     };
   });
   roles.sort((a, b) => (a.logicalId < b.logicalId ? -1 : 1));
@@ -357,11 +389,39 @@ const APPLIERS: Record<PoisonId, Applier> = {
     const document = propertiesOf(template, role.logicalId).AssumeRolePolicyDocument as Json;
     (document.Statement as Json[])[0] = {
       ...((document.Statement as Json[])[0] as Json),
+      // R3: an object Condition on an Allow statement is read as absent, so the poison is a Condition that is not an object.
+      Condition: "not-an-object",
+    };
+    return forbid(
+      `Resources.${role.logicalId}.Properties.AssumeRolePolicyDocument.Statement[0].Condition`,
+    );
+  },
+  TRUST_CONDITION_ON_DENY: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    const document = propertiesOf(template, role.logicalId).AssumeRolePolicyDocument as Json;
+    (document.Statement as Json[])[0] = {
+      ...((document.Statement as Json[])[0] as Json),
+      Effect: "Deny",
       Condition: { StringEquals: { "sts:ExternalId": "x" } },
     };
     return forbid(
       `Resources.${role.logicalId}.Properties.AssumeRolePolicyDocument.Statement[0].Condition`,
     );
+  },
+  MANAGED_POLICY_MIXED: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    propertiesOf(template, role.logicalId).ManagedPolicyArns = [
+      BASIC_ARN,
+      "arn:aws:iam::aws:policy/AdministratorAccess",
+    ];
+    return forbid(`Resources.${role.logicalId}.Properties.ManagedPolicyArns`);
+  },
+  MANAGED_POLICY_LOOKALIKE: (template, recipe, t) => {
+    const role = recipe.roles[t.roleIndex] as RoleRecipe;
+    propertiesOf(template, role.logicalId).ManagedPolicyArns = [
+      "arn:aws:iam::aws:policy/AWSLambdaBasicExecutionRole",
+    ];
+    return forbid(`Resources.${role.logicalId}.Properties.ManagedPolicyArns`);
   },
   TRUST_NON_LITERAL: (template, recipe, t) => {
     const role = recipe.roles[t.roleIndex] as RoleRecipe;
@@ -422,6 +482,9 @@ const NEEDS: Record<PoisonId, "inline" | "role" | "attached" | "none"> = {
   NON_DEFAULT_PATH: "role",
   TRUST_NOT_PRINCIPAL: "role",
   TRUST_CONDITION: "role",
+  TRUST_CONDITION_ON_DENY: "role",
+  MANAGED_POLICY_MIXED: "role",
+  MANAGED_POLICY_LOOKALIKE: "role",
   TRUST_NON_LITERAL: "role",
   MANAGED_POLICY_RESOURCE: "none",
   OTHER_IAM_TYPE: "none",
@@ -672,6 +735,18 @@ function shapesOf(recipe: TemplateRecipe): string[] {
     recipe.roles.some((r) => r.trust.awsPrincipal),
     "trust-aws-principal-ignored",
   );
+  add(
+    recipe.roles.some((r) => r.managed === "string"),
+    "managed-basic-string",
+  );
+  add(
+    recipe.roles.some((r) => r.managed === "join"),
+    "managed-basic-join",
+  );
+  add(
+    recipe.roles.some((r) => r.trust.condition === true),
+    "trust-condition-ignored",
+  );
   add(recipe.noise > 0, "noise-resource");
   add(
     recipe.roles.some((r) => r.roleName === undefined),
@@ -697,10 +772,26 @@ export function generateTemplateSpec(seed: number, index: number): TemplateSpec 
   const slot = index % 10;
   const round = Math.floor(index / 10);
   if (slot < 5) {
-    const recipe = ensureStatement(
+    const base = ensureStatement(
       randomRecipe(rng, { minRoles: 1, firstRoleNeedsPolicy: false, needAttached: false }),
       rng,
     );
+    // R2とR3の形は、別の乱数列から付けます。既存の断片の内容を変えないためです。
+    const extra = createRng(seed, index + 900_000);
+    const recipe: TemplateRecipe = {
+      ...base,
+      roles: base.roles.map((role, n) => ({
+        ...role,
+        // 先頭のロールには、round（index / 10）が偶数の断片で必ず付けて、網羅を決定的にします。
+        ...(extra.chance(0.35) || (n === 0 && round % 4 === 0)
+          ? { managed: round % 8 === 0 ? ("string" as const) : ("join" as const) }
+          : {}),
+        trust: {
+          ...role.trust,
+          ...(extra.chance(0.35) || (n === 0 && round % 4 === 1) ? { condition: true } : {}),
+        },
+      })),
+    };
     return { id: index, kind: "supported", recipe, shapes: shapesOf(recipe) };
   }
   if (slot < 9) {
@@ -759,6 +850,9 @@ export function requiredTemplateShapes(): string[] {
     "trust-mixed-case",
     "trust-deny-ignored",
     "trust-aws-principal-ignored",
+    "managed-basic-string",
+    "managed-basic-join",
+    "trust-condition-ignored",
     "noise-resource",
     "no-role-name",
     "several-roles",

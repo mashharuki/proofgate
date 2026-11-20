@@ -22,10 +22,10 @@ Rules for every task: Fail Closed stays; an unknown part of an `Allow` is read l
 - [x] 3. **Checkpoint 1.** Passed. R0 was merged to `main` alone as PR #4 (merge `21ffd71`, content cherry-picked onto a branch from `main`, plus a CHANGELOG entry under Unreleased). `main` was merged back into `support/phase-1-r0`. Steps 0 to 3 can be merged without Phase 3 (design section 10).
 
 ## Phase 2: R3 and R2
-- [ ] 4. Create branch `support/phase-2-r3-r2`.
-  - [ ] 4.1 R3: tests for a `Condition` on an `Allow` trust statement (red first), then implement in `parseTrustServices`. A `Condition` on a permission statement stays `PG-IAM-003`. Property P3.
-  - [ ] 4.2 R2: `packages/extractor/src/managed-policies.ts` with only `AWSLambdaBasicExecutionRole` (literal ARN and the `Fn::Join` form of the sample). Tests (red first), including an unknown managed policy staying `PG-IAM-003`.
-  - [ ] 4.3 Extend extractor-level generated tests and the poison list. Run the gate. Add a usage-log row.
+- [x] 4. Create branch `support/phase-2-r3-r2`.
+  - [x] 4.1 R3: tests for a `Condition` on an `Allow` trust statement (red first), then implement in `parseTrustServices`. A `Condition` on a permission statement stays `PG-IAM-003`. Property P3. Done. Two existing assertions had to change because they asserted exactly what R3 changes (an object `Condition` on an Allow trust statement is unsupported): the unit test "fails closed on a Condition in the role trust policy" (`tests/proofgate.test.ts`) and the poison `TRUST_CONDITION` of the extractor-level generator. Both now use a `Condition` that is not an object, which is still rejected; the object case is tested in `tests/construct-support-r2-r3.test.ts`. The design (4.3) said existing tests would still pass; that was wrong for these two. Flagged for the user at Checkpoint 2.
+  - [x] 4.2 R2: `packages/extractor/src/managed-policies.ts` with only `AWSLambdaBasicExecutionRole` (literal ARN and the `Fn::Join` form of the sample). Tests (red first), including an unknown managed policy staying `PG-IAM-003`. Done: 19 tests, red first (the 6 positive tests failed, the 13 rejection tests passed on the old code).
+  - [x] 4.3 Extend extractor-level generated tests and the poison list. Run the gate. Add a usage-log row. Done: the generator draws the new forms from a separate random stream (existing fragments unchanged), three new shapes and three new poisons (`TRUST_CONDITION_ON_DENY`, `MANAGED_POLICY_MIXED`, `MANAGED_POLICY_LOOKALIKE`). `pnpm real-stacks` now reports differences in RS-05, RS-07, RS-09, and RS-11 (RS-09 is now accepted; the others lose the managed-policy and trust reasons and still need R1). The expected table is not edited until Task 9.2.
 - [ ] 5. **Checkpoint 2.** Stop and wait for the user.
 
 ## Phase 3: R1, the resolver

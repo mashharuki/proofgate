@@ -4,6 +4,7 @@ import type {
   StatementModel,
   UnsupportedFinding,
 } from "@proofgate-cdk/model";
+import { parseManagedPolicies } from "./managed-policies.js";
 
 /**
  * CloudFormation JSONから、ProofGateが扱うIAMの有限モデルを抽出します。
@@ -108,6 +109,11 @@ function parseTrustServices(
       return;
     }
     for (const key of ["NotAction", "NotPrincipal", "Condition"] as const) {
+      // Allowの信頼Statementに付いたオブジェクトのConditionは、無いものとして読みます（R3）。
+      // Conditionは引き受けられる主体を狭めるだけなので、無視すると指摘が増える側です。
+      // An object Condition on an Allow trust statement is read as absent: it can only narrow who may
+      // assume the role, so ignoring it only adds findings. Deny, and a Condition that is not an object, stay unsupported.
+      if (key === "Condition" && raw.Effect === "Allow" && object(raw.Condition)) continue;
       if (key in raw)
         unsupported.push({
           sourcePath: `${sourcePath}.${key}`,
@@ -227,10 +233,13 @@ export function extractStack(template: unknown): ExtractionResult {
       }
     }
     if (rawResource.Properties.ManagedPolicyArns !== undefined) {
-      unsupported.push({
-        sourcePath: `Resources.${logicalId}.Properties.ManagedPolicyArns`,
-        reason: "Managed policies are not supported in the first vertical slice",
-      });
+      statements.push(
+        ...parseManagedPolicies(
+          rawResource.Properties.ManagedPolicyArns,
+          `Resources.${logicalId}.Properties.ManagedPolicyArns`,
+          unsupported,
+        ),
+      );
     }
     if (
       rawResource.Properties.RoleName !== undefined &&
