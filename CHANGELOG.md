@@ -2,7 +2,9 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
-## Unreleased
+## 1.1.0 - 2026-11-20
+
+The version is 1.1.0 because ProofGate reads more CDK templates than 1.0.1. The changes below can only add findings or make rejected templates readable; no finding of 1.0.1 disappears.
 
 ### Fixed: a role without `RoleName` was never a `iam:PassRole` target for a wildcard
 
