@@ -142,7 +142,11 @@ describe("policy variables in Resource (D5)", () => {
 // 1つも残らないために空虚な証明を拒否する指摘が1件、合わせて2件になります。
 describe("CloudFormation intrinsic Resource keeps the existing findings", () => {
   const variableText = `\${aws:username}`;
-  const joined = { "Fn::Join": ["", [`${bucket}/`, variableText]] };
+  // R1 (spec proofgate-cdk-construct-support) reads a Fn::Join of literals, so each Join here also has a Ref to a
+  // parameter, which R1 cannot read. The value stays an unreadable intrinsic, which is what this test is about.
+  // R1はリテラルのFn::Joinを読むため、ここのJoinには読めないパラメータへのRefを加え、読めないintrinsicのままにします。
+  const parameter = { Ref: "BucketParameter" };
+  const joined = { "Fn::Join": ["", [`${bucket}/`, variableText, parameter]] };
   const existing = [
     {
       sourcePath: inlinePath,
@@ -158,7 +162,7 @@ describe("CloudFormation intrinsic Resource keeps the existing findings", () => 
     ["Fn::Join with variable text", joined],
     ["array with a variable string and an intrinsic", [variable, joined]],
     ["Fn::Sub with a variable", { "Fn::Sub": variable }],
-    ["Fn::Join without any variable", { "Fn::Join": ["", [`${bucket}/`, "x"]] }],
+    ["Fn::Join without any variable", { "Fn::Join": ["", [`${bucket}/`, "x", parameter]] }],
   ] as const) {
     it(`reports the same two findings and no variable finding for ${name}`, () => {
       const result = extractStack(inline({ Resource: resource }));
