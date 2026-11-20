@@ -13,12 +13,12 @@ Rules for every task: Fail Closed stays; an unknown part of an `Allow` is read l
 - [ ] 1. **Checkpoint 0.** Stop and wait for the user.
 
 ## Phase 1: R0, unnamed role as a PassRole target
-- [ ] 2. Create branch `support/phase-1-r0`.
-  - [ ] 2.1 Change the independent oracle (`tests/pbt/support/oracle.ts`, `passRoleResourceMatches`) to the rule of design 2.3. Commit it alone. Review it before touching the evaluator, so it is not copied from the code.
-  - [ ] 2.2 Add unit tests for the table of design 2.3 and generator Cases with unnamed roles (categories `unsafe`, `safe`, `conservative`). Show them failing on the unchanged evaluator (red first). Save the output.
-  - [ ] 2.3 Fix `allowsPassRoleTarget` in `packages/core/src/index.ts`. Check TypeScript and Lean agree on the new Cases. Properties P6, P10.
-  - [ ] 2.4 Add a regression JSON under `tests/pbt/regressions/`. Update `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md` for the rule.
-  - [ ] 2.5 Run the quality gate, `pnpm verify:demo`, and `pnpm real-stacks`. Record any row that changes. Add a usage-log row.
+- [x] 2. Create branch `support/phase-1-r0`.
+  - [x] 2.1 Change the independent oracle (`tests/pbt/support/oracle.ts`, `passRoleResourceMatches`) to the rule of design 2.3. Commit it alone (`54b83c6`). Review it before touching the evaluator, so it is not copied from the code. Review so far: by me only; the user may review that commit.
+  - [x] 2.2 Add unit tests for the table of design 2.3 and generator Cases with unnamed roles (categories `unsafe`, `safe`, `conservative`). Show them failing on the unchanged evaluator (red first). Done: 7 regression JSONs `r0-*` and `tests/pbt/unnamed-role.test.ts` (10 patterns x named/unnamed, oracle, evaluate, and one Lean launch). Red: exactly the 4 rows r0-1 to r0-4 failed on the old evaluator, the 3 safe rows passed. The generator itself was not changed (it would shift every existing seed); the enumerated test replaces the generator Cases.
+  - [x] 2.3 Fix `allowsPassRoleTarget` in `packages/core/src/index.ts`. Check TypeScript and Lean agree on the new Cases. Properties P6, P10.
+  - [x] 2.4 Add a regression JSON under `tests/pbt/regressions/`. Update `docs/SUPPORTED_IAM.md` and `docs/ASSUMPTIONS.md` for the rule.
+  - [x] 2.5 Run the quality gate, `pnpm verify:demo`, and `pnpm real-stacks`. Record any row that changes. Add a usage-log row.
 - [ ] 3. **Checkpoint 1.** Stop and wait for the user. Steps 0 to 3 can be merged without Phase 3 (design section 10).
 
 ## Phase 2: R3 and R2
