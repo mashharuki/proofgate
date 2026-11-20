@@ -1,6 +1,6 @@
 {
   "name": "@proofgate-cdk/cdk-plugin",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Lean-powered AWS CDK policy validation plugin for application-specific IAM safety rules.",
   "type": "module",
   "main": "./dist/index.js",
