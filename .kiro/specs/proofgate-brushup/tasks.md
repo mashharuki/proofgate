@@ -34,19 +34,19 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 
 ## Step 3: B3 templates without IAM resources
 
-- [ ] 6. Create branch `brushup/phase-3-roleless`.
-  - [ ] 6.1 Tests first: no IAM resource is accepted with no finding and no Lean run; still rejected: empty `protectedBucketArns`, an unreadable template, an unsupported IAM resource, a policy that points outside the template, roles without readable statements.
-  - [ ] 6.2 Change the extractor and the validator (design 6). List the existing assertions that change (the generator's `no-iam` kind and any test of "No IAM roles were found") and ask the user at the checkpoint.
-  - [ ] 6.3 Docs (ja + en) say what "accepted" means here. Run RS-30 and RS-31. Gate; usage-log row.
+- [x] 6. Create branch `brushup/phase-3-roleless`.
+  - [x] 6.1 Tests first: no IAM resource is accepted with no finding and no Lean run; still rejected: empty `protectedBucketArns`, an unreadable template, an unsupported IAM resource, a policy that points outside the template, roles without readable statements. Done (`tests/roleless-templates.test.ts`, 22 tests): before the change 8 failed (the accepted cases) and 14 passed (the cases that stay rejected). **Hardening found while implementing, not in the design:** a template with a nested stack, a `Transform` or `Fn::Transform`, an `AWS::Serverless::` resource, or an entry that cannot be read is not accepted (it used to be caught by accident by the "no roles" finding; accepting it would have let a nested-stack parent pass silently).
+  - [x] 6.2 Change the extractor and the validator (design 6). List the existing assertions that change (the generator's `no-iam` kind and any test of "No IAM roles were found") and ask the user at the checkpoint. Done; two existing assertions changed (see the usage log): the `no-iam` kind of the extractor-level generator (`tests/pbt/support/template-gen.ts`, now expects an empty model), and the entry "a template without any IAM role" of `tests/pbt/failclosed.test.ts` (it held `AWS::S3::Bucket` only; now it holds a nested stack only, which stays rejected; the accepted case moved to the new test file). Nothing was deleted or skipped. The second one was not on my list: I found it when the full test run failed.
+  - [x] 6.3 Docs (ja + en) say what "accepted" means here. Run RS-30 and RS-31. Gate; usage-log row. Done: RS-30 and RS-31 are `accepted` as predicted; the other construct Patterns, the hold-out set, and the 14 acceptance Patterns do not change; differential against 1.1.2 (3038 inputs): 0 findings lost, 34 generated fragments move from `PG-IAM-003` to accepted (all of the kind "no IAM resource").
 - [ ] 7. **Checkpoint 3.** Needs the user's approval of the changed assertions.
 
 ## Step 4: B4 `Fn::Sub` and B5 managed policies
 
-- [ ] 8. Create branch `brushup/phase-4-sub-managed`.
-  - [ ] 8.1 Read the CloudFormation `Fn::Sub` page (escape `${!...}`, the variable map form) and the two AWS managed policy pages (statements, version). Record what was read.
-  - [ ] 8.2 B5 tests first, then the two table entries. Any other managed policy stays rejected.
-  - [ ] 8.3 B4 tests first (known variables, `${!x}`, unknown name, parameter, variable map, policy variable inside the text), then the resolver. Extend the extractor-level generator on a separate stream and add poisons and mutants.
-  - [ ] 8.4 Docs, CHANGELOG. Run RS-23, RS-32, RS-37. Gate; usage-log row.
+- [x] 8. Create branch `brushup/phase-4-sub-managed`.
+  - [x] 8.1 Read the CloudFormation `Fn::Sub` page (escape `${!...}`, the variable map form) and the two AWS managed policy pages (statements, version). Record what was read.
+  - [x] 8.2 B5 tests first, then the two table entries. Any other managed policy stays rejected.
+  - [x] 8.3 B4 tests first (known variables, `${!x}`, unknown name, parameter, variable map, policy variable inside the text), then the resolver. Extend the extractor-level generator on a separate stream and add poisons and mutants.
+  - [x] 8.4 Docs, CHANGELOG. Run RS-23, RS-32, RS-37. Gate; usage-log row.
 - [ ] 9. **Checkpoint 4.**
 
 ## Step 5: B2 launch services

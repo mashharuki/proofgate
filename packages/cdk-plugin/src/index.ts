@@ -28,7 +28,7 @@ const HINTS: readonly (readonly [string, string])[] = [
   ],
   [
     "must be literal strings",
-    "ProofGate reads a Resource written as a literal, Fn::Join, the pseudo-parameters AWS::Partition, AWS::Region, AWS::AccountId, and AWS::URLSuffix, or Ref and Fn::GetAtt of a resource in the same template. Parameters, Fn::Sub, Fn::ImportValue, Fn::If, and other functions are not read. Action must be literal.",
+    "ProofGate reads a Resource written as a literal, Fn::Join, Fn::Sub without a variable map, the pseudo-parameters AWS::Partition, AWS::Region, AWS::AccountId, and AWS::URLSuffix, or Ref and Fn::GetAtt of a resource in the same template. Parameters, Fn::Sub with a variable map, Fn::ImportValue, Fn::If, and other functions are not read. Action must be literal.",
   ],
   [
     "IAM policy variables",
@@ -146,6 +146,10 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
         });
       }
       if (!extraction.model) continue;
+      // IAMリソースのないテンプレートは、検査するプリンシパルがないため、評価もLeanも実行せず、何も報告しません。
+      // 中身が空の証明を「証明済み」として扱わないためです（spec proofgate-brushup, 要件3）。
+      // No IAM resource: there is no principal to check, so neither the evaluator nor Lean runs and nothing is reported.
+      if (extraction.model.roles.length === 0) continue;
 
       const findings = evaluate(extraction.model, this.props);
       const leanSource = generateLean(extraction.model, this.props);
