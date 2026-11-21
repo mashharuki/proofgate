@@ -34,17 +34,17 @@ Unknown parts of an `Allow` are read larger, never smaller, so a template that w
 
 ## 1.0.1 - 2026-11-18
 
-The first version published to npm. There is no change in behavior or in the code compared with 1.0.0; the packages were renamed.
+Not published to npm. (Correction, 2026-11-21: this entry first said that 1.0.1 was the first version published to npm. The publish attempt failed and was not repeated; the first version on npm is 1.1.0.) There is no change in behavior or in the code compared with 1.0.0; the packages were renamed.
 
 ### Package names
 
-The packages are published under the npm scope `@proofgate-cdk`: `@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, and `@proofgate-cdk/cdk-plugin`. Import paths use the new scope.
+The packages use the npm scope `@proofgate-cdk`: `@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, and `@proofgate-cdk/cdk-plugin`. Import paths use the new scope.
 
-The tag and GitHub release `v1.0.0` are a source release only. At that tag the packages were still named `@proofgate/*`, a scope that was never published. 1.0.1 is the first version on npm; use it instead of `v1.0.0`. The behavior changes listed under 1.0.0 are all included.
+The tag and GitHub release `v1.0.0` are a source release only. At that tag the packages were still named `@proofgate/*`, a scope that was never published. The behavior changes listed under 1.0.0 are all included in 1.0.1. Use 1.1.0 or later from npm.
 
 ## 1.0.0 - 2026-11-18
 
-Source release only (tag `v1.0.0`). The packages were named `@proofgate/*` at that tag and were not published to npm. See 1.0.1.
+Source release only (tag `v1.0.0`). The packages were named `@proofgate/*` at that tag and were not published to npm. See 1.0.1 and 1.1.0.
 
 First stable release. The version is 1.0.0 because this release changes what ProofGate accepts and rejects. Read "Upgrade notes" before updating.
 
