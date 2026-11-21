@@ -32,7 +32,7 @@ const S3_DATA_ACTIONS = ["s3:getobject", "s3:putobject", "s3:deleteobject"] as c
 
 // Decision 8.2: Action name case. Prefix and action name are case-insensitive.
 function actionMatches(pattern: string, action: string): boolean {
-  return matchTokens(compileGlob(pattern.toLowerCase(), { colonAware: false }), action);
+  return matchTokens(compileGlob(pattern.toLowerCase()), action);
 }
 
 const allows = (statement: StatementModel, action: string) =>
@@ -57,12 +57,9 @@ function passRoleResourceMatches(resource: string, target: RoleModel): boolean {
   // 名前のないロールは、CloudFormationが付ける未知の名前を、不透明な名前として読みます。
   if (target.roleName === undefined) {
     if (/[*?]/.test(namePattern)) return true;
-    return matchTokens(
-      compileGlob(namePattern, { colonAware: false }),
-      `_generated_${target.logicalId}`,
-    );
+    return matchTokens(compileGlob(namePattern), `_generated_${target.logicalId}`);
   }
-  return matchTokens(compileGlob(namePattern, { colonAware: false }), target.roleName);
+  return matchTokens(compileGlob(namePattern), target.roleName);
 }
 
 /** 保護バケット内の全オブジェクトを表す集合です（末尾のスラッシュは取り除きます）。 */
@@ -74,7 +71,7 @@ function protectedObjects(bucketArn: string) {
 // denotes intersects the object set of the protected bucket. A bucket-level ARN alone does not.
 // Resources are case-sensitive.
 function resourceReachesBucket(resource: string, bucketArn: string): boolean {
-  return intersects(compileGlob(resource, { colonAware: true }), protectedObjects(bucketArn));
+  return intersects(compileGlob(resource), protectedObjects(bucketArn));
 }
 
 function canPassRole(principal: RoleModel, target: RoleModel): boolean {
