@@ -1,6 +1,6 @@
 # Requirements: proofgate-implicit-role-paths
 
-Status: DRAFT, awaiting approval. `design.md` and `tasks.md` are not written. No code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-21 with the proposals of the open questions below (answers recorded at the end). `design.md` and `tasks.md` are not written. No code has been changed for this spec.
 
 ## Introduction
 
@@ -84,3 +84,10 @@ The first three are verified from the documentation and are the first candidates
 3. CloudFormation stack roles (Requirement 4): include, or document only? Proposal: document only in this spec, because ProofGate cannot see the stack role.
 4. Is a role that can update its own function (principal equals target) a finding? Proposal: no.
 5. Should this spec wait until `proofgate-brushup` is finished (after 2026-11-29), or run in parallel with Step 5? Proposal: finish Step 5 first.
+
+## Decisions (2026-11-21, user)
+1. First set: Lambda (`UpdateFunctionCode`), CodeBuild (`StartBuild`), Step Functions (`UpdateStateMachine`). The user wants **more services added after `proofgate-brushup` is finished**; the table and the design SHALL make adding a service a table entry plus tests, not a new code path.
+2. Unknown role of a resource: `PG-IAM-003` only if the principal's statement matches the resource and the role is unknown.
+3. CloudFormation stack roles: documentation only.
+4. A role that updates its own function is not a finding.
+5. This spec starts after Step 5 of `proofgate-brushup`.
