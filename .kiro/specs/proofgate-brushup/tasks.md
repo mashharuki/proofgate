@@ -13,14 +13,14 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
   - [x] 0.1 Write RS-39 to RS-47 of design section 10 under `examples/real-stacks/src/launch-probe/` (own catalogue, runner option `--launch`, selectable by `-c pattern=`). Each unsafe Pattern has a deploy role with `iam:PassRole` for the target role and the launch action, a target role that trusts the service and reads the protected bucket.
   - [x] 0.2 Write `data/launch-probe-predictions.json` (ground truth, Result on 1.1.2, Result after the spec) and commit it **alone**. Never edit it afterwards.
   - [x] 0.3 Run the Patterns on the unchanged code and record the baseline `data/launch-probe-baseline-1.1.2.json`. Compare with the predictions for 1.1.2 and record each difference. Done: 9 of 9 as predicted, no difference. On 1.1.2, RS-39, 41, 42, 43, 44, 45 (and RS-47, whose ground truth is unknown) are accepted although they hold the escalation path (false negatives); RS-40 is rejected because of `AWS::IAM::InstanceProfile`; RS-46 is correctly accepted.
-- [ ] 1. **Checkpoint 0.** Stop and wait for the user.
+- [x] 1. **Checkpoint 0.** Passed (the user approved Step 1).
 
 ## Step 1: Generated tables, no behavior change
 
-- [ ] 2. Create branch `brushup/phase-1-tables`.
-  - [ ] 2.1 Write `scripts/sync-service-reference.mjs` (dev-time, network, never run by tests or CI): downloads the index and the service files to a temporary directory, extracts `OBJECT_ACTIONS`, `BUCKET_GRANT_ACTIONS`, and `LAUNCH_ACTIONS` as in design sections 3 to 5, writes `packages/core/src/aws-tables.generated.ts` with a header (source, date, counts), deletes the downloads.
-  - [ ] 2.2 Commit the generated module. A test checks the spot values of design section 3 and the counts.
-  - [ ] 2.3 Add the trust assumption to `docs/ASSUMPTIONS.md` (ja + en). No evaluator code uses the tables yet. Gate; usage-log row.
+- [x] 2. Create branch `brushup/phase-1-tables`.
+  - [x] 2.1 Write `scripts/sync-service-reference.mjs` (dev-time, network, never run by tests or CI): downloads the index and the service files to a temporary directory, extracts `OBJECT_ACTIONS`, `BUCKET_GRANT_ACTIONS`, and `LAUNCH_ACTIONS` as in design sections 3 to 5, writes `packages/core/src/aws-tables.generated.ts` with a header (source, date, counts), deletes the downloads. Done: the script keeps the downloads in memory (no temporary files), has `--from-dir` for an offline run and `--out`/`--date`; the output is deterministic (same file on a second run, and a network run gave the same file as the offline run). Result: 44 object actions, 7 bucket grant actions, 988 launch actions (23 without a passed-to service), 726 tagging-only actions excluded. Two points found while checking: `iam:PassRole` itself appeared as a launch action for EC2 (an iam operation authorizes it) and would have made every PassRole holder an EC2 launcher, so the script excludes it; and actions of other services that an operation authorizes on the side are not taken.
+  - [x] 2.2 Commit the generated module. A test checks the spot values of design section 3 and the counts (`tests/aws-tables.test.ts`, 7 tests). Honest note: this step has no red-first run, because the tests check generated data; I looked at the generated values once while writing them, and wrote the expected values from the AWS pages read earlier (ECS and S3 pages, the Lambda API reference).
+  - [x] 2.3 Add the trust assumption to `docs/ASSUMPTIONS.md` (ja + en). No evaluator code uses the tables yet. Gate; usage-log row.
 - [ ] 3. **Checkpoint 1.**
 
 ## Step 2: B1 complete S3 access
