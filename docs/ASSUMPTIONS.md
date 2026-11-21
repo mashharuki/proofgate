@@ -51,3 +51,7 @@ English: three tables of AWS actions (the S3 actions that take the `object` reso
 バケットに対するActionのうち、複製（`PutReplicationConfiguration`）とライフサイクル（`PutLifecycleConfiguration`）は、AWSの「Permissions management」の分類には入っていませんが、データの複製と消失につながるため、判断として数えます。この2つを数えたくない場合は、生成スクリプトではなく、評価器とオラクルの規則を見直す必要があります。
 
 English: of the bucket actions, replication (`PutReplicationConfiguration`) and lifecycle (`PutLifecycleConfiguration`) are not in the AWS "Permissions management" class; they count by judgment because they can copy or remove every object.
+
+IAMリソースのないテンプレートの受理（要件3）は、テンプレートに現れるものだけを根拠にします。CDKがProofGateへ渡すテンプレートの外にあるロール（ネストされたスタックの子テンプレート、`Transform`が作るロール）は検査できないため、それらを含むテンプレートは受理せずに拒否します。ProofGateは、CDKが渡したテンプレートが、デプロイされるものと一致すると仮定します（従来と同じ前提です）。
+
+English: accepting a template without IAM resources rests only on what the template shows. Roles outside the templates that CDK passes (the child template of a nested stack, roles created by a `Transform`) cannot be checked, so a template that contains them is rejected, not accepted. As before, ProofGate assumes that the templates that CDK passes are what is deployed.

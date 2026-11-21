@@ -672,6 +672,12 @@ export function build(spec: TemplateSpec): BuiltCase {
     return { template, expectation: { kind: "poison", ...applied } };
   }
   const template = render(spec.recipe);
+  // Changed for spec proofgate-brushup, Step 3 (with the user's approval at Checkpoint 3): a fragment without any IAM
+  // resource ("no-iam": noise resources only) used to be rejected with a finding at "Resources". It now gives an
+  // empty model and no finding (see tests/roleless-templates.test.ts for the cases that stay rejected).
+  if (spec.empty === "no-iam") {
+    return { template, expectation: { kind: "model", model: { version: "1", roles: [] } } };
+  }
   const path =
     spec.empty === "attached-to-missing-role"
       ? `Resources.${spec.recipe.attached[0]?.logicalId}.Properties.Roles[0]`

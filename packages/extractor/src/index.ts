@@ -173,6 +173,29 @@ function parseTrustServices(
   return [...new Set(services)].sort();
 }
 
+/** テンプレートの先頭レベルまたは入れ子に、マクロや変換が現れるかを調べます。 */
+const usesTransform = (template: JsonObject): boolean =>
+  "Transform" in template || JSON.stringify(template).includes('"Fn::Transform"');
+/**
+ * テンプレートに、IAMのプリンシパルが現れないと言い切れるかを判定します。迷うときは言い切りません（Fail Closed）。
+ * 言い切らないのは次の場合です。
+ * - 型がAWS::IAM::で始まるリソースがある
+ * - ネストされたスタック（AWS::CloudFormation::Stack）。ロールは別のテンプレートにあるかもしれません
+ * - SAM（AWS::Serverless::）や、TransformとFn::Transform。デプロイ時にテンプレートにないロールが作られます
+ * - オブジェクトでない項目や、Typeが文字列でない項目（読めないものを「IAMなし」とは言えません）
+ * Whether the template certainly has no IAM principal; when in doubt it does not say so (fail closed).
+ */
+function hasNoIamResources(template: JsonObject): boolean {
+  if (!object(template.Resources) || usesTransform(template)) return false;
+  return Object.values(template.Resources).every((resource) => {
+    if (!object(resource) || typeof resource.Type !== "string") return false;
+    return !(
+      resource.Type.startsWith("AWS::IAM::") ||
+      resource.Type.startsWith("AWS::Serverless::") ||
+      resource.Type === "AWS::CloudFormation::Stack"
+    );
+  });
+}
 /**
  * 1つのCloudFormationテンプレートを正規化します。
  * 未対応構文があれば部分的なモデルを返さず、呼び出し側がFail Closedにできるようにします。
@@ -308,6 +331,12 @@ export function extractStack(template: unknown): ExtractionResult {
     }
   }
 
+  // IAMリソースが1つもないテンプレートは、検査するプリンシパルがないため、空のモデルを返します
+  // （spec proofgate-brushup, 要件3）。「証明済み」ではなく「このテンプレートにIAMプリンシパルがない」という意味です。
+  // A template without any IAM resource returns an empty model: there is no principal to check. It does not mean "proved safe".
+  if (unsupported.length === 0 && roles.size === 0 && hasNoIamResources(template)) {
+    return { model: { version: "1", roles: [] }, unsupported };
+  }
   // 検査対象が空のときに定理が自明に成立する「空虚な証明」を防ぎます。
   if (roles.size === 0)
     unsupported.push({

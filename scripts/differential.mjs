@@ -54,6 +54,11 @@ function rulesFor(reasons) {
     if (reason.startsWith("Managed policies")) rules.add("R2");
     else if (reason.startsWith("Condition is not supported in trust")) rules.add("R3");
     else if (reason.startsWith("Action and Resource must be literal")) rules.add("R1");
+    else if (
+      reason.startsWith("No IAM roles were found") ||
+      reason.startsWith("No supported IAM policy statements")
+    )
+      rules.add("no-IAM-resource");
   }
   return [...rules].sort().join("+") || "(no rule; check by hand)";
 }
