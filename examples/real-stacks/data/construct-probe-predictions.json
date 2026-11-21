@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "description": "Construct-probe Patterns RS-23 to RS-38 of the spec proofgate-brushup. observedResult112 was OBSERVED, not predicted: the same 16 constructs were run with npm 1.1.2 in a trial app on 2026-11-21 before these Patterns were written. predictedResultAfter is a prediction for the Result after the spec, written before any rule of the spec is implemented. Never edit this file.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-23",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "PG-IAM-003",
+      "observedReason112": "managed policy AWSLambdaVPCAccessExecutionRole, then vacuous proof",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Requirement 5 adds AWSLambdaVPCAccessExecutionRole."
+    },
+    {
+      "id": "RS-24",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-25",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-26",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-27",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-28",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-29",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-30",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "PG-IAM-003",
+      "observedReason112": "no IAM roles (vacuous proof)",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Requirement 3: no IAM resource in the template."
+    },
+    {
+      "id": "RS-31",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "PG-IAM-003",
+      "observedReason112": "no IAM roles (vacuous proof)",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Requirement 3: no IAM resource. The bucket policy that lets CloudFront read the protected bucket is a resource policy and is not modeled; the acceptance does not cover it."
+    },
+    {
+      "id": "RS-32",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "PG-IAM-003",
+      "observedReason112": "Fn::Sub in a Resource (CDK bootstrap asset bucket)",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Requirement 4 reads Fn::Sub with pseudo-parameters. The deployment role writes the protected bucket, but nobody can pass it, so there is no path."
+    },
+    {
+      "id": "RS-33",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-34",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-35",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-36",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    },
+    {
+      "id": "RS-37",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "PG-IAM-003",
+      "observedReason112": "Fn::Sub in ManagedPolicyArns, then vacuous proof",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Requirement 4 reads Fn::Sub in ManagedPolicyArns (AWSLambdaBasicExecutionRole)."
+    },
+    {
+      "id": "RS-38",
+      "groundTruth": "safe",
+      "inScope": true,
+      "observedResult112": "accepted",
+      "observedReason112": "",
+      "predictedResultAfter": "accepted",
+      "basis": "observation for 1.1.2 (the probe was run before these Patterns were written); reasoning for after",
+      "note": "Already accepted on 1.1.2. Requirements 1 and 2 add findings only where a principal can pass a role, and nobody here can, so the Result should not change."
+    }
+  ]
+}
