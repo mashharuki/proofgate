@@ -10,7 +10,7 @@
 - 文字列または文字列配列で指定された`Action`、`Resource`
 - Action・Resource文字列内の`*`によるglob matching
 - Action・Resource文字列内の`?`（任意の1文字）によるglob matching
-- `iam:PassRole`、Lambdaの作成、または既存のLambda関数の設定更新（`lambda:UpdateFunctionConfiguration`。1.1.1までは設定更新とコード更新の組み合わせを要求していました）、S3オブジェクトの読み取り・書き込み・削除Action
+- `iam:PassRole`、Lambdaの作成、または既存のLambda関数の設定更新（`lambda:UpdateFunctionConfiguration`。1.1.1までは設定更新とコード更新の組み合わせを要求していました）、S3のアクセスを与えるAction（下記）
 - 保護対象バケットへのアクセスは、ポリシーのResourceが表すARN集合と、保護対象バケット内のオブジェクト集合が交わるかで判定します。`bucket/reports/*`のような一部のプレフィックスや、単一オブジェクトへのアクセスも、保護対象バケットへのアクセスとみなします。バケットレベルのARNだけでは、オブジェクト操作へのアクセスとはみなしません
 
 ProofGateは次の場合に`PG-IAM-003`を報告し、Fail Closedで拒否します。
@@ -66,3 +66,12 @@ English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition
 Lambdaの制御は、`lambda:CreateFunction`、または`lambda:UpdateFunctionConfiguration`です。`UpdateFunctionConfiguration`は、実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのレイヤーも可）を変えられます（AWS Lambda APIリファレンス、2026-11-20に確認）。そのため、`iam:PassRole`と組み合わせると、コードを更新する権限がなくても、レイヤーのコードを渡したロールで実行できます。`lambda:UpdateFunctionCode`だけでは実行ロールを変えられないため、Lambdaの制御とはみなしません。この変更は指摘を増やす方向だけに働きます。
 
 English: Lambda control is `lambda:CreateFunction` or `lambda:UpdateFunctionConfiguration`. A configuration update can change the execution role (`Role`) and the layers (`Layers`, also from other accounts; AWS Lambda API reference, checked 2026-11-20), so together with `iam:PassRole` it can run layer code as the passed role without a code update. `lambda:UpdateFunctionCode` alone cannot change the role and is not Lambda control. Up to 1.1.1 a configuration update counted only together with a code update. The change can only add findings.
+
+S3のアクセスは、次の2種類のActionで数えます（AWS Service Referenceから生成した表、2026-11-21。1.1.2までは`GetObject`、`PutObject`、`DeleteObject`の3つだけを数えていました）。
+
+- **オブジェクトに対するAction**（`object`リソースを取る44個。`GetObjectVersion`、`DeleteObjectVersion`、`PutObjectAcl`、`PutObjectVersionAcl`、`ReplicateObject`、`RestoreObject`、`AbortMultipartUpload`など）。保護バケットのオブジェクトの集合と交わるResourceで数えます。
+- **バケットに対するAction**（7個）。`PutBucketPolicy`、`DeleteBucketPolicy`、`PutBucketAcl`、`PutBucketOwnershipControls`、`PutBucketPublicAccessBlock`は、バケットポリシーやACLで他のプリンシパルにアクセスを与えられます。`PutReplicationConfiguration`は全オブジェクトを別のバケットへ写せます。`PutLifecycleConfiguration`は全オブジェクトを期限切れにできます。バケットのARN自体に届くResourceで数えます。オブジェクトのResource（`bucket/*`）だけでは数えません。
+
+`ListBucket`、`GetBucketPolicy`、`PutBucketTagging`など、データやアクセス権を変えないActionは数えません。アクセスポイントとMulti-Region Access Point経由のアクセスは検査しません。この変更は指摘を増やす方向だけに働きます。
+
+English: S3 access is counted for two kinds of actions (tables generated from the AWS Service Reference, 2026-11-21; up to 1.1.2 only `GetObject`, `PutObject`, and `DeleteObject` counted). **Object actions** (the 44 that take the `object` resource, such as `GetObjectVersion`, `DeleteObjectVersion`, `PutObjectAcl`, `ReplicateObject`) count on a Resource that intersects the object set of the protected bucket. **Bucket actions** (7) count on a Resource that reaches the bucket ARN itself, not on `bucket/*` alone: `PutBucketPolicy`, `DeleteBucketPolicy`, `PutBucketAcl`, `PutBucketOwnershipControls`, and `PutBucketPublicAccessBlock` can give others access; `PutReplicationConfiguration` can copy every object; `PutLifecycleConfiguration` can expire every object. Actions that change neither data nor access (`ListBucket`, `GetBucketPolicy`, `PutBucketTagging`) do not count. Access through access points and Multi-Region Access Points is not checked. The change can only add findings.

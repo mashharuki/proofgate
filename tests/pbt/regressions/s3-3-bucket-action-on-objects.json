@@ -1,0 +1,46 @@
+{
+  "name": "s3-3-bucket-action-on-objects",
+  "note": "A bucket action applied to the object set is not a valid grant (the action takes the bucket resource type), so it is not access.",
+  "label": "safe",
+  "expectedTs": "safe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "roleName": "data-role",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:PutBucketPolicy"],
+            "resources": ["arn:aws:s3:::protected-bucket/*"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "roleName": "dev-role",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::123456789012:role/data-role"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:CreateFunction"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      }
+    ]
+  }
+}

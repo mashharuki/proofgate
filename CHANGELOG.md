@@ -2,6 +2,12 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
+## Unreleased
+
+### Fixed: more S3 actions count as access to a protected bucket
+
+Up to 1.1.2 only `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` counted as access. A role with only `s3:GetObjectVersion`, `s3:DeleteObjectVersion`, `s3:PutObjectAcl`, `s3:ReplicateObject`, or `s3:PutBucketPolicy` on the protected bucket was reported as having no access, so a path through it was missed. Now the 44 actions that take the S3 `object` resource count on the objects of the bucket, and 7 bucket actions count on the bucket ARN itself: the five "permissions management" actions (`PutBucketPolicy`, `DeleteBucketPolicy`, `PutBucketAcl`, `PutBucketOwnershipControls`, `PutBucketPublicAccessBlock`), `PutReplicationConfiguration`, and `PutLifecycleConfiguration`. The tables are generated from the AWS Service Reference (see `docs/ASSUMPTIONS.md`). The change can only add findings: a template that was accepted may now report `PG-IAM-004` (checked against 1.1.2 over 3038 inputs: no finding lost).
+
 ## 1.1.2 - 2026-11-20
 
 ### Fixed: a configuration update alone is Lambda control
