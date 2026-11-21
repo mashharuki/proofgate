@@ -16,14 +16,21 @@ import { compileGlob, matchTokens } from "./support/glob.js";
 // reviewed. A deviation of the evaluator may only be on the over-approximating side (it matches where AWS does not).
 // ProofGateの規則を、IAMポリシーエンジンの実際の判定と比べます。食い違いは明示し、変化があればテストが落ちます。
 type Row = [string, string, string, boolean];
-const observations = JSON.parse(
-  readFileSync(join(process.cwd(), "tests/pbt/aws-observations.json"), "utf8"),
-) as { resource: Row[]; action: Row[] };
+const read = (file: string) =>
+  JSON.parse(readFileSync(join(process.cwd(), file), "utf8")) as {
+    resource?: Row[];
+    action?: Row[];
+  };
+const first = read("tests/pbt/aws-observations.json");
+const second = read("tests/pbt/aws-observations-2.json");
+const observations = {
+  resource: [...(first.resource ?? []), ...(second.resource ?? [])],
+  action: first.action ?? [],
+};
 
-const oracleResource = (pattern: string, value: string) =>
-  matchTokens(compileGlob(pattern, { colonAware: true }), value);
+const oracleResource = (pattern: string, value: string) => matchTokens(compileGlob(pattern), value);
 const oracleAction = (pattern: string, value: string) =>
-  matchTokens(compileGlob(pattern.toLowerCase(), { colonAware: false }), value.toLowerCase());
+  matchTokens(compileGlob(pattern.toLowerCase()), value.toLowerCase());
 // Copy of `matches` in packages/core/src/index.ts.
 const evaluatorMatches = (pattern: string, value: string): boolean => {
   const escaped = pattern
@@ -33,8 +40,12 @@ const evaluatorMatches = (pattern: string, value: string): boolean => {
   return new RegExp(`^${escaped}$`, "i").test(value);
 };
 
-/** Rows where the oracle differs from AWS. R13 and P11 have one cause: the oracle does not let a `*` cross a colon unless it ends its segment; AWS lets it cross anywhere. */
-const ORACLE_DEVIATIONS = ["P11", "R13"];
+/**
+ * Rows where the oracle differs from AWS. None since the oracle reads `*` and `?` as plain wildcards that also
+ * stand for a colon (before this fix: R13, P11, and Q03, Q04, Q05, Q09, Q10, Q11, Q14 of the second file; one cause: a `*` crossed a colon
+ * only at the end of a segment and a `?` never did).
+ */
+const ORACLE_DEVIATIONS: string[] = [];
 /** Rows where the evaluator differs from AWS: all are the case-insensitive reading (AWS is case-sensitive), an over-approximation. */
 const EVALUATOR_DEVIATIONS = ["P07", "R05", "R06", "R17"];
 
@@ -43,7 +54,7 @@ const ids = (rows: Row[], read: (pattern: string, value: string) => boolean) =>
 
 describe("matching rules against the real IAM engine", () => {
   it("has the observations that were taken", () => {
-    expect(observations.resource).toHaveLength(31);
+    expect(observations.resource).toHaveLength(45);
     expect(observations.action).toHaveLength(13);
   });
   it("the oracle agrees with AWS except on the listed rows", () => {

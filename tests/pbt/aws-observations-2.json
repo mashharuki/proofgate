@@ -1,0 +1,19 @@
+{
+  "description": "More matching decisions of the real IAM policy engine, observed with iam:SimulateCustomPolicy through the AWS MCP Server on 2026-11-21, to settle whether `?` and `*` cross a colon inside an ARN (spec proofgate-brushup, fix of the oracle). Same format as aws-observations.json: Allow s3:GetObject on <pattern>, request for <value>; awsMatches is true for 'allowed'. Q01 is false only because `?` stands for one character and the value has two colons before `b`. Never edit.",
+  "resource": [
+    ["Q01", "arn:aws:s3:?b/k", "arn:aws:s3:::b/k", false],
+    ["Q02", "arn:aws:s3:::?/k", "arn:aws:s3:::b/k", true],
+    ["Q03", "arn:aws:s3:::b/k?x", "arn:aws:s3:::b/k:x", true],
+    ["Q04", "arn:aws:s3:::b/k?", "arn:aws:s3:::b/k:", true],
+    ["Q05", "arn:aws:s3:?:b/k", "arn:aws:s3:::b/k", true],
+    ["Q06", "arn:aws:s3:*:*:b/k", "arn:aws:s3:::b/k", true],
+    ["Q07", "arn:aws:s3:*:b/k", "arn:aws:s3:us-east-1:123:b/k", true],
+    ["Q08", "arn:aws:*:b/k", "arn:aws:s3:::b/k", true],
+    ["Q09", "arn:aws:*b/k", "arn:aws:s3:::b/k", true],
+    ["Q10", "arn:aws:s3:::b*/k", "arn:aws:s3:::b:x/k", true],
+    ["Q11", "arn:aws:s3:::*/k", "arn:aws:s3:::b:x/k", true],
+    ["Q12", "arn:aws:s3:::?*", "arn:aws:s3:::b:x", true],
+    ["Q13", "arn:aws:s3:::b/*", "arn:aws:s3:::b/k:x:y", true],
+    ["Q14", "arn:aws:s3:::b/k??", "arn:aws:s3:::b/k::", true]
+  ]
+}

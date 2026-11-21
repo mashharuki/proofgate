@@ -21,7 +21,7 @@ Any doubt means rejection. Never turn an unknown into "safe".
 - `?` is a single-character wildcard and `*` matches any length, in Actions and Resources.
 - An IAM policy variable (`${aws:username}` and similar) in a Resource string is not evaluated. The Statement is rejected as unsupported with `PG-IAM-003`, and no partial model is returned. A Resource that is already an intrinsic keeps its existing findings. This rejects more input than before and has no opt-out.
 - Kept on purpose as conservative over-approximations (they only add findings): Resource ARN matching ignores letter case (IAM is case-sensitive: checked with `SimulateCustomPolicy` on 2026-11-21), trust principal `*` counts as Lambda-assumable, a Logical ID or bare role name in `iam:PassRole` Resource counts, and Deny statements are ignored.
-- A `*` may cross a colon anywhere in an ARN. This is **not** an over-approximation: IAM does exactly this (observed with `SimulateCustomPolicy`; the independent oracle still reads a `*` as crossing only at the end of a segment, a known deviation recorded in `tests/pbt/aws-observations.test.ts`).
+- A `*` and a `?` may stand for a colon anywhere in an ARN. This is **not** an over-approximation: IAM does exactly this (observed with `SimulateCustomPolicy`, `tests/pbt/aws-observations*.json`). The independent oracle read it differently until 2026-11-21 and was corrected; it now agrees with all 58 observations.
 - Any change to these rules must keep the corrections one-directional: it may add findings or rejections. Turning an unsafe verdict into safe, or accepting what `PG-IAM-003` rejects, needs the user's approval.
 
 ## Trust boundary

@@ -53,7 +53,7 @@ Saved as `tests/pbt/aws-observations.json`, compared in `tests/pbt/aws-observati
 | --- | --- | --- | --- |
 | Action names are case-insensitive; `*` and `?` | yes (13 of 13) | same | same |
 | Resource ARNs are **case-sensitive** (bucket, key, role name, `ARN:AWS:...`) | yes | same | **no** (matches ignoring case): rows R05, R06, R17, P07 |
-| A `*` crosses a colon **anywhere** (`arn:aws:s3:*b/k` matches `arn:aws:s3:::b/k`; `arn:aws:iam:*role/x` matches a role ARN) | yes | **no**: only at the end of a segment (rows R13, P11) | yes |
+| A `*` crosses a colon **anywhere** (`arn:aws:s3:*b/k` matches `arn:aws:s3:::b/k`; `arn:aws:iam:*role/x` matches a role ARN); a `?` may stand for a colon (`arn:aws:s3:?:b/k` matches `arn:aws:s3:::b/k`) | yes | **no** before the fix (rows R13, P11, Q03, Q04, Q05, Q09, Q10, Q11, Q14; fixed, see section 7) | yes |
 | `?` is one character; `b/*` does not match the bucket ARN `b` | yes | same | same |
 | A wildcard partition (`arn:*:iam::*:role/x`) matches `aws` and `aws-cn` | yes | same | same |
 
@@ -99,7 +99,7 @@ No behavior of ProofGate changes: nothing reads the launch table yet.
 | # | Follow-up | Why | Size |
 | --- | --- | --- | --- |
 | a | Step 5: normalize regional trust principals; reconsider the 23 any-service entries | 3.6, 3.8 (1) | small, inside Step 5 |
-| b | Make the oracle read `*` as crossing a colon everywhere; drop the `ARN_STAR_SPAN` conservative category | 3.5 | medium (generator, tags, coverage, self-check), tests only |
+| b | Make the oracle read `*` and `?` as plain wildcards that also stand for a colon; drop the `ARN_STAR_SPAN` conservative category | 3.5 | **done on 2026-11-21 (the user chose b), section 7** |
 | c | A spec for paths that need no `iam:PassRole` (CloudFormation stack roles first) | 3.8 (2) | large |
 | d | Count the "Permissions management" actions of other S3 resource types when the Resource is `*` | 3.4 | small, needs a decision |
 | e | Make resource ARN matching case-sensitive in the evaluator | 3.5 | would turn findings off: needs the user's approval |
@@ -110,3 +110,15 @@ No behavior of ProofGate changes: nothing reads the launch table yet.
 - The 44 observations are a sample of matching rules, not a proof that the evaluator or the oracle is right everywhere.
 - `SimulateCustomPolicy` evaluates policies as text. It does not check that a request would really be sent with that resource ARN.
 - No AWS resource was created, changed, or deleted. The account that the MCP Server uses is not recorded here.
+
+## 7. Follow-up b: the oracle was corrected (2026-11-21)
+
+The user chose follow-up b. 14 more observations of the real IAM engine (`tests/pbt/aws-observations-2.json`) showed that a `?` also stands for a colon, so the oracle's whole colon rule (`colonAware`) was wrong, not only the `*` part. Before the change the old oracle disagreed with AWS on 9 of the 45 resource observations (R13, P11, Q03, Q04, Q05, Q09, Q10, Q11, Q14); the first test run failed on them. Changes:
+
+- `tests/pbt/support/glob.ts` lost the colon rule: `*` is any run of characters, `?` any one character, the colon is an ordinary character. `compileGlob` has no option any more.
+- The generator no longer has the tag `ARN_STAR_SPAN` and the access mode `starSpan`. A Resource such as `arn:aws:s3:*<bucket>/*` is now a valid form (`access:star-span`) with the label unsafe. The conservative plans that used `starSpan` were replaced by combinations of the remaining tags. The indices of generated cases shift again (no stored report depends on them).
+- Assertions of existing tests that encoded the old rule were changed, with the user's approval ("b"): the test "lets only a segment-final * cross a colon (Decision 8.2)" in `tests/pbt/oracle.test.ts` (now: `*` and `?` stand for a colon anywhere), and the two readings (`arn` and `plain`) of the brute-force intersection test (now one reading; the random patterns of both old runs are kept). The tests of the independent oracle for the S3 and Lambda rules were not touched.
+- `tests/pbt/aws-observations.test.ts` now expects **no** deviation of the oracle (45 resource and 13 action observations). The deviations of the evaluator (case only, over-approximation) are unchanged.
+- The product is unchanged: the evaluator already read the colon as AWS does.
+
+Checks: 199 generated tests pass; seeds 12345, 987654321, 424242 and 5000 cases with 2000 Lean-checked pass.
