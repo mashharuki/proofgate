@@ -225,7 +225,9 @@ export function extractStack(template: unknown): ExtractionResult {
       object(rawResource) &&
       typeof rawResource.Type === "string" &&
       rawResource.Type.startsWith("AWS::IAM::") &&
-      !["AWS::IAM::Role", "AWS::IAM::Policy"].includes(rawResource.Type)
+      !["AWS::IAM::Role", "AWS::IAM::Policy", "AWS::IAM::InstanceProfile"].includes(
+        rawResource.Type,
+      )
     ) {
       unsupported.push({
         sourcePath: `Resources.${logicalId}`,
@@ -331,6 +333,30 @@ export function extractStack(template: unknown): ExtractionResult {
     }
   }
 
+  // 第3段階: AWS::IAM::InstanceProfileを読みます（spec proofgate-brushup, Step 5, design 5.3）。
+  // プロファイルは権限を増やさないため、モデルには入れません。Rolesは、テンプレート内のロールへのRefか、リテラルの名前だけを許します。
+  // An instance profile adds no permission and does not enter the model. Its Roles must be local role Refs or literal names.
+  for (const [logicalId, rawResource] of Object.entries(template.Resources)) {
+    if (!object(rawResource) || rawResource.Type !== "AWS::IAM::InstanceProfile") continue;
+    const profileRoles = object(rawResource.Properties) ? rawResource.Properties.Roles : undefined;
+    const readable =
+      Array.isArray(profileRoles) &&
+      profileRoles.length > 0 &&
+      profileRoles.every(
+        (entry) =>
+          (typeof entry === "string" && entry.length > 0) ||
+          (object(entry) &&
+            Object.keys(entry).length === 1 &&
+            typeof entry.Ref === "string" &&
+            roles.has(entry.Ref)),
+      );
+    if (!readable) {
+      unsupported.push({
+        sourcePath: `Resources.${logicalId}.Properties.Roles`,
+        reason: "Instance profile Roles must be local role Refs or literal role names",
+      });
+    }
+  }
   // IAMリソースが1つもないテンプレートは、検査するプリンシパルがないため、空のモデルを返します
   // （spec proofgate-brushup, 要件3）。「証明済み」ではなく「このテンプレートにIAMプリンシパルがない」という意味です。
   // A template without any IAM resource returns an empty model: there is no principal to check. It does not mean "proved safe".

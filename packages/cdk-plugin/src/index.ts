@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { evaluate, generateLean } from "@proofgate-cdk/core";
+import { evaluate, generateLean, unknownTrustFindings } from "@proofgate-cdk/core";
 import { extractStack } from "@proofgate-cdk/extractor";
 import type { ProofGateConfig } from "@proofgate-cdk/model";
 import type {
@@ -151,6 +151,22 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
       // No IAM resource: there is no principal to check, so neither the evaluator nor Lean runs and nothing is reported.
       if (extraction.model.roles.length === 0) continue;
 
+      // 渡せて保護バケットに届くロールが、起動アクションの表にないサービスを信頼しているときは、PG-IAM-003にします（design 5.4）。
+      // A passable, bucket-reaching role that trusts a service not in the launch table is reported as PG-IAM-003.
+      for (const finding of unknownTrustFindings(extraction.model, this.props)) {
+        violations.push({
+          ruleName: "PG-IAM-003",
+          description: `Unsupported IAM syntax: ${finding.reason}`,
+          fix: "Check whether this service can run code with the role, remove iam:PassRole for the role, or prevent the role from accessing the protected bucket.",
+          violatingResources: [
+            {
+              resourceLogicalId: logicalIdFromPath(finding.sourcePath),
+              templatePath,
+              locations: [finding.sourcePath],
+            },
+          ],
+        });
+      }
       const findings = evaluate(extraction.model, this.props);
       const leanSource = generateLean(extraction.model, this.props);
       const leanResult = this.runLean(leanSource);
@@ -183,7 +199,7 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
         violations.push({
           ruleName: finding.ruleId,
           description: finding.explanation,
-          fix: `Remove iam:PassRole or Lambda code/configuration control from ${finding.principalLogicalId}, remove Lambda trust from ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`,
+          fix: `Remove iam:PassRole or the launch action from ${finding.principalLogicalId}, remove the service from the trust policy of ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`,
           violatingResources: [
             {
               resourceLogicalId: finding.principalLogicalId,

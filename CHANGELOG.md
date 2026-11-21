@@ -4,6 +4,10 @@ All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@pr
 
 ## Unreleased
 
+### Fixed: paths through launch services other than Lambda
+
+Up to 1.1.2 only Lambda counted: a principal that could pass a role to ECS (`ecs:RunTask`), EC2 (`ec2:RunInstances`), CodeBuild, CloudFormation, Step Functions, Glue, or another service was not checked, so those paths were missed. Now every launch action of a table generated from the AWS Service Reference (879 actions of operations that authorize `iam:PassRole`) counts, together with a target role that trusts the service the action passes the role to. A regional service principal (`states.us-east-1.amazonaws.com`) is read as the global one. `AWS::IAM::InstanceProfile` is read instead of rejected. A passable role that reaches a protected bucket and trusts a service that is in no value of the table is rejected with `PG-IAM-003`. The violation text names the service and the launch action. The Lean fields `canControlLambda` and `targetIsLambdaAssumable` are renamed `canLaunch` and `targetTrustsService`, and a `service` field is added. The change can only add findings (checked against 1.1.2 over 3038 inputs: no finding lost).
+
 ### Added: `Fn::Sub` and two managed policies
 
 `Resource` and `ManagedPolicyArns` now read the string form of `Fn::Sub` (no variable map): `${Name}` like `Ref`, `${Id.Attr}` like `Fn::GetAtt`, `${!Text}` as the literal `${Text}`. CDK writes `Fn::Sub` in the bootstrap asset bucket statement and in the `ManagedPolicyArns` of the `autoDeleteObjects` provider role, so those stacks were rejected before. Unknown names, parameters, a variable map, and an IAM policy variable still reject with `PG-IAM-003`. Two managed policies are added to the checked table: `AWSLambdaVPCAccessExecutionRole` (v3) and `AmazonAPIGatewayPushToCloudWatchLogs` (v1). Any other managed policy stays rejected. Neither policy touches S3 or `iam:PassRole`.

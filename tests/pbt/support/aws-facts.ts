@@ -7,5 +7,6 @@
  */
 export {
   BUCKET_GRANT_ACTIONS,
+  LAUNCH_ACTIONS,
   OBJECT_ACTIONS,
 } from "../../../packages/core/src/aws-tables.generated.js";
