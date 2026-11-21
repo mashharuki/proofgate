@@ -5,8 +5,10 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { catalog } from "./catalog.js";
 import { ClassificationError, classify, RESULTS } from "./classify.js";
+import { constructProbeCatalog } from "./construct-probe/catalog.js";
 import { createApp } from "./create-app.js";
 import { holdoutCatalog } from "./holdout/catalog.js";
+import { launchProbeCatalog } from "./launch-probe/catalog.js";
 import type { Pattern } from "./pattern.js";
 
 /**
@@ -217,8 +219,8 @@ interface Options {
   readonly print: boolean;
   readonly only: string | undefined;
   readonly cli: "none" | "sample" | "all";
-  /** holdoutは、ホールドアウトのPatternを観測だけします（期待表はなく、--printと同じ出力です）。 */
-  readonly set: "main" | "holdout";
+  /** holdoutとprobeは、ホールドアウトと構成の試しのPatternを観測だけします（期待表はなく、--printと同じ出力です）。 */
+  readonly set: "main" | "holdout" | "probe" | "launch";
 }
 
 function parseArguments(argv: string[]): Options {
@@ -231,6 +233,8 @@ function parseArguments(argv: string[]): Options {
     if (argument === "--print") print = true;
     else if (argument === "--only") only = argv[++i];
     else if (argument === "--holdout") set = "holdout";
+    else if (argument === "--probe") set = "probe";
+    else if (argument === "--launch") set = "launch";
     else if (argument === "--cli") {
       const mode = argv[++i];
       if (mode !== "none" && mode !== "sample" && mode !== "all") {
@@ -245,7 +249,13 @@ function parseArguments(argv: string[]): Options {
 function main(): number {
   const started = performance.now();
   const options = parseArguments(process.argv.slice(2));
-  const patterns = (options.set === "holdout" ? holdoutCatalog : catalog).filter(
+  const sets = {
+    main: catalog,
+    holdout: holdoutCatalog,
+    probe: constructProbeCatalog,
+    launch: launchProbeCatalog,
+  };
+  const patterns = sets[options.set].filter(
     (pattern) => options.only === undefined || pattern.id === options.only,
   );
   if (patterns.length === 0)
@@ -253,11 +263,11 @@ function main(): number {
 
   // 期待表がなければ、Patternを実行する前に止めます（先に--printで観測して、確認します）。
   const expected =
-    options.print || options.set === "holdout" ? new Map<string, Expected>() : loadExpected();
+    options.print || options.set !== "main" ? new Map<string, Expected>() : loadExpected();
   const observedAll = patterns.map(observe);
   const problems: string[] = [];
 
-  if (options.print || options.set === "holdout") {
+  if (options.print || options.set !== "main") {
     console.log(JSON.stringify({ version: 1, patterns: observedAll }, null, 2));
   } else {
     for (const observed of observedAll) {

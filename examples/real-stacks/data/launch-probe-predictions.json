@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "description": "Predictions for the launch-service Patterns RS-39 to RS-47 of the spec proofgate-brushup, written BEFORE these Patterns were run with ProofGate and before any rule of the spec was implemented. predictedResult112 is the prediction for ProofGate 1.1.2; predictedResultAfter is for the implementation of design sections 4 and 5. Never edit this file.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-39",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "1.1.2 checks Lambda only, so a task role passed with ecs:RunTask is a missed path (false negative)."
+    },
+    {
+      "id": "RS-40",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "PG-IAM-003",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "1.1.2 rejects AWS::IAM::InstanceProfile as an unsupported IAM resource, so the path is not visible. After the spec the profile is read and the path is reported."
+    },
+    {
+      "id": "RS-41",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Missed on 1.1.2 (Lambda only)."
+    },
+    {
+      "id": "RS-42",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Missed on 1.1.2 (Lambda only)."
+    },
+    {
+      "id": "RS-43",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Missed on 1.1.2 (Lambda only)."
+    },
+    {
+      "id": "RS-44",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Missed on 1.1.2: s3:GetObjectVersion is not in the S3 action list."
+    },
+    {
+      "id": "RS-45",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Missed on 1.1.2: s3:PutBucketPolicy on the bucket ARN never counts as access."
+    },
+    {
+      "id": "RS-46",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "No launch action for ECS, so no path before or after."
+    },
+    {
+      "id": "RS-47",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult112": "accepted",
+      "predictedResultAfter": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Ground truth is unknown (worst case recorded as unsafe). 1.1.2 accepts it because it only knows Lambda trust; after the spec a passable, bucket-reaching role that trusts an unknown service is rejected (design 5.4)."
+    }
+  ]
+}

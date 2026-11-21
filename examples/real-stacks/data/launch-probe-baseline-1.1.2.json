@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "description": "Launch-probe Patterns RS-39 to RS-47 run with the code of 1.1.2 (main at 2fd0cb6) on 2026-11-21, with `node dist/runner.js --launch --cli none`, before any rule of proofgate-brushup was implemented. Never edit.",
+  "patterns": [
+    {
+      "id": "RS-39",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-40",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["AWS::IAM::InstanceProfile is not supported in the first vertical slice"],
+      "rules": ["PG-IAM-003"],
+      "locations": ["RealStack/Profile/Resource"]
+    },
+    {
+      "id": "RS-41",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-42",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-43",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-44",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-45",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-46",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-47",
+      "result": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    }
+  ]
+}
