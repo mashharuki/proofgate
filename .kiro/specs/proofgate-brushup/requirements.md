@@ -1,6 +1,6 @@
 # Requirements: proofgate-brushup
 
-Status: DRAFT, awaiting approval. `design.md` and `tasks.md` are intentionally not written yet. No code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-21, with the answers to the open questions recorded at the end. `design.md` and `tasks.md` are not written yet. No production code has been changed for this spec.
 
 ## Introduction
 
@@ -53,7 +53,7 @@ The user chose the scope on 2026-11-21: items 1, 4, 5, 6 of the proposal, accept
 2. EACH entry SHALL be checked against the AWS documentation (for example the Service Authorization Reference, which marks the actions that require `iam:PassRole`), with the source and the date in the design. An entry whose behavior cannot be confirmed SHALL NOT be added.
 3. THE design SHALL propose the first set of services and why. It SHALL include at least Lambda, ECS (tasks), EC2 (instances with an instance profile), CodeBuild, and CloudFormation (stacks with a service role), unless the documentation shows that one of them does not fit the path.
 4. A path SHALL require that the launch action and the trust belong to the **same** service. A trust principal `*` SHALL count for every service (as today for Lambda).
-5. IF a target role that can access a protected bucket, and that the principal can pass, trusts a service that is **not** in the table, THEN ProofGate SHALL NOT silently accept it. THE design SHALL decide between reporting `PG-IAM-003` for that role and documenting it as out of scope; the recommendation is `PG-IAM-003` (see open question 2).
+5. IF a target role that can access a protected bucket, and that the principal can pass, trusts a service that is **not** in the table, THEN ProofGate SHALL NOT silently accept it. ProofGate SHALL report `PG-IAM-003` for that role, naming the service and the reason ("cannot tell whether this service runs code with the role") (the user's answer to open question 2).
 6. WHERE a service needs a resource that the extractor rejects today (for example `AWS::IAM::InstanceProfile`), THE extractor SHALL read it, with the same fail-closed rules as for roles.
 7. THE Lean model MAY be generalized (for example renaming `canControlLambda` and `targetIsLambdaAssumable`), but it SHALL keep four facts per candidate path and the theorem shape `safe generatedPaths = true`. A change of the Lean sources SHALL keep the audit (no `sorry`, no project-defined `axiom`) and SHALL be tested on both the TypeScript and the Lean side. THE documents SHALL keep saying that Lean checks facts that TypeScript computes.
 8. THE violation for such a path SHALL keep the rule ID `PG-IAM-004` and SHALL name the service in its explanation.
@@ -67,7 +67,7 @@ The user chose the scope on 2026-11-21: items 1, 4, 5, 6 of the proposal, accept
 
 1. WHEN a template contains no IAM resource at all, THE validator SHALL accept it with no finding. This is a permissive change approved by the user on 2026-11-21.
 2. THE following SHALL stay rejected with `PG-IAM-003`: an empty `protectedBucketArns`; an unreadable template; an IAM resource that the extractor does not support; an `AWS::IAM::Policy` that refers to a role outside the template.
-3. WHETHER a template that has roles but no readable statement (for example a role with only a trust policy) is accepted SHALL be decided by the user (open question 1). Until then it stays rejected.
+3. A template that has roles but no readable statement (for example a role with only a trust policy) SHALL stay rejected (the user's answer to open question 1).
 4. THE documents SHALL say plainly that "accepted" for such a template means "no IAM principal in this template", not "proved safe".
 5. THE existing tests that assert the rejection of a template without roles SHALL be changed only as approved by the user, and the change SHALL be listed at the checkpoint (known today: the extractor-level generator's empty kind `no-iam`).
 
@@ -120,7 +120,8 @@ The user chose the scope on 2026-11-21: items 1, 4, 5, 6 of the proposal, accept
 #### Acceptance criteria
 
 1. THE work SHALL be split into steps that can be merged on their own, in this order unless the design shows a reason to change it: Requirement 1 (missed path, small), Requirement 3, Requirement 4, Requirement 5, Requirement 2 (largest), Requirement 6.
-2. THE last day for code changes SHALL be agreed with the user (proposal: 2026-11-29). Code that is not finished by then SHALL NOT be merged, and the result SHALL be reported as it is.
+2. THE last day for code changes is 2026-11-29 (agreed). Code that is not finished by then SHALL NOT be merged, and the result SHALL be reported as it is.
+3. THE user wants to keep trying and improving until that day. AFTER the planned steps, remaining time SHALL be used for more trials (new constructs, the trial app), each with predictions written first, and for fixes that they show; each such fix follows Requirements 7 and 9.
 
 ### Requirement 9: Existing behavior and release
 
@@ -151,3 +152,10 @@ The user chose the scope on 2026-11-21: items 1, 4, 5, 6 of the proposal, accept
 2. Requirement 2.5: a target role that can access a protected bucket, that the principal can pass, and that trusts a service **not in the table**. Recommendation: report `PG-IAM-003` ("cannot tell whether this service runs code with the role"), so that the table can stay small without hiding paths.
 3. Requirement 8.2: is 2026-11-29 the last day for code changes? Requirement 2 is the largest step; if it does not fit, the other steps are merged without it.
 4. Should the 16-construct probe of 2026-11-21 become committed Patterns (with predictions written now, before the implementation), or should the new Patterns be chosen fresh in the design?
+
+## Answers (2026-11-21)
+
+1. Roles without a readable statement: keep rejected.
+2. A passable, bucket-reaching role that trusts a service not in the table: `PG-IAM-003`.
+3. Last day for code changes: 2026-11-29; use the remaining time for more trials and fixes up to that day.
+4. The 16-construct probe becomes committed Patterns now. Because the probe was already run on 1.1.2, the 1.1.2 Results are recorded as **observations**, not predictions; the predictions are for the Results **after** this spec, written and committed before any rule of this spec is implemented.
