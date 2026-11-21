@@ -146,6 +146,10 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
         });
       }
       if (!extraction.model) continue;
+      // IAMリソースのないテンプレートは、検査するプリンシパルがないため、評価もLeanも実行せず、何も報告しません。
+      // 中身が空の証明を「証明済み」として扱わないためです（spec proofgate-brushup, 要件3）。
+      // No IAM resource: there is no principal to check, so neither the evaluator nor Lean runs and nothing is reported.
+      if (extraction.model.roles.length === 0) continue;
 
       const findings = evaluate(extraction.model, this.props);
       const leanSource = generateLean(extraction.model, this.props);

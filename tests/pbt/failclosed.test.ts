@@ -63,7 +63,14 @@ describe("unusable template files", () => {
     ["a JSON array", "[]"],
     ["a JSON string", '"text"'],
     ["an object without Resources", "{}"],
-    ["a template without any IAM role", '{"Resources":{"B":{"Type":"AWS::S3::Bucket"}}}'],
+    // Changed for spec proofgate-brushup, Step 3 (with the user's approval at Checkpoint 3): this entry was
+    // `{"Resources":{"B":{"Type":"AWS::S3::Bucket"}}}`, a template without IAM resources, which is now accepted
+    // (tests/roleless-templates.test.ts). It now holds the case that must stay rejected: no role, and the template
+    // cannot be called free of IAM because its only resource is a nested stack (its roles are in another template).
+    [
+      "a template without any IAM role whose only resource is a nested stack",
+      '{"Resources":{"Child":{"Type":"AWS::CloudFormation::Stack","Properties":{"TemplateURL":"https://x/y.json"}}}}',
+    ],
   ];
 
   for (const [name, content] of files) {
