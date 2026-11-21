@@ -10,11 +10,47 @@ import type { StatementModel, UnsupportedFinding } from "@proofgate-cdk/model";
  * Source: https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSLambdaBasicExecutionRole.html
  * Checked on 2026-11-19. AWS can publish a new default version later; this is a trust assumption (docs/ASSUMPTIONS.md).
  */
+/**
+ * AWSLambdaVPCAccessExecutionRole: policy version v3 (edited 2024-01-05), ARN arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole.
+ * One Allow statement on "*": three logs actions and six ec2 network-interface actions.
+ * Source: https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AWSLambdaVPCAccessExecutionRole.html (read 2026-11-21).
+ *
+ * AmazonAPIGatewayPushToCloudWatchLogs: policy version v1 (edited 2015-11-11), ARN arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs.
+ * One Allow statement on "*": seven logs actions.
+ * Source: https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonAPIGatewayPushToCloudWatchLogs.html (read 2026-11-21).
+ * Neither policy touches S3 or iam:PassRole, so neither can create a path; they only make the role readable.
+ */
 const MANAGED_POLICIES: Readonly<
   Record<string, { readonly actions: readonly string[]; readonly resources: readonly string[] }>
 > = {
   "service-role/AWSLambdaBasicExecutionRole": {
     actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+    resources: ["*"],
+  },
+  "service-role/AWSLambdaVPCAccessExecutionRole": {
+    actions: [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "ec2:CreateNetworkInterface",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeSubnets",
+      "ec2:DeleteNetworkInterface",
+      "ec2:AssignPrivateIpAddresses",
+      "ec2:UnassignPrivateIpAddresses",
+    ],
+    resources: ["*"],
+  },
+  "service-role/AmazonAPIGatewayPushToCloudWatchLogs": {
+    actions: [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams",
+      "logs:PutLogEvents",
+      "logs:GetLogEvents",
+      "logs:FilterLogEvents",
+    ],
     resources: ["*"],
   },
 };
@@ -45,6 +81,16 @@ function policyNameOf(entry: unknown): string | undefined {
         return ref === "AWS::Partition" ? "*" : undefined;
       });
       if (parts.every((part): part is string => part !== undefined)) text = parts.join("");
+    }
+  }
+  // CDKが書く`Fn::Sub "arn:${AWS::Partition}:iam::aws:policy/<name>"`。変数は`AWS::Partition`だけを許し、`*`と読みます（Joinと同じ）。
+  // The Fn::Sub form CDK writes: only ${AWS::Partition} is allowed, read as "*" like the Join form. No variable map, no other `$`.
+  if (isObject(entry) && Object.keys(entry).length === 1 && "Fn::Sub" in entry) {
+    const raw = entry["Fn::Sub"];
+    if (typeof raw === "string") {
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: CloudFormation Fn::Sub variable text
+      const replaced = raw.replaceAll("${AWS::Partition}", "*");
+      if (!replaced.includes("$")) text = replaced;
     }
   }
   if (text === undefined) return undefined;

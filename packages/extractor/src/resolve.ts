@@ -90,6 +90,45 @@ function resolveGetAtt(target: unknown, context: ResolveContext): Alternatives |
   return ["*"];
 }
 
+/**
+ * `Fn::Sub`の文字列形式（変数マップなし）です（spec proofgate-brushup, B4）。
+ * `${Name}`は`Ref Name`、`${Id.Attr}`は`Fn::GetAtt [Id, Attr]`と同じに読み、`${!Text}`はリテラルの`${Text}`です。
+ * 未知の名前、パラメータ、閉じていない`${`、空の`${}`は読まず、未対応にします（IAMポリシー変数`${aws:username}`も、
+ * ここでは名前として未知なので未対応になります）。
+ * The string form of Fn::Sub without a variable map. `${!Text}` is the literal `${Text}`
+ * (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/intrinsic-function-reference-sub.html, read 2026-11-21).
+ */
+function resolveSub(text: unknown, context: ResolveContext): Alternatives | undefined {
+  if (typeof text !== "string") return undefined;
+  let combined: string[] = [""];
+  let rest = text;
+  while (rest.length > 0) {
+    const start = rest.indexOf("${");
+    const literal = start === -1 ? rest : rest.slice(0, start);
+    combined = combined.map((left) => `${left}${literal}`);
+    if (start === -1) break;
+    const end = rest.indexOf("}", start);
+    if (end === -1) return undefined;
+    const name = rest.slice(start + 2, end);
+    rest = rest.slice(end + 1);
+    if (name.length === 0) return undefined;
+    let alternatives: Alternatives | undefined;
+    if (name.startsWith("!")) {
+      alternatives = [`\${${name.slice(1)}}`];
+    } else {
+      const dot = name.indexOf(".");
+      alternatives =
+        dot === -1
+          ? resolveRef(name, context)
+          : resolveGetAtt([name.slice(0, dot), name.slice(dot + 1)], context);
+    }
+    if (alternatives === undefined) return undefined;
+    const values = alternatives;
+    combined = combined.flatMap((left) => values.map((right) => `${left}${right}`));
+    if (combined.length > MAX_ALTERNATIVES) return undefined;
+  }
+  return [...new Set(combined)];
+}
 /** 値を、候補の文字列の集合にします。読めなければundefinedです。 */
 export function resolveValue(value: unknown, context: ResolveContext): Alternatives | undefined {
   if (typeof value === "string") return [value];
@@ -98,6 +137,7 @@ export function resolveValue(value: unknown, context: ResolveContext): Alternati
   if (keys.length !== 1) return undefined;
   if ("Ref" in value) return resolveRef(value.Ref, context);
   if ("Fn::GetAtt" in value) return resolveGetAtt(value["Fn::GetAtt"], context);
+  if ("Fn::Sub" in value) return resolveSub(value["Fn::Sub"], context);
   if ("Fn::Join" in value) {
     const join = value["Fn::Join"];
     if (!Array.isArray(join) || join.length !== 2) return undefined;

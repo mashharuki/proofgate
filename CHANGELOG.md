@@ -4,6 +4,10 @@ All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@pr
 
 ## Unreleased
 
+### Added: `Fn::Sub` and two managed policies
+
+`Resource` and `ManagedPolicyArns` now read the string form of `Fn::Sub` (no variable map): `${Name}` like `Ref`, `${Id.Attr}` like `Fn::GetAtt`, `${!Text}` as the literal `${Text}`. CDK writes `Fn::Sub` in the bootstrap asset bucket statement and in the `ManagedPolicyArns` of the `autoDeleteObjects` provider role, so those stacks were rejected before. Unknown names, parameters, a variable map, and an IAM policy variable still reject with `PG-IAM-003`. Two managed policies are added to the checked table: `AWSLambdaVPCAccessExecutionRole` (v3) and `AmazonAPIGatewayPushToCloudWatchLogs` (v1). Any other managed policy stays rejected. Neither policy touches S3 or `iam:PassRole`.
+
 ### Changed: a template without IAM resources is accepted
 
 A template with no resource whose type starts with `AWS::IAM::` (a stack with only a Cognito user pool or a CloudFront distribution, for example) used to be rejected with `PG-IAM-003` ("No IAM roles were found; refusing a vacuous proof"). It is now accepted: there is no IAM principal to check, so neither the evaluator nor Lean runs and nothing is reported. This is permissive, and it does not mean "proved safe". A template that cannot be called free of IAM stays rejected: it contains a nested stack, a `Transform`, an `Fn::Transform`, an `AWS::Serverless::` resource, or an entry that cannot be read, or it has IAM resources without a role or without a readable statement. See `docs/SUPPORTED_IAM.md`.
