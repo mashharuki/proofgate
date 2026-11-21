@@ -527,7 +527,10 @@ const APPLIERS: Record<PoisonId, Applier> = {
   },
   RESOURCE_SUB: (template, recipe, t) => {
     const s = inlineStatement(template, recipe, t);
-    s.statement.Resource = { "Fn::Sub": "arn:aws:s3:::b/x" };
+    // Step 4 reads the string form of Fn::Sub, so the poison is now the form that stays unsupported: a variable map.
+    // 文字列形式は読めるようになったため、読めないままの変数マップ形式にしました（承認待ちの変更）。
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: CloudFormation Fn::Sub variable text
+    s.statement.Resource = { "Fn::Sub": ["arn:aws:s3:::b/${V}", { V: "x" }] };
     return forbid(s.path);
   },
   RESOURCE_IMPORT_VALUE: (template, recipe, t) => {

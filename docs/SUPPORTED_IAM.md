@@ -17,7 +17,7 @@ ProofGateは次の場合に`PG-IAM-003`を報告し、Fail Closedで拒否しま
 
 - `NotAction`、`NotResource`、`Condition`
 - Role Trust Policy内の`NotPrincipal`、`NotAction`、`Deny`のStatementの`Condition`、オブジェクトではない`Condition`、またはリテラルではない値
-- リテラルではないAction、Role Name、Policy Attachment。Resourceは、後述の値リゾルバで読めないもの（パラメータへの`Ref`、`Fn::Sub`、`Fn::ImportValue`、`Fn::If`、`Fn::Select`、テンプレートにない名前への参照、バケットとロールの`Arn`以外の属性、`AWS::StackName`や`AWS::NoValue`など）
+- リテラルではないAction、Role Name、Policy Attachment。Resourceは、後述の値リゾルバで読めないもの（パラメータへの`Ref`、変数マップのある`Fn::Sub`、`Fn::ImportValue`、`Fn::If`、`Fn::Select`、テンプレートにない名前への参照、バケットとロールの`Arn`以外の属性、`AWS::StackName`や`AWS::NoValue`など）
 - デフォルト以外のIAM Role Path
 - `AWS::IAM::ManagedPolicy`と、後述の表にない管理ポリシー（ロールの`ManagedPolicyArns`）
 - 不正な形式のPolicy Document
@@ -34,13 +34,15 @@ Trust Policyの`Allow` Statementに付いたオブジェクトの`Condition`は�
 
 English: an object `Condition` on an `Allow` trust statement is read as absent. A condition can only narrow who may assume the role, so ignoring it only adds findings. A `Condition` on a `Deny` statement, and a `Condition` that is not an object, are still rejected with `PG-IAM-003`.
 
-ロールの`ManagedPolicyArns`は、次の管理ポリシー1件だけを読みます。内容はAWSのドキュメント（2026-11-19に確認、ポリシーバージョンv1）のとおり、ロールのStatementへ展開します。展開したStatementは、インラインのStatementの後、独立した`AWS::IAM::Policy`の前に並びます。
+ロールの`ManagedPolicyArns`は、次の管理ポリシー3件だけを読みます。内容はAWSのドキュメント（`AWSLambdaBasicExecutionRole`は2026-11-19、ほかの2件は2026-11-21に確認）のとおり、ロールのStatementへ展開します。展開したStatementは、インラインのStatementの後、独立した`AWS::IAM::Policy`の前に並びます。
 
-- `AWSLambdaBasicExecutionRole`（`arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole`）: `logs:CreateLogGroup`、`logs:CreateLogStream`、`logs:PutLogEvents`を`*`へAllow
+- `AWSLambdaBasicExecutionRole`（`arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole`）: `logs:CreateLogGroup`、`logs:CreateLogStream`、`logs:PutLogEvents`を`*`へAllow（v1）
+- `AWSLambdaVPCAccessExecutionRole`（`.../service-role/AWSLambdaVPCAccessExecutionRole`、v3）: 上の3つの`logs:`に加えて、`ec2:CreateNetworkInterface`、`ec2:DescribeNetworkInterfaces`、`ec2:DescribeSubnets`、`ec2:DeleteNetworkInterface`、`ec2:AssignPrivateIpAddresses`、`ec2:UnassignPrivateIpAddresses`を`*`へAllow
+- `AmazonAPIGatewayPushToCloudWatchLogs`（`.../service-role/AmazonAPIGatewayPushToCloudWatchLogs`、v1）: `logs:CreateLogGroup`、`logs:CreateLogStream`、`logs:DescribeLogGroups`、`logs:DescribeLogStreams`、`logs:PutLogEvents`、`logs:GetLogEvents`、`logs:FilterLogEvents`を`*`へAllow
 
-書き方は、リテラルのARN（パーティションは`aws`）か、CDKが作る`Fn::Join ["", ["arn:", {"Ref": "AWS::Partition"}, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]`です。表にない管理ポリシー、`service-role/`のない同名のARN、`aws`以外のリテラルのパーティション、ほかの`Ref`や区切り文字のある`Fn::Join`は、`PG-IAM-003`で拒否します。1つでも読めない要素があれば、そのロールの`ManagedPolicyArns`全体を拒否します。
+書き方は、リテラルのARN（パーティションは`aws`）か、CDKが作る`Fn::Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/<名前>"`（変数は`AWS::Partition`だけ）か、`Fn::Join ["", ["arn:", {"Ref": "AWS::Partition"}, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]`です。表にない管理ポリシー、`service-role/`のない同名のARN、`aws`以外のリテラルのパーティション、ほかの`Ref`や区切り文字のある`Fn::Join`は、`PG-IAM-003`で拒否します。1つでも読めない要素があれば、そのロールの`ManagedPolicyArns`全体を拒否します。
 
-English: `ManagedPolicyArns` is read for one managed policy only, `AWSLambdaBasicExecutionRole`, written as a literal ARN (partition `aws`) or as the CDK `Fn::Join` with `Ref AWS::Partition`. Its statement (Allow of three `logs:` actions on `*`, as in the AWS documentation checked on 2026-11-19, version v1) is appended to the role after the inline statements and before attached `AWS::IAM::Policy` statements. Any other managed policy, or any entry that cannot be read, rejects the whole `ManagedPolicyArns` with `PG-IAM-003`. More policies need the same check against the AWS documentation first.
+English: `ManagedPolicyArns` is read for three managed policies only (`AWSLambdaBasicExecutionRole`, `AWSLambdaVPCAccessExecutionRole`, `AmazonAPIGatewayPushToCloudWatchLogs`), written as a literal ARN (partition `aws`), as the CDK `Fn::Sub` with `${AWS::Partition}` (no other variable), or as the CDK `Fn::Join` with `Ref AWS::Partition`. Each statement (an Allow on `*` of `logs:` actions, plus six `ec2:` network-interface actions for the VPC policy, as in the AWS documentation checked on 2026-11-19 and 2026-11-21) is appended to the role after the inline statements and before attached `AWS::IAM::Policy` statements. Any other managed policy, or any entry that cannot be read, rejects the whole `ManagedPolicyArns` with `PG-IAM-003`. More policies need the same check against the AWS documentation first.
 
 ## Resourceの値リゾルバ（R1）
 
@@ -61,7 +63,7 @@ English: `ManagedPolicyArns` is read for one managed policy only, `AWSLambdaBasi
 
 パーティションを`*`にしないのは、評価器の`*`がコロンをまたぐためです。`arn:*:s3:::x/*`は保護バケットのオブジェクトと必ず交わり、すべてのバケットが誤検出になります。
 
-English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to the three documented partitions `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt Arn` of buckets and roles of the same template. `Ref` or `Fn::GetAtt` of any other resource of the template is read as `*`. An unnamed bucket or role is written as the opaque name `_generated_<LogicalId>`. An unnamed bucket does not meet a literal protected bucket; if the protected name has `*` or `?`, the opaque name is read as `*`. Anything else (a parameter, `Fn::Sub`, `Fn::ImportValue`, `Fn::If`, a missing target, an attribute other than `Arn` of a bucket or a role, `AWS::StackName`, `AWS::NoValue`) rejects the value with `PG-IAM-003`. The partition is not read as `*` because the evaluator's `*` crosses colons, so `arn:*:s3:::x/*` would always meet the protected objects.
+English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to the three documented partitions `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt Arn` of buckets and roles of the same template. `Ref` or `Fn::GetAtt` of any other resource of the template is read as `*`. An unnamed bucket or role is written as the opaque name `_generated_<LogicalId>`. An unnamed bucket does not meet a literal protected bucket; if the protected name has `*` or `?`, the opaque name is read as `*`. `Fn::Sub` in its string form (no variable map) is read too: `${Name}` like `Ref Name`, `${Id.Attr}` like `Fn::GetAtt`, and `${!Text}` as the literal `${Text}` (which the policy-variable rule then rejects). A variable map, an unknown name, a parameter, an unterminated `${`, and an empty `${}` reject the value. Anything else (a parameter, a `Fn::Sub` with a variable map, `Fn::ImportValue`, `Fn::If`, a missing target, an attribute other than `Arn` of a bucket or a role, `AWS::StackName`, `AWS::NoValue`) rejects the value with `PG-IAM-003`. The partition is not read as `*` because the evaluator's `*` crosses colons, so `arn:*:s3:::x/*` would always meet the protected objects.
 
 Lambdaの制御は、`lambda:CreateFunction`、または`lambda:UpdateFunctionConfiguration`です。`UpdateFunctionConfiguration`は、実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのレイヤーも可）を変えられます（AWS Lambda APIリファレンス、2026-11-20に確認）。そのため、`iam:PassRole`と組み合わせると、コードを更新する権限がなくても、レイヤーのコードを渡したロールで実行できます。`lambda:UpdateFunctionCode`だけでは実行ロールを変えられないため、Lambdaの制御とはみなしません。この変更は指摘を増やす方向だけに働きます。
 

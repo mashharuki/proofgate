@@ -42,11 +42,11 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 
 ## Step 4: B4 `Fn::Sub` and B5 managed policies
 
-- [ ] 8. Create branch `brushup/phase-4-sub-managed`.
-  - [ ] 8.1 Read the CloudFormation `Fn::Sub` page (escape `${!...}`, the variable map form) and the two AWS managed policy pages (statements, version). Record what was read.
-  - [ ] 8.2 B5 tests first, then the two table entries. Any other managed policy stays rejected.
-  - [ ] 8.3 B4 tests first (known variables, `${!x}`, unknown name, parameter, variable map, policy variable inside the text), then the resolver. Extend the extractor-level generator on a separate stream and add poisons and mutants.
-  - [ ] 8.4 Docs, CHANGELOG. Run RS-23, RS-32, RS-37. Gate; usage-log row.
+- [x] 8. Create branch `brushup/phase-4-sub-managed`.
+  - [x] 8.1 Read the CloudFormation `Fn::Sub` page (escape `${!...}`, the variable map form) and the two AWS managed policy pages (statements, version). Record what was read.
+  - [x] 8.2 B5 tests first, then the two table entries. Any other managed policy stays rejected.
+  - [x] 8.3 B4 tests first (known variables, `${!x}`, unknown name, parameter, variable map, policy variable inside the text), then the resolver. Extend the extractor-level generator on a separate stream and add poisons and mutants.
+  - [x] 8.4 Docs, CHANGELOG. Run RS-23, RS-32, RS-37. Gate; usage-log row.
 - [ ] 9. **Checkpoint 4.**
 
 ## Step 5: B2 launch services

@@ -70,7 +70,9 @@ const cases: [string, unknown, string, string][] = [
   ],
   [
     "a Resource that cannot be read",
-    role({}, { Resource: { "Fn::Sub": "arn:aws:s3:::b/x" } }),
+    // Step 4 reads the string form of Fn::Sub; the unreadable input is now the variable-map form (approval pending).
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: CloudFormation Fn::Sub variable text
+    role({}, { Resource: { "Fn::Sub": ["arn:aws:s3:::b/${V}", { V: "x" }] } }),
     "Action and Resource must be literal strings or arrays of strings",
     "Fn::Join",
   ],

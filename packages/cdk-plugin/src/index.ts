@@ -28,7 +28,7 @@ const HINTS: readonly (readonly [string, string])[] = [
   ],
   [
     "must be literal strings",
-    "ProofGate reads a Resource written as a literal, Fn::Join, the pseudo-parameters AWS::Partition, AWS::Region, AWS::AccountId, and AWS::URLSuffix, or Ref and Fn::GetAtt of a resource in the same template. Parameters, Fn::Sub, Fn::ImportValue, Fn::If, and other functions are not read. Action must be literal.",
+    "ProofGate reads a Resource written as a literal, Fn::Join, Fn::Sub without a variable map, the pseudo-parameters AWS::Partition, AWS::Region, AWS::AccountId, and AWS::URLSuffix, or Ref and Fn::GetAtt of a resource in the same template. Parameters, Fn::Sub with a variable map, Fn::ImportValue, Fn::If, and other functions are not read. Action must be literal.",
   ],
   [
     "IAM policy variables",

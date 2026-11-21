@@ -23,7 +23,7 @@ ProofGateは抽出した有限モデルについて、次の4条件を同時に�
 - SCP、Permissions Boundary、Session Policy、Resource Policy、Explicit Denyの評価
 - 推移的なロール引き受け、スタック間参照、クロスアカウント参照
 - サービス信頼以外のLambda固有制約と`iam:PassedToService` Condition
-- 表にないManaged Policy（`AWSLambdaBasicExecutionRole`だけを読みます）、ポリシー変数、大部分のCloudFormation intrinsic function、権限StatementのIAM Condition
+- 表にないManaged Policy（`AWSLambdaBasicExecutionRole`、`AWSLambdaVPCAccessExecutionRole`、`AmazonAPIGatewayPushToCloudWatchLogs`の3件だけを読みます）、ポリシー変数、大部分のCloudFormation intrinsic function、権限StatementのIAM Condition
 - 検査済みのCDK synthを経由しない変更やデプロイ後のドリフト
 
 Extractorは、未対応の構文を安全とみなさず拒否します。AWSへのデプロイは、意図的にこのリポジトリのデモとテストの対象外にしています。
@@ -35,7 +35,9 @@ English: a role without `RoleName` is read as the opaque name `_generated_<Logic
 
 管理ポリシー`AWSLambdaBasicExecutionRole`の内容は、AWSのドキュメント（2026-11-19に確認、v1）のとおりだと仮定します。AWSが新しい既定バージョンを公開すると、この仮定は古くなります。Trust Policyの`Allow`に付いた`Condition`は引き受けられる主体を狭めるだけだと仮定し、無視します（実際より多くの主体が引き受けられるものとして読むため、指摘が増える側です）。
 
-English: the content of the managed policy `AWSLambdaBasicExecutionRole` is assumed to be that of the AWS documentation (checked on 2026-11-19, v1); a new default version published by AWS makes this assumption stale. A `Condition` on an `Allow` trust statement is assumed to only narrow who can assume the role, so it is ignored (the role is read as assumable by more principals, which only adds findings).
+管理ポリシー`AWSLambdaVPCAccessExecutionRole`（v3）と`AmazonAPIGatewayPushToCloudWatchLogs`（v1）も同じ仮定です（2026-11-21に確認）。どちらもS3と`iam:PassRole`に触れないため、経路は作れません。
+
+English: the content of the managed policies `AWSLambdaVPCAccessExecutionRole` (v3) and `AmazonAPIGatewayPushToCloudWatchLogs` (v1, both checked on 2026-11-21) is assumed the same way; neither touches S3 or `iam:PassRole`. The content of the managed policy `AWSLambdaBasicExecutionRole` is assumed to be that of the AWS documentation (checked on 2026-11-19, v1); a new default version published by AWS makes this assumption stale. A `Condition` on an `Allow` trust statement is assumed to only narrow who can assume the role, so it is ignored (the role is read as assumable by more principals, which only adds findings).
 
 CloudFormationは、バケットの`Ref`にバケット名を、`Fn::GetAtt Arn`に`arn:<パーティション>:s3:::<バケット名>`を、ロールの`Ref`にロール名を、`Fn::GetAtt Arn`にロールのARNを返すと仮定します（AWSのCloudFormationテンプレートリファレンス、2026-11-19に確認）。パーティションは`aws`、`aws-cn`、`aws-us-gov`のいずれかだと仮定します（IAMユーザーガイドのARNの形式）。新しいパーティションが加わると、この仮定は古くなります。Allowの中の未知の部分（リージョン、アカウントID、ほかのリソースの物理ID）は`*`として読み、経路を隠さないと仮定します。保護バケットは、同じテンプレートの名前のない`AWS::S3::Bucket`ではないと仮定します。名前のないバケットは不透明な名前で表し、リテラルの保護バケット名とは交わらないものとして読むためです。前回のデプロイで生成された名前を保護バケットとして設定し、そのバケットがテンプレートでは名前のないままの場合、経路を見逃します。この場合は、テンプレートでバケットに`BucketName`を付けてください。
 
