@@ -122,3 +122,10 @@ The user chose follow-up b. 14 more observations of the real IAM engine (`tests/
 - The product is unchanged: the evaluator already read the colon as AWS does.
 
 Checks: 199 generated tests pass; seeds 12345, 987654321, 424242 and 5000 cases with 2000 Lean-checked pass.
+
+## Follow-ups d and e (decided by the user on 2026-11-21)
+
+- Decision d: do not count them. Decision e: decline, as recommended below.
+
+- d (S3 permissions-management actions of other resource types: access points, Multi-Region Access Points, Access Grants, account public access block): recommendation is not to count them, or only when Resource is `*`. Access-point permissions take effect only if the bucket delegates to them, which ProofGate cannot see. The benefit is small.
+- e (case-sensitive ARN matching in the evaluator): recommendation is to decline. It would turn findings off, and a protected-bucket ARN typed in another case in the config would stop matching (fail-open). The real benefit is tiny. Needs the user's explicit decision either way.
