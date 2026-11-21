@@ -2,6 +2,7 @@ import { ProofGateValidator } from "@proofgate-cdk/cdk-plugin";
 import { App, Validations } from "aws-cdk-lib";
 import { catalog, selectPattern } from "./catalog.js";
 import { PROTECTED_BUCKET_ARN } from "./config.js";
+import { constructProbeCatalog } from "./construct-probe/catalog.js";
 import { holdoutCatalog } from "./holdout/catalog.js";
 
 export interface CreateAppOptions {
@@ -18,6 +19,7 @@ export function createApp(options: CreateAppOptions): App {
   const pattern = selectPattern(options.pattern ?? app.node.tryGetContext("pattern"), [
     ...catalog,
     ...holdoutCatalog,
+    ...constructProbeCatalog,
   ]);
   pattern.build(app);
   if (options.gated) {
