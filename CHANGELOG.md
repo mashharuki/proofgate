@@ -2,7 +2,7 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
-## Unreleased
+## 1.1.2 - 2026-11-20
 
 ### Fixed: a configuration update alone is Lambda control
 
