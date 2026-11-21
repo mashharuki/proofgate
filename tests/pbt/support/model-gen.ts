@@ -12,10 +12,12 @@ import { createRng } from "./prng.js";
 import { statementPath } from "./render.js";
 
 export type Category = "unsafe" | "safe" | "boundary" | "conservative";
-export type Tag = "PASSROLE_ALIAS" | "TRUST_STAR" | "ARN_CASE" | "ARN_STAR_SPAN";
+// ARN_STAR_SPAN was removed on 2026-11-21: the real IAM engine lets a `*` cross a colon anywhere, so such a Resource is
+// an ordinary valid form (`access:star-span`), not a conservative one. See tests/pbt/aws-observations*.json.
+export type Tag = "PASSROLE_ALIAS" | "TRUST_STAR" | "ARN_CASE";
 type Label = "unsafe" | "safe";
 
-export const TAGS: readonly Tag[] = ["PASSROLE_ALIAS", "TRUST_STAR", "ARN_CASE", "ARN_STAR_SPAN"];
+export const TAGS: readonly Tag[] = ["PASSROLE_ALIAS", "TRUST_STAR", "ARN_CASE"];
 export const CATEGORIES: readonly Category[] = ["unsafe", "safe", "boundary", "conservative"];
 
 /** タグ付きの形式を使ったStatementとロールを指す証跡です。 */
@@ -184,6 +186,8 @@ function accessResource(rng: Rng, bucket: string): Chosen<string> {
     { value: `${arnOf(bucket)}/?`, form: "access:question-key" },
     { value: `arn:aws:s3:::*${bucket}/*`, form: "access:mid-star" },
     { value: "arn:aws:s3:::protected-?/*", form: "access:question-bucket" },
+    // Real IAM: a `*` crosses a colon anywhere, so this matches `arn:aws:s3:::<bucket>/key`.
+    { value: `arn:aws:s3:*${bucket}/*`, form: "access:star-span" },
   ]);
 }
 
@@ -214,8 +218,7 @@ type AccessMode =
   | "disjoint-wildcard"
   | "non-data-action"
   | "none"
-  | "arnCase"
-  | "starSpan";
+  | "arnCase";
 
 interface Plan {
   readonly pass: PassMode;
@@ -248,7 +251,6 @@ function planTags(plan: Plan): Tag[] {
   if (plan.pass === "alias") tags.add("PASSROLE_ALIAS");
   if (plan.pass === "arnCase" || plan.access === "arnCase") tags.add("ARN_CASE");
   if (plan.trust === "star") tags.add("TRUST_STAR");
-  if (plan.access === "starSpan") tags.add("ARN_STAR_SPAN");
   return TAGS.filter((tag) => tags.has(tag));
 }
 
@@ -272,10 +274,9 @@ const CONSERVATIVE_PLANS: readonly Partial<Plan>[] = [
   { trust: "star" },
   { pass: "arnCase" },
   { access: "arnCase" },
-  { access: "starSpan" },
   { pass: "alias", trust: "star" },
-  { pass: "arnCase", access: "starSpan" },
-  { pass: "alias", access: "starSpan" },
+  { pass: "arnCase", access: "arnCase" },
+  { pass: "alias", access: "arnCase" },
   { trust: "star", access: "arnCase" },
 ];
 
@@ -362,12 +363,6 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
     targetStatements.push({
       actions: ["s3:GetObject"],
       resources: [`arn:aws:s3:::${grantedBucket.toUpperCase()}/*`],
-      witness: true,
-    });
-  } else if (plan.access === "starSpan") {
-    targetStatements.push({
-      actions: ["s3:GetObject"],
-      resources: [`arn:aws:s3:*${grantedBucket}/*`],
       witness: true,
     });
   } else if (plan.access === "other-bucket") {
@@ -742,6 +737,7 @@ const REQUIRED_FORMS: readonly string[] = [
   "access:question-key",
   "access:mid-star",
   "access:question-bucket",
+  "access:star-span",
   "split-statements",
   "trailing-slash-bucket",
   "two-buckets",

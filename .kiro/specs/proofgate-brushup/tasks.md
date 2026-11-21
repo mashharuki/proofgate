@@ -30,7 +30,7 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
   - [x] 4.2 Tests first (oracle, evaluator, one Lean launch) for each of: `GetObjectVersion`, `DeleteObjectVersion`, `PutObjectAcl`, `ReplicateObject`, `PutBucketPolicy` on the bucket ARN, `PutBucketAcl`, a bucket ARN with an object action (still no access), another bucket (no access). Show them red. Done (`tests/pbt/s3-access.test.ts`, 34 rows): before the evaluator change 23 tests failed (every row that 1.1.2 misses) and 12 passed (every safe row); one row I had named confusingly was a duplicate and was removed before the evaluator change.
   - [x] 4.3 Change `bucketAccessStatements` in `core`. Extend the model generator on a separate random stream (new tag for bucket grants). Differential against 1.1.2: no finding lost. Done: `core` reads the tables (`s3:*` is kept in the object list so that no finding of 1.1.2 disappears); 3038 inputs, 0 findings lost, 268 inputs gain a finding (266 generated model cases, 2 regression cases), no real-stack Pattern of the acceptance, hold-out, or construct sets changes. RS-44 and RS-45 are now `PG-IAM-004`, as predicted. The model generator got 3 object-action forms and 10 fixed boundary cases; that shifts the indices of all generated cases (the content of a case for a given index differs from before; replay by index of an old report is not possible, and none is stored). Extra seeds 12345 and 987654321 pass. 4 regression JSONs added.
   - [x] 4.4 Docs (ja + en), CHANGELOG Unreleased. Gate; usage-log row.
-- [ ] 5. **Checkpoint 2.**
+- [x] 5. **Checkpoint 2.** Passed. The user asked to merge Step 2 together with the oracle fix (PR #16). `main` (PRs #15 and #16) was merged into `brushup/phase-2-s3`; the conflicts (usage log, `ASSUMPTIONS.md`) were resolved by keeping both sides, and the Step 2 function `resourceReachesBucketArn` was updated for the oracle that no longer has a colon option.
 
 ## Step 3: B3 templates without IAM resources
 
@@ -56,6 +56,7 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
   - [ ] 10.2 Tests first for every service of RS-39 to RS-47, Lambda regression cases, the tagging-only exclusion, the unknown-service rejection, and `*` trust. Show them red.
   - [ ] 10.3 Change `core` (candidate paths per service, violation text with the service) and the Lean sources (`canLaunch`, `targetTrustsService`, `service`), `generateLean`, the batch runner's shape check, and `docs/PROOFS.md`. Lean audit (no `sorry`, no `axiom`). Evaluator and Lean must agree on every Case.
   - [ ] 10.4 Extractor: read `AWS::IAM::InstanceProfile` (design 5.3).
+  - [ ] 10.4b From the data verification of 2026-11-21 (`data-verification.md`): normalize a trust principal of the form `<service>.<region>.amazonaws.com` to `<service>.amazonaws.com` before comparing with the launch table (Step Functions documents both forms); decide how to read the 23 any-service entries; tests first for both.
   - [ ] 10.5 Differential against 1.1.2: no finding lost; list the new findings by service. Run all Pattern sets; update each expected table row by row with a reason.
   - [ ] 10.6 Docs (ja + en), CHANGELOG. Gate; usage-log row.
 - [ ] 11. **Checkpoint 5.**
@@ -71,3 +72,9 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 ## Step 7: More trials until 2026-11-29
 
 - [ ] 14. For each new construct or layout tried: write the prediction first, run, record. A fix that a trial shows follows Requirements 7 and 9 and is merged alone.
+
+## Data verification (2026-11-21, after Step 2)
+
+The user asked for a thorough check of the AWS data that the oracle and the evaluator share. Result and findings: [data-verification.md](./data-verification.md). Done on `brushup/data-verification`: the launch table rule was corrected (996 to 879 actions; read actions removed), independent S3 User Guide expectations were added to `tests/aws-tables.test.ts`, and 44 decisions of the real IAM engine were saved with a test that fixes the known deviations of the oracle (a `*` crossing a colon) and of the evaluator (case, over-approximation). Follow-ups a to e of section 5 of that document wait for the user's decision.
+
+Follow-up b of the data verification (the oracle reads `*` and `?` as plain wildcards that also stand for a colon; the tag `ARN_STAR_SPAN` removed) was done on 2026-11-21 at the user's request: see section 7 of `data-verification.md`. Follow-ups a, c, d, and e still wait for the user's decision.
