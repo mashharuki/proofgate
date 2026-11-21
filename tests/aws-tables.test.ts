@@ -48,7 +48,8 @@ describe("generated AWS tables", () => {
       "ecs:runtask": ["ecs-tasks.amazonaws.com", "ecs.amazonaws.com"],
       "ecs:starttask": ["ecs-tasks.amazonaws.com", "ecs.amazonaws.com"],
       "ecs:createservice": ["ecs-tasks.amazonaws.com", "ecs.amazonaws.com"],
-      "ecs:registertaskdefinition": ["ecs-tasks.amazonaws.com", "ecs.amazonaws.com"],
+      // The Service Authorization Reference for Amazon ECS: RegisterTaskDefinition passes the role to ecs-tasks only.
+      "ecs:registertaskdefinition": ["ecs-tasks.amazonaws.com"],
       "ec2:runinstances": ["ec2.amazonaws.com"],
       "codebuild:createproject": ["codebuild.amazonaws.com"],
       "cloudformation:createstack": ["cloudformation.amazonaws.com"],
@@ -63,13 +64,23 @@ describe("generated AWS tables", () => {
   it("does not count actions that only read, tag, or pass the role itself", () => {
     // lambda:UpdateFunctionCode cannot change the role of a function (PR #10), invoking is not launching,
     // and iam:PassRole itself would make every PassRole holder a launcher of EC2.
+    // Found with the AWS MCP Server on 2026-11-21: the first generation rule also took read and list actions
+    // that a PassRole operation only depends on (lambda:GetLayerVersion, glue:GetJob, cloudformation:GetResource),
+    // which would have made a holder of GetLayerVersion a "launcher" of Lambda.
     for (const action of [
       "lambda:updatefunctioncode",
       "lambda:invokefunction",
+      "lambda:getlayerversion",
       "iam:passrole",
       "iam:createrole",
       "ecs:tagresource",
       "ecs:describetasks",
+      "ecs:createcluster",
+      "glue:getjob",
+      "glue:getjobs",
+      "cloudformation:getresource",
+      "cloudformation:listresources",
+      "states:revealsecrets",
     ]) {
       expect(LAUNCH_ACTIONS, action).not.toHaveProperty(action);
     }
@@ -89,6 +100,76 @@ describe("generated AWS tables", () => {
     expect(LAUNCH_ACTIONS["codebuild:createfleet"]).toEqual(["*"]);
   });
   it("is large enough to be a real extraction", () => {
-    expect(Object.keys(LAUNCH_ACTIONS).length).toBeGreaterThan(900);
+    expect(Object.keys(LAUNCH_ACTIONS).length).toBeGreaterThan(800);
+  });
+
+  // Independent expectations. The lists below were copied from the Amazon S3 User Guide page "Required
+  // permissions for Amazon S3 API operations" (using-with-s3-policy-actions.html), read through the AWS MCP
+  // Server on 2026-11-21. That page is written by the S3 team and does not come from the Service Reference.
+  const GUIDE_OBJECT_OPERATIONS = [
+    "AbortMultipartUpload",
+    "PutObject",
+    "GetObject",
+    "GetObjectVersion",
+    "DeleteObject",
+    "DeleteObjectVersion",
+    "BypassGovernanceRetention",
+    "DeleteObjectTagging",
+    "DeleteObjectVersionTagging",
+    "GetObjectTagging",
+    "GetObjectVersionTagging",
+    "GetObjectLegalHold",
+    "GetObjectRetention",
+    "GetObjectAcl",
+    "GetObjectVersionAcl",
+    "ListMultipartUploadParts",
+    "PutObjectAcl",
+    "PutObjectVersionAcl",
+    "PutObjectLegalHold",
+    "PutObjectRetention",
+    "PutObjectTagging",
+    "PutObjectVersionTagging",
+    "RestoreObject",
+    "UpdateObjectEncryption",
+  ];
+  it("contains every object operation that the S3 User Guide lists", () => {
+    // ListBucketMultipartUploads is listed there too, but it takes the bucket resource (a listing of uploads).
+    for (const name of GUIDE_OBJECT_OPERATIONS)
+      expect(OBJECT_ACTIONS, name).toContain(`s3:${name.toLowerCase()}`);
+    expect(OBJECT_ACTIONS).not.toContain("s3:listbucketmultipartuploads");
+  });
+  const GUIDE_BUCKET_OPERATIONS = [
+    "PutBucketAcl",
+    "PutBucketOwnershipControls",
+    "PutBucketPolicy",
+    "DeleteBucketPolicy",
+    "PutBucketPublicAccessBlock",
+    "PutReplicationConfiguration",
+    "PutLifecycleConfiguration",
+  ];
+  it("counts as bucket grant actions only actions that the S3 User Guide lists as bucket operations", () => {
+    expect([...BUCKET_GRANT_ACTIONS].sort()).toEqual(
+      GUIDE_BUCKET_OPERATIONS.map((n) => `s3:${n.toLowerCase()}`).sort(),
+    );
+  });
+  it("does not count the other write operations on the bucket (a documented judgment)", () => {
+    // They change settings but neither give access to the objects nor copy or expire them: notifications,
+    // inventory and analytics reports (key names only), logging, versioning, encryption, CORS, website, delete.
+    for (const name of [
+      "PutBucketNotification",
+      "PutInventoryConfiguration",
+      "PutAnalyticsConfiguration",
+      "PutBucketLogging",
+      "PutBucketVersioning",
+      "PutEncryptionConfiguration",
+      "PutBucketCORS",
+      "PutBucketWebsite",
+      "DeleteBucket",
+      "PutBucketObjectLockConfiguration",
+      "PutAccelerateConfiguration",
+      "PutBucketTagging",
+    ]) {
+      expect(BUCKET_GRANT_ACTIONS, name).not.toContain(`s3:${name.toLowerCase()}`);
+    }
   });
 });

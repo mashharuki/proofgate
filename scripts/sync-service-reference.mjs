@@ -74,17 +74,17 @@ for (const name of ["PutReplicationConfiguration", "PutLifecycleConfiguration"])
   bucketGrant.add(`s3:${lower(name)}`);
 }
 
-// 2. 起動アクション: `iam:PassRole`を伴うAPI操作の、同じサービスの、タグ付けだけではないアクション。
-const taggingOnly = new Set();
-for (const service of services) {
-  for (const action of service.Actions ?? []) {
-    if (properties(action).IsTaggingOnly === true)
-      taggingOnly.add(`${service.Name}:${lower(action.Name)}`);
-  }
-}
+// 2. 起動アクション: `iam:PassRole`を伴うAPI操作の、同じサービスの、書き込みか権限管理のアクションです。
+// 操作自身のアクション（操作名と同じ名前）があれば、それだけを入れます。
+// 依存して認可される読み取り・一覧のアクション（例: lambda:GetLayerVersion、glue:GetJob）や、他のアクションの付随（例: ecs:CreateCluster）は、
+// 起動ではないため入れません。2026-11-21のAWS MCP Serverによる検証で、読み取りのアクションが混ざっていたため、この規則に改めました。
+// Launch actions: the write or permission-management actions of the same service that a PassRole-bearing operation
+// authorizes; if one of them is the operation's own action (same name), only that one. Read and list actions that an
+// operation merely depends on (lambda:GetLayerVersion, glue:GetJob) are not launches.
 const launch = new Map();
 let withoutContext = 0;
 for (const service of services) {
+  const byName = new Map((service.Actions ?? []).map((action) => [action.Name, action]));
   for (const operation of service.Operations ?? []) {
     const authorized = operation.AuthorizedActions ?? [];
     const passRoles = authorized.filter((a) => a.Service === "iam" && a.Name === "PassRole");
@@ -96,12 +96,15 @@ for (const service of services) {
         for (const value of values) targets.add(lower(value));
       else targets.add("*");
     }
-    for (const action of authorized) {
-      if (action.Service !== service.Name) continue; // 他のサービスの副次的なアクションは入れません
-      // `iam:PassRole`自体は起動アクションではありません。入れると、PassRoleを持つだけで起動できることになります。
-      if (action.Service === "iam" && action.Name === "PassRole") continue;
+    const writes = authorized.filter((action) => {
+      if (action.Service !== service.Name) return false; // 他のサービスの副次的なアクションは入れません
+      const p = properties(byName.get(action.Name) ?? {});
+      if (p.IsTaggingOnly === true) return false;
+      return p.IsWrite === true || p.IsPermissionManagement === true;
+    });
+    const own = writes.filter((action) => action.Name === operation.Name);
+    for (const action of own.length > 0 ? own : writes) {
       const key = `${service.Name}:${lower(action.Name)}`;
-      if (taggingOnly.has(key)) continue;
       const set = launch.get(key) ?? new Set();
       for (const target of targets) set.add(target);
       launch.set(key, set);
@@ -139,5 +142,5 @@ mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, body);
 console.log(
   `wrote ${out}: ${objectSorted.length} object actions, ${grantSorted.length} bucket grant actions, ` +
-    `${launchEntries.length} launch actions, ${withoutContext} without a passed-to service, ${taggingOnly.size} tagging-only actions known`,
+    `${launchEntries.length} launch actions, ${withoutContext} without a passed-to service, launch actions limited to write and permission-management actions`,
 );
