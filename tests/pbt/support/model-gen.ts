@@ -314,8 +314,13 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
   const principalStatements: StatementSpec[] = [];
   if (plan.pass === "valid") {
     let actions = passActions(rng);
-    // Action `*`はLambda操作も許可してしまうため、Lambda条件を壊すPlanでは使えません。
-    if (plan.lambda !== "valid" && actions.form === "pass:all") {
+    // Action `*`は、Lambda操作に加えて、表のすべての起動アクション（どのサービスでも可の23件を含む）も許可します。
+    // そのため、すべての条件が成り立つPlanで、ノイズロールがないときだけ使います（spec proofgate-brushup, Step 5）。
+    // Action `*` also launches every service of the table, so it is used only when all conditions hold and there is no noise role.
+    if (
+      (plan.lambda !== "valid" || plan.trust !== "valid" || noiseIndexes.length > 0) &&
+      actions.form === "pass:all"
+    ) {
       actions = { value: ["iam:*"], form: "pass:service-star" };
     }
     const resource = passResource(rng, target);
@@ -378,10 +383,10 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
 
   const trust =
     plan.trust === "valid"
-      ? rng.pick([[LAMBDA], ["ec2.amazonaws.com", LAMBDA]])
+      ? rng.pick([[LAMBDA], ["ecs-tasks.amazonaws.com", LAMBDA]])
       : plan.trust === "star"
         ? ["*"]
-        : rng.pick([["ec2.amazonaws.com"], ["ecs-tasks.amazonaws.com"]]);
+        : rng.pick([["ecs-tasks.amazonaws.com"], ["events.amazonaws.com"]]);
 
   const roles: RoleSpec[] = [
     {
@@ -407,7 +412,7 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
     noiseIds.push(noise.logicalId);
     const kind = rng.pick(["lambda-only", "trust-only", "access-only", "inert"] as const);
     const statements: StatementSpec[] = [inertStatement(rng)];
-    let noiseTrust = ["ec2.amazonaws.com"];
+    let noiseTrust = ["ecs-tasks.amazonaws.com"];
     if (kind === "lambda-only") statements.push(...lambdaStatements(rng).value);
     if (kind === "trust-only") noiseTrust = [LAMBDA];
     if (kind === "access-only") {
