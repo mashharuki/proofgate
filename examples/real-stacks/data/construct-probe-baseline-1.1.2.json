@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "description": "Construct-probe Patterns RS-23 to RS-38 run in the repository with the code of 1.1.2 (main at 2fd0cb6) on 2026-11-21, with `node dist/runner.js --probe --cli none`, before any rule of proofgate-brushup was implemented. Never edit.",
+  "patterns": [
+    {
+      "id": "RS-23",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": ["(no construct path)", "RealStack/Fn/ServiceRole/Resource"]
+    },
+    {
+      "id": "RS-24",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-25",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-26",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-27",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-28",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-29",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-30",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "No IAM roles were found; refusing a vacuous proof",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": ["(no construct path)"]
+    },
+    {
+      "id": "RS-31",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "No IAM roles were found; refusing a vacuous proof",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": ["(no construct path)"]
+    },
+    {
+      "id": "RS-32",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Action and Resource must be literal strings or arrays of strings"],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "RealStack/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource"
+      ]
+    },
+    {
+      "id": "RS-33",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-34",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-35",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-36",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    },
+    {
+      "id": "RS-37",
+      "result": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ],
+      "rules": ["PG-IAM-003"],
+      "locations": [
+        "(no construct path)",
+        "RealStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+      ]
+    },
+    {
+      "id": "RS-38",
+      "result": "accepted",
+      "class": "correct acceptance",
+      "reasons": [],
+      "rules": [],
+      "locations": []
+    }
+  ]
+}
