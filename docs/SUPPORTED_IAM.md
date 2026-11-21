@@ -3,14 +3,15 @@
 現在の実装は、次の構文に対応します。
 
 - `AWS::IAM::Role`
-- Lambdaが引き受け可能かを判定するService Principalを含む、リテラル値で記述されたRole Trust Policy
+- 起動サービス（Lambda、ECS、EC2、CodeBuildなど）が引き受け可能かを判定するService Principalを含む、リテラル値で記述されたRole Trust Policy
+- `AWS::IAM::InstanceProfile`（`Roles`がテンプレート内のロールへの`Ref`か、リテラルの名前のとき。権限を増やさないため、モデルには入りません）
 - `Role.Properties.Policies`のインラインポリシー
 - `{ "Ref": "LogicalId" }`によってローカルロールへアタッチされた`AWS::IAM::Policy`
 - リテラル値の`Allow`、`Deny` Effect
 - 文字列または文字列配列で指定された`Action`、`Resource`
 - Action・Resource文字列内の`*`によるglob matching
 - Action・Resource文字列内の`?`（任意の1文字）によるglob matching
-- `iam:PassRole`、Lambdaの作成、または既存のLambda関数の設定更新（`lambda:UpdateFunctionConfiguration`。1.1.1までは設定更新とコード更新の組み合わせを要求していました）、S3のアクセスを与えるAction（下記）
+- `iam:PassRole`、起動アクション（下記。Lambdaでは関数の作成または設定更新`lambda:UpdateFunctionConfiguration`。1.1.1までは設定更新とコード更新の組み合わせを要求していました）、S3のアクセスを与えるAction（下記）
 - 保護対象バケットへのアクセスは、ポリシーのResourceが表すARN集合と、保護対象バケット内のオブジェクト集合が交わるかで判定します。`bucket/reports/*`のような一部のプレフィックスや、単一オブジェクトへのアクセスも、保護対象バケットへのアクセスとみなします。バケットレベルのARNだけでは、オブジェクト操作へのアクセスとはみなしません
 
 ProofGateは次の場合に`PG-IAM-003`を報告し、Fail Closedで拒否します。
@@ -65,7 +66,18 @@ English: `ManagedPolicyArns` is read for three managed policies only (`AWSLambda
 
 English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to the three documented partitions `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt Arn` of buckets and roles of the same template. `Ref` or `Fn::GetAtt` of any other resource of the template is read as `*`. An unnamed bucket or role is written as the opaque name `_generated_<LogicalId>`. An unnamed bucket does not meet a literal protected bucket; if the protected name has `*` or `?`, the opaque name is read as `*`. `Fn::Sub` in its string form (no variable map) is read too: `${Name}` like `Ref Name`, `${Id.Attr}` like `Fn::GetAtt`, and `${!Text}` as the literal `${Text}` (which the policy-variable rule then rejects). A variable map, an unknown name, a parameter, an unterminated `${`, and an empty `${}` reject the value. Anything else (a parameter, a `Fn::Sub` with a variable map, `Fn::ImportValue`, `Fn::If`, a missing target, an attribute other than `Arn` of a bucket or a role, `AWS::StackName`, `AWS::NoValue`) rejects the value with `PG-IAM-003`. The partition is not read as `*` because the evaluator's `*` crosses colons, so `arn:*:s3:::x/*` would always meet the protected objects.
 
-Lambdaの制御は、`lambda:CreateFunction`、または`lambda:UpdateFunctionConfiguration`です。`UpdateFunctionConfiguration`は、実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのレイヤーも可）を変えられます（AWS Lambda APIリファレンス、2026-11-20に確認）。そのため、`iam:PassRole`と組み合わせると、コードを更新する権限がなくても、レイヤーのコードを渡したロールで実行できます。`lambda:UpdateFunctionCode`だけでは実行ロールを変えられないため、Lambdaの制御とはみなしません。この変更は指摘を増やす方向だけに働きます。
+## 起動サービス
+
+1.2.0（予定）から、経路はLambdaに限りません。起動アクションは、AWS Service Referenceから生成した表（`packages/core/src/aws-tables.generated.ts`、879件、2026-11-21）です。`iam:PassRole`を認可に含む操作の、書き込みまたは権限管理のアクションで、値はロールを渡せるサービスプリンシパル（`iam:PassedToService`）です。起点ロールが起動アクションを持ち、対象ロールがそのサービスを信頼していれば、条件2と3が成り立ちます。例: `ecs:RunTask`と`ecs-tasks.amazonaws.com`、`ec2:RunInstances`と`ec2.amazonaws.com`、`codebuild:CreateProject`、`cloudformation:CreateStack`、`states:CreateStateMachine`、`glue:CreateJob`。
+
+- 表にサービスの値がない23件（`cognito-idp:CreateUserPool`など）は、どのサービスにも渡せるものとして読みます（過剰検出の側）。
+- リージョン付きのサービスプリンシパル（`states.us-east-1.amazonaws.com`）は、リージョンなしの形として読みます。
+- Trust Policyの`*`は、起点ロールが起動できるどのサービスにも引き受けられるものとして読みます（過剰検出の側）。
+- 渡せて保護バケットに届くロールが、表のどの値にもないサービスを信頼していると、そのサービスが渡されたロールでコードを動かすかどうかを判断できないため、`PG-IAM-003`で拒否します。
+
+English: from 1.2.0 (planned) the path is not limited to Lambda. Launch actions come from a table generated from the AWS Service Reference (879 entries, 2026-11-21): write or permission-management actions of operations that authorize `iam:PassRole`, each mapped to the service principals that can receive the role. A principal with a launch action and a target that trusts that service meet conditions 2 and 3. The 23 entries with no service value count for any service; a regional principal is read as the global one; a trust `*` counts for every service the principal can launch (both over-approximations). A passable, bucket-reaching role that trusts a service that is in no value of the table is rejected with `PG-IAM-003`.
+
+Lambdaの起動アクションは、`lambda:CreateFunction`、または`lambda:UpdateFunctionConfiguration`です。`UpdateFunctionConfiguration`は、実行ロール（`Role`）とレイヤー（`Layers`、ほかのアカウントのレイヤーも可）を変えられます（AWS Lambda APIリファレンス、2026-11-20に確認）。そのため、`iam:PassRole`と組み合わせると、コードを更新する権限がなくても、レイヤーのコードを渡したロールで実行できます。`lambda:UpdateFunctionCode`だけでは実行ロールを変えられないため、Lambdaの制御とはみなしません。この変更は指摘を増やす方向だけに働きます。
 
 English: Lambda control is `lambda:CreateFunction` or `lambda:UpdateFunctionConfiguration`. A configuration update can change the execution role (`Role`) and the layers (`Layers`, also from other accounts; AWS Lambda API reference, checked 2026-11-20), so together with `iam:PassRole` it can run layer code as the passed role without a code update. `lambda:UpdateFunctionCode` alone cannot change the role and is not Lambda control. Up to 1.1.1 a configuration update counted only together with a code update. The change can only add findings.
 

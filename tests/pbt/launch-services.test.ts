@@ -2,9 +2,12 @@ import { join } from "node:path";
 import { evaluate, generateLean, unknownTrustFindings } from "@proofgate-cdk/core";
 import type { ProofGateConfig, StackModel, StatementModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
+import { LAUNCH_ACTIONS } from "./support/aws-facts.js";
 import { tsVerdict } from "./support/compare.js";
+import { readConfig } from "./support/config.js";
 import { type BatchCase, runBatch } from "./support/lean-batch.js";
 import { oracleUnknownTrusts, oracleVerdict } from "./support/oracle.js";
+import { createRng } from "./support/prng.js";
 
 // spec proofgate-brushup, Step 5 (B2): the path through any launch service of the generated table, not only Lambda.
 // Every row is checked by the independent oracle, the evaluator, and Lean (one launch).
@@ -281,5 +284,69 @@ describe("a passable, bucket-reaching role that trusts an unknown service (desig
     const allowed = { ...config, allowedPassRoleTargets: ["Data"] };
     expect(oracleUnknownTrusts(unknown, allowed)).toEqual([]);
     expect(unknownTrustFindings(unknown, allowed)).toEqual([]);
+  });
+});
+// Generated rows on a separate random stream: a random launch pattern from the table (or a non-launch action),
+// a random trust (a table service, its regional form, another service, "*", or an unknown service), and checks
+// oracle = evaluator (the evaluator may only add findings for trust "*"), and evaluator = Lean, in one launch.
+// 別の乱数ストリームで、表の起動アクションと信頼先をランダムに組み合わせ、3者の一致を確かめます。
+describe("launch services (generated, separate stream)", () => {
+  const STREAM = 0x1a0c4;
+  const cfg = readConfig();
+  const actions = Object.keys(LAUNCH_ACTIONS);
+  const services = [...new Set(Object.values(LAUNCH_ACTIONS).flat())].filter((s) => s !== "*");
+  const nonLaunch = ["ecs:DescribeTasks", "lambda:GetLayerVersion", "glue:GetJob", "s3:ListBucket"];
+  const shape = (rng: ReturnType<typeof createRng>, action: string) => {
+    const [prefix, name] = action.split(":") as [string, string];
+    return rng.pick([
+      action,
+      `${prefix.toUpperCase()}:${name}`,
+      `${prefix}:${name.slice(0, Math.max(1, name.length - 3))}*`,
+      `${prefix}:*`,
+    ]);
+  };
+  const cases = Array.from({ length: 300 }, (_, index) => {
+    const rng = createRng(cfg.seed ^ STREAM, index);
+    const launch = rng.chance(0.8) ? shape(rng, rng.pick(actions)) : rng.pick(nonLaunch);
+    const service = rng.pick(services);
+    const trust = rng.pick([
+      service,
+      service.replace(".amazonaws.com", ".eu-central-1.amazonaws.com"),
+      ...(Object.entries(LAUNCH_ACTIONS).find(([a]) => a === launch.toLowerCase())?.[1] ?? []),
+      "*",
+    ]);
+    return { index, model: model([trust], [launch]), trust };
+  });
+  it("agrees: oracle and evaluator (trust * may only add findings), evaluator and Lean", () => {
+    for (const c of cases) {
+      const oracle = oracleVerdict(c.model, config);
+      const ts = tsVerdict(evaluate(c.model, config));
+      if (c.trust === "*") {
+        if (oracle === "unsafe") expect(ts, `case ${c.index}`).toBe("unsafe");
+      } else {
+        expect(
+          ts,
+          `case ${c.index} ${JSON.stringify(c.model.roles[1]?.statements[1]?.actions)} ${c.trust}`,
+        ).toBe(oracle);
+      }
+      expect(unknownTrustFindings(c.model, config).length, `case ${c.index}`).toBe(
+        oracleUnknownTrusts(c.model, config).length,
+      );
+    }
+    const batch: BatchCase[] = cases.map((c) => ({
+      id: c.index,
+      model: c.model,
+      config,
+      ts: tsVerdict(evaluate(c.model, config)),
+    }));
+    const result = runBatch(batch, generateLean, {
+      leanDirectory: join(process.cwd(), "packages/cdk-plugin/lean"),
+    });
+    expect(result.failed.size).toBe(0);
+    for (const b of batch) expect(result.verdicts.get(b.id), String(b.id)).toBe(b.ts);
+  }, 300_000);
+  it("reaches both verdicts and several services", () => {
+    const verdicts = new Set(cases.map((c) => oracleVerdict(c.model, config)));
+    expect([...verdicts].sort()).toEqual(["safe", "unsafe"]);
   });
 });
