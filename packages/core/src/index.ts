@@ -6,6 +6,7 @@ import type {
   Violation,
 } from "@proofgate-cdk/model";
 import { RULE_ID } from "@proofgate-cdk/model";
+import { BUCKET_GRANT_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
 
 /**
  * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、
@@ -76,11 +77,20 @@ function globsIntersect(a: readonly GlobToken[], b: readonly GlobToken[]): boole
   return go(0, 0);
 }
 /**
- * 保護バケットのオブジェクト（`<バケット>/`で始まる任意のキー）に届くStatementを返します。
- * バケットレベルのARNだけではオブジェクト操作に届かず、`bucket/reports/*`のような一部のプレフィックスは届きます。
+ * 保護バケットへのアクセスを与えるStatementを返します（spec proofgate-brushup, 要件1）。
+ * - オブジェクトに対するアクション（AWS Service Referenceで`object`リソースを取る44個）は、
+ *   `<バケット>/`で始まる任意のキーに届くResourceで数えます。`bucket/reports/*`のような一部のプレフィックスも届きます。
+ *   バケットレベルのARNだけでは、オブジェクト操作に届きません。
+ * - バケットの権限を変えるアクションと、複製・ライフサイクルの設定は、バケットのARNそのものに届くResourceで数えます。
+ *   バケットポリシーやACLで他のプリンシパルにアクセスを与えたり、全オブジェクトを写したり期限切れにしたりできるためです。
+ * 以前は`GetObject`、`PutObject`、`DeleteObject`の3つだけを数えていました（指摘が増える方向だけの変更です）。
+ * Statements that give access to the protected bucket: the 44 actions that take the S3 `object` resource, on the
+ * object set; and the bucket actions that can give others access, copy, or expire every object, on the bucket ARN.
  */
 function bucketAccessStatements(role: RoleModel, bucketArn: string): StatementModel[] {
-  const objects = [...literalOf(`${bucketArn.replace(/\/$/, "")}/`), STAR];
+  const bucket = bucketArn.replace(/\/$/, "");
+  const objects = [...literalOf(`${bucket}/`), STAR];
+  const bucketItself = literalOf(bucket);
   // 名前のないバケットは、抽出器が不透明な名前`_generated_<LogicalId>`で表します（spec proofgate-cdk-construct-support, design 5）。
   // 保護バケットの名前にワイルドカードがあると、実際の生成名がそれに一致しうるため、不透明な名前を`*`として読みます（過剰検出の側）。
   // リテラルの保護バケットには、生成名は一致しません（ARN文字列のまま比べます）。
@@ -89,10 +99,12 @@ function bucketAccessStatements(role: RoleModel, bucketArn: string): StatementMo
   const protectedHasWildcard = /[*?]/.test(bucketArn);
   const pattern = (resource: string) =>
     protectedHasWildcard ? resource.replace(GENERATED_NAME, "*") : resource;
+  const reaches = (statement: StatementModel, target: readonly GlobToken[]) =>
+    statement.resources.some((resource) => globsIntersect(globOf(pattern(resource)), target));
   return role.statements.filter(
     (statement) =>
-      allowsAction(statement, S3_DATA_ACTIONS) &&
-      statement.resources.some((resource) => globsIntersect(globOf(pattern(resource)), objects)),
+      (allowsAction(statement, OBJECT_ACTIONS_AND_STAR) && reaches(statement, objects)) ||
+      (allowsAction(statement, BUCKET_GRANT_ACTIONS) && reaches(statement, bucketItself)),
   );
 }
 /** 抽出器が名前のないリソースに付ける不透明な名前です（`@proofgate-cdk/extractor`の`GENERATED_PREFIX`と同じ形）。 */
@@ -127,7 +139,12 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
   });
 }
 
-const S3_DATA_ACTIONS = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:*"] as const;
+/**
+ * `s3:*`の1要素は、1.1.2までのリストに入っていたものです。アクションのパターンを文字列`s3:*`と比べる読み方のため、
+ * `s3:?`のような実在しないパターンも一致していました。指摘が減らないように残します（過剰検出の側）。
+ * `s3:*` was in the list of 1.1.2; it is kept so that no finding disappears (over-approximation).
+ */
+const OBJECT_ACTIONS_AND_STAR: readonly string[] = [...OBJECT_ACTIONS, "s3:*"];
 
 /**
  * 任意コードを対象ロールで実行できるLambda操作の根拠を返します。

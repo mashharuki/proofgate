@@ -127,6 +127,17 @@ describe("oracle verdicts for the D1 regression table", () => {
 });
 
 describe("oracle independence", () => {
+  // Added in spec proofgate-brushup (Step 2): the only door to AWS facts is a re-export of generated data.
+  it("reads AWS facts only through aws-facts.ts, which re-exports the generated tables and has no logic", () => {
+    const oracle = readFileSync(join(process.cwd(), "tests/pbt/support/oracle.ts"), "utf8");
+    expect(oracle).toContain('from "./aws-facts.js"');
+    expect(oracle).not.toContain("aws-tables.generated");
+    const facts = readFileSync(join(process.cwd(), "tests/pbt/support/aws-facts.ts"), "utf8");
+    const code = facts.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(code.trim()).toMatch(
+      /^export \{[^}]*\} from "\.\.\/\.\.\/\.\.\/packages\/core\/src\/aws-tables\.generated\.js";$/,
+    );
+  });
   it("imports nothing from the production packages except types", () => {
     for (const file of ["oracle.ts", "glob.ts"]) {
       const source = readFileSync(join(process.cwd(), "tests/pbt/support", file), "utf8");

@@ -164,6 +164,13 @@ function accessActions(rng: Rng): Chosen<string[]> {
     { value: ["s3:Get*", "s3:Delete*"], form: "accessact:two-patterns" },
     { value: ["*"], form: "accessact:all" },
     { value: ["s3:Delete?bject"], form: "accessact:question" },
+    // spec proofgate-brushup, Step 2: object actions that 1.1.2 did not count (AWS Service Reference).
+    { value: ["s3:GetObjectVersion"], form: "accessact:object-version" },
+    {
+      value: ["s3:PutObjectAcl", "s3:DeleteObjectVersion"],
+      form: "accessact:object-acl-and-delete-version",
+    },
+    { value: ["s3:Replicate*"], form: "accessact:replicate-star" },
   ]);
 }
 
@@ -487,6 +494,14 @@ const dataRole = (accessResources: string[], actions = ["s3:GetObject"]): RoleSp
 });
 
 const PASS_DATA = [`arn:aws:iam::${ACCOUNT}:role/data-role`];
+function s3(name: string, label: Label, actions: string[], resources: string[]): Fixed {
+  return {
+    name,
+    label,
+    config: { protectedBucketArns: [PB] },
+    roles: [devRole(PASS_DATA), dataRole(resources, actions)],
+  };
+}
 
 function d1(name: string, label: Label, accessResource: string): Fixed {
   return {
@@ -597,6 +612,27 @@ const FIXED: readonly Fixed[] = [
   d1("d1-7-bucket-trailing-star", "unsafe", `${PB}*`),
   d1("d1-8-all-s3", "unsafe", "arn:aws:s3:::*"),
   d1("d1-10-question-key", "unsafe", `${PB}/?`),
+  // spec proofgate-brushup, Step 2: a bucket action counts on the bucket ARN itself, not on the objects.
+  s3("s3-bucket-policy-on-bucket", "unsafe", ["s3:PutBucketPolicy"], [PB]),
+  s3(
+    "s3-bucket-acl-on-bucket-wildcard",
+    "unsafe",
+    ["s3:PutBucketAcl"],
+    ["arn:aws:s3:::protected-*"],
+  ),
+  s3("s3-replication-on-bucket", "unsafe", ["s3:PutReplicationConfiguration"], [PB]),
+  s3("s3-lifecycle-on-bucket", "unsafe", ["s3:PutLifecycleConfiguration"], [PB]),
+  s3("s3-put-star-on-bucket", "unsafe", ["s3:Put*"], [PB]),
+  s3("s3-bucket-action-on-objects", "safe", ["s3:PutBucketPolicy"], [`${PB}/*`]),
+  s3(
+    "s3-bucket-action-on-other-bucket",
+    "safe",
+    ["s3:PutBucketPolicy"],
+    ["arn:aws:s3:::another-bucket"],
+  ),
+  s3("s3-bucket-read-actions", "safe", ["s3:GetBucketPolicy", "s3:ListBucket"], [PB]),
+  s3("s3-object-version-on-objects", "unsafe", ["s3:GetObjectVersion"], [`${PB}/*`]),
+  s3("s3-object-version-on-bucket-only", "safe", ["s3:GetObjectVersion"], [PB]),
   {
     name: "question-wildcards",
     label: "unsafe",
@@ -689,6 +725,9 @@ const REQUIRED_FORMS: readonly string[] = [
   "accessact:two-patterns",
   "accessact:all",
   "accessact:question",
+  "accessact:object-version",
+  "accessact:object-acl-and-delete-version",
+  "accessact:replicate-star",
   "access:bucket-star",
   "access:prefix",
   "access:object",

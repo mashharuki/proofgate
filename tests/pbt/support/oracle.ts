@@ -13,9 +13,16 @@
  * - cross-account semantics: the partition and account parts of a PassRole ARN are not
  *   checked because they are unknown when the template is synthesized
  * - Lambda resource scoping (lambda:* Resource is not evaluated; this is conservative)
- * - S3 data actions beyond GetObject, PutObject, DeleteObject (see design.md section 18)
+ * - S3 access points and Multi-Region Access Points (a Resource on an access point ARN does not
+ *   intersect the bucket ARN)
+ *
+ * S3 access (spec proofgate-brushup, Requirement 1). The actions come from the AWS Service Reference
+ * (`aws-facts.ts`, data only): the 44 actions that take the `object` resource count on the object set of
+ * the protected bucket, and the bucket actions that can give others access, or copy or expire every
+ * object (permission management, replication, lifecycle), count on the bucket ARN itself.
  */
 import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
+import { BUCKET_GRANT_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
 import { ANY_SUFFIX, compileGlob, intersects, literalTokens, matchTokens } from "./glob.js";
 
 export type OracleVerdict = "unsafe" | "safe";
@@ -28,7 +35,6 @@ interface OraclePath {
 }
 
 const LAMBDA_SERVICE = "lambda.amazonaws.com";
-const S3_DATA_ACTIONS = ["s3:getobject", "s3:putobject", "s3:deleteobject"] as const;
 
 // Decision 8.2: Action name case. Prefix and action name are case-insensitive.
 function actionMatches(pattern: string, action: string): boolean {
@@ -97,11 +103,17 @@ function trustsLambda(target: RoleModel): boolean {
   return target.trustServices.some((s) => s.toLowerCase() === LAMBDA_SERVICE);
 }
 
+// A bucket action is applied to the bucket ARN itself (no key part).
+function resourceReachesBucketArn(resource: string, bucketArn: string): boolean {
+  return intersects(compileGlob(resource), literalTokens(bucketArn.replace(/\/$/, "")));
+}
 function canReachBucket(target: RoleModel, bucketArn: string): boolean {
   return target.statements.some(
     (s) =>
-      S3_DATA_ACTIONS.some((a) => allows(s, a)) &&
-      s.resources.some((r) => resourceReachesBucket(r, bucketArn)),
+      (OBJECT_ACTIONS.some((a) => allows(s, a)) &&
+        s.resources.some((r) => resourceReachesBucket(r, bucketArn))) ||
+      (BUCKET_GRANT_ACTIONS.some((a) => allows(s, a)) &&
+        s.resources.some((r) => resourceReachesBucketArn(r, bucketArn))),
   );
 }
 

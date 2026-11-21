@@ -1,0 +1,46 @@
+{
+  "name": "s3-1-get-object-version",
+  "note": "s3:GetObjectVersion reads old versions of the objects; 1.1.2 did not count it as access (spec proofgate-brushup, Requirement 1).",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "roleName": "data-role",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:GetObjectVersion"],
+            "resources": ["arn:aws:s3:::protected-bucket/*"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "roleName": "dev-role",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::123456789012:role/data-role"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:CreateFunction"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      }
+    ]
+  }
+}
