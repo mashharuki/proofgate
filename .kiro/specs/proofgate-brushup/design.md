@@ -1,6 +1,6 @@
 # Design: proofgate-brushup
 
-Status: DRAFT, awaiting approval. `tasks.md` is not written yet. No production code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-21 (the four open points accepted). `tasks.md` is written. No production code has been changed for this spec yet.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-21, with the answers at its end).
 
 ## 1. Summary
