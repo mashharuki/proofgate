@@ -17,7 +17,7 @@
 ProofGateは次の場合に`PG-IAM-003`を報告し、Fail Closedで拒否します。
 
 - `NotAction`、`NotResource`、`Condition`
-- Role Trust Policy内の`NotPrincipal`、`NotAction`、`Deny`のStatementの`Condition`、オブジェクトではない`Condition`、またはリテラルではない値
+- Role Trust Policy内の`NotPrincipal`、`NotAction`、`Deny`のStatementの`Condition`、オブジェクトではない`Condition`、またはリテラルではない値（サービスではないプリンシパルを除く。次の段落）
 - リテラルではないAction、Role Name、Policy Attachment。Resourceは、後述の値リゾルバで読めないもの（パラメータへの`Ref`、変数マップのある`Fn::Sub`、`Fn::ImportValue`、`Fn::If`、`Fn::Select`、テンプレートにない名前への参照、バケットとロールの`Arn`以外の属性、`AWS::StackName`や`AWS::NoValue`など）
 - デフォルト以外のIAM Role Path
 - `AWS::IAM::ManagedPolicy`と、後述の表にない管理ポリシー（ロールの`ManagedPolicyArns`）
@@ -72,6 +72,12 @@ English: four more managed policies are read (added 2026-11-22; contents copied 
 パーティションを`*`にしないのは、評価器の`*`がコロンをまたぐためです。`arn:*:s3:::x/*`は保護バケットのオブジェクトと必ず交わり、すべてのバケットが誤検出になります。
 
 English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition` (expanded to the three documented partitions `aws`, `aws-cn`, `aws-us-gov`), `AWS::Region`, `AWS::AccountId`, `AWS::URLSuffix` (read as `*`), and `Ref` and `Fn::GetAtt Arn` of buckets and roles of the same template. `Ref` or `Fn::GetAtt` of any other resource of the template is read as `*`. An unnamed bucket or role is written as the opaque name `_generated_<LogicalId>`. An unnamed bucket does not meet a literal protected bucket; if the protected name has `*` or `?`, the opaque name is read as `*`. `Fn::Sub` in its string form (no variable map) is read too: `${Name}` like `Ref Name`, `${Id.Attr}` like `Fn::GetAtt`, and `${!Text}` as the literal `${Text}` (which the policy-variable rule then rejects). A variable map, an unknown name, a parameter, an unterminated `${`, and an empty `${}` reject the value. Anything else (a parameter, a `Fn::Sub` with a variable map, `Fn::ImportValue`, `Fn::If`, a missing target, an attribute other than `Arn` of a bucket or a role, `AWS::StackName`, `AWS::NoValue`) rejects the value with `PG-IAM-003`. The partition is not read as `*` because the evaluator's `*` crosses colons, so `arn:*:s3:::x/*` would always meet the protected objects.
+
+## サービスではない信頼プリンシパル
+
+信頼ポリシーの`Principal`が`AWS`（アカウントやロール）や`Federated`のとき、ProofGateは、その値を無視します（引き受けられるサービスだけを読むためです）。リテラルの文字列は、以前から無視していました。`Fn::Join`、`Fn::Sub`、`Fn::GetAtt`、疑似パラメータで書かれていても、リゾルバが読めるなら、同じように無視します（CDKの`AccountPrincipal`は、アカウントを`Fn::Join`と`Ref AWS::Partition`で書きます）。読めない値（パラメータへの`Ref`、`Fn::ImportValue`、`Fn::If`、文字列ではない値）は、今までどおり`PG-IAM-003`で拒否します。`Service`だけは、引き受けられるサービスを決めるため、リテラルの文字列でなければなりません。この読み方は、ロールの連鎖（別のロールが`sts:AssumeRole`で引き受ける形）をモデルにしないという、これまでの限界と同じです（`docs/ASSUMPTIONS.md`）。
+
+English: a trust-policy `Principal` of type `AWS` or `Federated` is ignored (only the services that can assume the role are read). A literal string was always ignored; a value written with `Fn::Join`, `Fn::Sub`, `Fn::GetAtt`, or pseudo-parameters that the resolver can read is now ignored the same way (CDK's `AccountPrincipal` is written with `Fn::Join` and `Ref AWS::Partition`). A value that cannot be read (a `Ref` to a parameter, `Fn::ImportValue`, `Fn::If`, a non-string) is still rejected with `PG-IAM-003`. A `Service` principal must stay literal. This is the same limit as before: role chains are not modeled.
 
 ## ロールで動くリソースと、PassRoleの要らない経路
 

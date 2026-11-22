@@ -4,6 +4,10 @@ All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@pr
 
 ## Unreleased
 
+### Changed: a trust principal that is not a service is read when it is written with an intrinsic
+
+A trust-policy principal of type `AWS` or `Federated` that is written with `Fn::Join`, `Fn::Sub`, `Fn::GetAtt`, or pseudo-parameters is now ignored like a literal one (the extractor reads only the services that can assume the role). CDK writes `AccountPrincipal` this way, so a CodePipeline role, for example, was rejected with `PG-IAM-003` ("Trust principals must contain literal strings"). A value that cannot be read (a parameter, an import, `Fn::If`) and a `Service` principal that is not literal are still rejected. This accepts more templates; it does not hide a path that was seen before, because non-service principals were never modeled (role chains are a documented limit).
+
 ### Added: four more AWS managed policies are read
 
 `AmazonSSMManagedInstanceCore` (v2), `AWSGlueServiceRole` (v5), `AWSBackupServiceRolePolicyForBackup` (v30), and `AWSBackupServiceRolePolicyForRestores` (v36) are read from `ManagedPolicyArns`, so a role that has one of them is no longer rejected with `PG-IAM-003`. The statements are copied one by one from the AWS documentation (read 2026-11-22); the `Condition` of an Allow statement is not copied, which only adds findings. Two of them matter for the result: the Glue policy allows S3 object actions on `arn:aws:s3:::*/*aws-glue-*/*` (a key that contains `aws-glue-` in any bucket), so a role that holds it counts as reaching a protected bucket; the Backup restore policy holds `iam:PassRole` and launch actions, so it can be part of a `PG-IAM-004` path. Any other managed policy, including `AWS_ConfigRole` (3775 actions, not read yet), is still rejected.

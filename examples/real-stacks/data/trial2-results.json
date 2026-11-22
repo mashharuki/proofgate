@@ -26,7 +26,9 @@
       "predictedResultMain": "PG-IAM-003",
       "observed": "PG-IAM-003",
       "class": "rejected as unsupported",
-      "reasons": ["Trust principals must contain literal strings"]
+      "reasons": ["Trust principals must contain literal strings"],
+      "observedAfterTrustFix": "accepted",
+      "note": "After the trust-principal change (2026-11-22) a CodePipeline role whose trust names the account with Fn::Join is read and the principal is ignored."
     },
     {
       "id": "RS-76",
