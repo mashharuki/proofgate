@@ -1,4 +1,10 @@
 import type { StatementModel, UnsupportedFinding } from "@proofgate-cdk/model";
+import {
+  AMAZONSSMMANAGEDINSTANCECORE,
+  AWSBACKUPSERVICEROLEPOLICYFORBACKUP,
+  AWSBACKUPSERVICEROLEPOLICYFORRESTORES,
+  AWSGLUESERVICEROLE,
+} from "./managed-policy-data.js";
 
 /**
  * AWS管理ポリシーの表です（spec proofgate-cdk-construct-support, R2）。
@@ -20,41 +26,53 @@ import type { StatementModel, UnsupportedFinding } from "@proofgate-cdk/model";
  * Source: https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonAPIGatewayPushToCloudWatchLogs.html (read 2026-11-21).
  * Neither policy touches S3 or iam:PassRole, so neither can create a path; they only make the role readable.
  */
-const MANAGED_POLICIES: Readonly<
-  Record<string, { readonly actions: readonly string[]; readonly resources: readonly string[] }>
-> = {
-  "service-role/AWSLambdaBasicExecutionRole": {
-    actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-    resources: ["*"],
-  },
-  "service-role/AWSLambdaVPCAccessExecutionRole": {
-    actions: [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DescribeSubnets",
-      "ec2:DeleteNetworkInterface",
-      "ec2:AssignPrivateIpAddresses",
-      "ec2:UnassignPrivateIpAddresses",
-    ],
-    resources: ["*"],
-  },
-  "service-role/AmazonAPIGatewayPushToCloudWatchLogs": {
-    actions: [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
-      "logs:GetLogEvents",
-      "logs:FilterLogEvents",
-    ],
-    resources: ["*"],
-  },
+/** 管理ポリシーの1つのAllow Statementです（Resource付き）。 */
+export interface ManagedPolicyStatement {
+  readonly actions: readonly string[];
+  readonly resources: readonly string[];
+}
+const MANAGED_POLICIES: Readonly<Record<string, readonly ManagedPolicyStatement[]>> = {
+  "service-role/AWSLambdaBasicExecutionRole": [
+    {
+      actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+      resources: ["*"],
+    },
+  ],
+  "service-role/AWSLambdaVPCAccessExecutionRole": [
+    {
+      actions: [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "ec2:CreateNetworkInterface",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeSubnets",
+        "ec2:DeleteNetworkInterface",
+        "ec2:AssignPrivateIpAddresses",
+        "ec2:UnassignPrivateIpAddresses",
+      ],
+      resources: ["*"],
+    },
+  ],
+  "service-role/AmazonAPIGatewayPushToCloudWatchLogs": [
+    {
+      actions: [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:PutLogEvents",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents",
+      ],
+      resources: ["*"],
+    },
+  ],
+  AmazonSSMManagedInstanceCore: AMAZONSSMMANAGEDINSTANCECORE,
+  "service-role/AWSGlueServiceRole": AWSGLUESERVICEROLE,
+  "service-role/AWSBackupServiceRolePolicyForBackup": AWSBACKUPSERVICEROLEPOLICYFORBACKUP,
+  "service-role/AWSBackupServiceRolePolicyForRestores": AWSBACKUPSERVICEROLEPOLICYFORRESTORES,
 };
-
 const UNSUPPORTED_REASON = "Managed policies are not supported in the first vertical slice";
 const ARN_PREFIX = "arn:aws:iam::aws:policy/";
 const PARTITION_WILDCARD_PREFIX = "arn:*:iam::aws:policy/";
@@ -120,15 +138,11 @@ export function parseManagedPolicies(
   }
   return names.flatMap((name, index) => {
     const policy = MANAGED_POLICIES[name as string];
-    return policy === undefined
-      ? []
-      : [
-          {
-            effect: "Allow" as const,
-            actions: [...policy.actions],
-            resources: [...policy.resources],
-            sourcePath: `${path}[${index}]`,
-          },
-        ];
+    return (policy ?? []).map((statement) => ({
+      effect: "Allow" as const,
+      actions: [...statement.actions],
+      resources: [...statement.resources],
+      sourcePath: `${path}[${index}]`,
+    }));
   });
 }

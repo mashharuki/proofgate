@@ -41,6 +41,8 @@ English: a role without `RoleName` is read as the opaque name `_generated_<Logic
 
 管理ポリシー`AWSLambdaBasicExecutionRole`の内容は、AWSのドキュメント（2026-11-19に確認、v1）のとおりだと仮定します。AWSが新しい既定バージョンを公開すると、この仮定は古くなります。Trust Policyの`Allow`に付いた`Condition`は引き受けられる主体を狭めるだけだと仮定し、無視します（実際より多くの主体が引き受けられるものとして読むため、指摘が増える側です）。
 
+管理ポリシー`AmazonSSMManagedInstanceCore`（v2）、`AWSGlueServiceRole`（v5）、`AWSBackupServiceRolePolicyForBackup`（v30）、`AWSBackupServiceRolePolicyForRestores`（v36）の内容も、AWSのドキュメント（2026-11-22に確認）のとおりだと仮定します。Statementは1つずつ写し、AllowのConditionは写しません（Conditionは許可を狭めるだけなので、外すと指摘が増える側です）。Glueのポリシーは、どのバケットでも、キーに`aws-glue-`を含むオブジェクトへのS3アクションを持つため、このポリシーのロールは保護対象バケットに届くものとして数えます。Backupの復元用ポリシーは`iam:PassRole`と起動アクションを持つため、渡せるロールと起動の組が、`PG-IAM-004`の経路になりえます。
+
 管理ポリシー`AWSLambdaVPCAccessExecutionRole`（v3）と`AmazonAPIGatewayPushToCloudWatchLogs`（v1）も同じ仮定です（2026-11-21に確認）。どちらもS3と`iam:PassRole`に触れないため、経路は作れません。
 
 English: the content of the managed policies `AWSLambdaVPCAccessExecutionRole` (v3) and `AmazonAPIGatewayPushToCloudWatchLogs` (v1, both checked on 2026-11-21) is assumed the same way; neither touches S3 or `iam:PassRole`. The content of the managed policy `AWSLambdaBasicExecutionRole` is assumed to be that of the AWS documentation (checked on 2026-11-19, v1); a new default version published by AWS makes this assumption stale. A `Condition` on an `Allow` trust statement is assumed to only narrow who can assume the role, so it is ignored (the role is read as assumable by more principals, which only adds findings).

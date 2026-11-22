@@ -17,7 +17,8 @@
       "predictedResultMain": "PG-IAM-003",
       "observed": "PG-IAM-003",
       "class": "rejected as unsupported",
-      "reasons": ["Managed policies are not supported in the first vertical slice"]
+      "reasons": ["Managed policies are not supported in the first vertical slice"],
+      "observedAfterManagedPolicies": "accepted"
     },
     {
       "id": "RS-75",
@@ -76,7 +77,8 @@
       "reasons": [
         "Managed policies are not supported in the first vertical slice",
         "No supported IAM policy statements were found; refusing a vacuous proof"
-      ]
+      ],
+      "observedAfterManagedPolicies": "accepted"
     },
     {
       "id": "RS-82",
@@ -95,7 +97,8 @@
       "predictedResultMain": "PG-IAM-003",
       "observed": "PG-IAM-003",
       "class": "rejected as unsupported",
-      "reasons": ["Managed policies are not supported in the first vertical slice"]
+      "reasons": ["Managed policies are not supported in the first vertical slice"],
+      "observedAfterManagedPolicies": "accepted"
     },
     {
       "id": "RS-84",

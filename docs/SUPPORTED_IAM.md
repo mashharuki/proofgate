@@ -35,7 +35,14 @@ Trust Policyの`Allow` Statementに付いたオブジェクトの`Condition`は�
 
 English: an object `Condition` on an `Allow` trust statement is read as absent. A condition can only narrow who may assume the role, so ignoring it only adds findings. A `Condition` on a `Deny` statement, and a `Condition` that is not an object, are still rejected with `PG-IAM-003`.
 
-ロールの`ManagedPolicyArns`は、次の管理ポリシー3件だけを読みます。内容はAWSのドキュメント（`AWSLambdaBasicExecutionRole`は2026-11-19、ほかの2件は2026-11-21に確認）のとおり、ロールのStatementへ展開します。展開したStatementは、インラインのStatementの後、独立した`AWS::IAM::Policy`の前に並びます。
+ロールの`ManagedPolicyArns`は、次の管理ポリシー7件だけを読みます（下の3件は2026-11-22に追加）。
+
+- `AmazonSSMManagedInstanceCore`（`arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore`、v2）: 3つのStatement。`service-role/`は付きません。
+- `AWSGlueServiceRole`（`.../service-role/AWSGlueServiceRole`、v5）: 6つのStatement。S3のStatementを含みます。`arn:aws:s3:::*/*aws-glue-*/*`が、どのバケットでも、キーに`aws-glue-`を含むオブジェクトを表すため、このポリシーを持つロールは、保護対象バケットに届くものとして数えます。
+- `AWSBackupServiceRolePolicyForBackup`（v30、59 Statement）と`AWSBackupServiceRolePolicyForRestores`（v36、47 Statement）（`.../service-role/<名前>`）: `iam:PassRole`と、`ec2:RunInstances`、`rds:*`などの起動アクションを含みます。AllowのConditionは写さないため、`iam:PassedToService`の制限はなく、渡せるロールと起動アクションの組として数えます（過大判定）。
+- `AWS_ConfigRole`は、アクションが3775個と大きいため、まだ読みません。
+
+次の3件は、以前からの対象です。内容はAWSのドキュメント（`AWSLambdaBasicExecutionRole`は2026-11-19、ほかの2件は2026-11-21に確認）のとおり、ロールのStatementへ展開します。展開したStatementは、インラインのStatementの後、独立した`AWS::IAM::Policy`の前に並びます。
 
 - `AWSLambdaBasicExecutionRole`（`arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole`）: `logs:CreateLogGroup`、`logs:CreateLogStream`、`logs:PutLogEvents`を`*`へAllow（v1）
 - `AWSLambdaVPCAccessExecutionRole`（`.../service-role/AWSLambdaVPCAccessExecutionRole`、v3）: 上の3つの`logs:`に加えて、`ec2:CreateNetworkInterface`、`ec2:DescribeNetworkInterfaces`、`ec2:DescribeSubnets`、`ec2:DeleteNetworkInterface`、`ec2:AssignPrivateIpAddresses`、`ec2:UnassignPrivateIpAddresses`を`*`へAllow
@@ -43,7 +50,7 @@ English: an object `Condition` on an `Allow` trust statement is read as absent. 
 
 書き方は、リテラルのARN（パーティションは`aws`）か、CDKが作る`Fn::Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/<名前>"`（変数は`AWS::Partition`だけ）か、`Fn::Join ["", ["arn:", {"Ref": "AWS::Partition"}, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]`です。表にない管理ポリシー、`service-role/`のない同名のARN、`aws`以外のリテラルのパーティション、ほかの`Ref`や区切り文字のある`Fn::Join`は、`PG-IAM-003`で拒否します。1つでも読めない要素があれば、そのロールの`ManagedPolicyArns`全体を拒否します。
 
-English: `ManagedPolicyArns` is read for three managed policies only (`AWSLambdaBasicExecutionRole`, `AWSLambdaVPCAccessExecutionRole`, `AmazonAPIGatewayPushToCloudWatchLogs`), written as a literal ARN (partition `aws`), as the CDK `Fn::Sub` with `${AWS::Partition}` (no other variable), or as the CDK `Fn::Join` with `Ref AWS::Partition`. Each statement (an Allow on `*` of `logs:` actions, plus six `ec2:` network-interface actions for the VPC policy, as in the AWS documentation checked on 2026-11-19 and 2026-11-21) is appended to the role after the inline statements and before attached `AWS::IAM::Policy` statements. Any other managed policy, or any entry that cannot be read, rejects the whole `ManagedPolicyArns` with `PG-IAM-003`. More policies need the same check against the AWS documentation first.
+English: four more managed policies are read (added 2026-11-22; contents copied statement by statement from the AWS pages, the `Condition` of an Allow statement not copied, which only adds findings): `AmazonSSMManagedInstanceCore` (v2), `AWSGlueServiceRole` (v5, with S3 statements that may denote objects of any bucket), `AWSBackupServiceRolePolicyForBackup` (v30), and `AWSBackupServiceRolePolicyForRestores` (v36, with `iam:PassRole` and launch actions). `AWS_ConfigRole` (3775 actions) is not read yet. Earlier: `ManagedPolicyArns` is read for three managed policies only (`AWSLambdaBasicExecutionRole`, `AWSLambdaVPCAccessExecutionRole`, `AmazonAPIGatewayPushToCloudWatchLogs`), written as a literal ARN (partition `aws`), as the CDK `Fn::Sub` with `${AWS::Partition}` (no other variable), or as the CDK `Fn::Join` with `Ref AWS::Partition`. Each statement (an Allow on `*` of `logs:` actions, plus six `ec2:` network-interface actions for the VPC policy, as in the AWS documentation checked on 2026-11-19 and 2026-11-21) is appended to the role after the inline statements and before attached `AWS::IAM::Policy` statements. Any other managed policy, or any entry that cannot be read, rejects the whole `ManagedPolicyArns` with `PG-IAM-003`. More policies need the same check against the AWS documentation first.
 
 ## Resourceの値リゾルバ（R1）
 
