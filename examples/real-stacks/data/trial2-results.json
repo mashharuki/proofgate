@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "description": "Observed results of the construct trials RS-73 to RS-84, 2026-11-22, with `node dist/runner.js --trial2 --cli none` (main at 32f1c63). trial2-predictions.json was committed before the Patterns existed and is not edited.",
+  "differencesFromPrediction": [],
+  "results": [
+    {
+      "id": "RS-73",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-74",
+      "groundTruth": "safe",
+      "predictedResultMain": "PG-IAM-003",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Managed policies are not supported in the first vertical slice"]
+    },
+    {
+      "id": "RS-75",
+      "groundTruth": "safe",
+      "predictedResultMain": "PG-IAM-003",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Trust principals must contain literal strings"]
+    },
+    {
+      "id": "RS-76",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-77",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-78",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-79",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-80",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "PG-IAM-004",
+      "observed": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-81",
+      "groundTruth": "safe",
+      "predictedResultMain": "PG-IAM-003",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ]
+    },
+    {
+      "id": "RS-82",
+      "groundTruth": "safe",
+      "predictedResultMain": "PG-IAM-003",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "Managed policies are not supported in the first vertical slice",
+        "No supported IAM policy statements were found; refusing a vacuous proof"
+      ]
+    },
+    {
+      "id": "RS-83",
+      "groundTruth": "safe",
+      "predictedResultMain": "PG-IAM-003",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Managed policies are not supported in the first vertical slice"]
+    },
+    {
+      "id": "RS-84",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    }
+  ]
+}

@@ -10,6 +10,8 @@ Subject: `examples/real-stacks` (aws-cdk-lib 2.277.0). Protected bucket: `arn:aw
 pnpm build
 pnpm real-stacks            # compares the 14 Patterns with the expected table (0 match, 1 difference, 2 harness error)
 pnpm real-stacks --cli all   # also runs the real cdk synth CLI (about one minute)
+pnpm real-stacks --trial2 --cli none   # the twelve construct trials RS-73 to RS-84 (second round)
+pnpm real-stacks --policy-write --cli none   # the ten Patterns RS-63 to RS-72 (self-escalation, baseline before the rule)
 pnpm real-stacks --implicit --cli none   # the nine Patterns RS-54 to RS-62 (paths without iam:PassRole)
 pnpm real-stacks --incident --cli none   # the six incident-shaped Patterns RS-48 to RS-53 (observed only; --holdout, --probe, --launch work the same way)
 ```
@@ -180,6 +182,34 @@ Nine Patterns were run with `pnpm real-stacks --implicit` after their prediction
 - RS-48 (the Sysdig 2025 shape) was a miss before and is `PG-IAM-004` now.
 - RS-59 checks the resolver narrowing (`GetAtt Arn` as an ARN instead of `*`). Read as `*` it would match project A and be a false alarm.
 - The 91 pathfinding.cloud paths: 52 are reported now (46 before). The six new ones are `lambda-003`, `lambda-004`, `lambda-005`, `codebuild-002`, `codebuild-003`, `stepfunctions-002`. 39 are accepted (the other 16 paths without PassRole, 14 `principal-access`, 8 `self-escalation`, 1 `new-passrole`).
+
+## Construct trials, second round (RS-73 to RS-84, Step 7, 2026-11-22)
+
+Twelve common CDK constructs were run with `pnpm real-stacks --trial2` after their predictions were committed (`trial2-predictions.json`). All twelve results match the predictions (results in `trial2-results.json`).
+
+| ID    | Construct                                                                     | Ground truth | Predicted  | Observed   |
+| ----- | ----------------------------------------------------------------------------- | ------------ | ---------- | ---------- |
+| RS-73 | A Firehose delivery stream that writes to the protected bucket                | safe         | accepted   | accepted   |
+| RS-74 | A Glue job role with the managed policy `AWSGlueServiceRole`                  | safe         | PG-IAM-003 | PG-IAM-003 |
+| RS-75 | A CodePipeline with an S3 source (the protected bucket) and CodeBuild         | safe         | PG-IAM-003 | PG-IAM-003 |
+| RS-76 | An HTTP API with a Lambda authorizer                                          | safe         | accepted   | accepted   |
+| RS-77 | A DynamoDB stream to Lambda                                                   | safe         | accepted   | accepted   |
+| RS-78 | An AppSync API with a Lambda data source                                      | safe         | accepted   | accepted   |
+| RS-79 | An unauthenticated Cognito identity pool role that reads the protected bucket | unsafe       | accepted   | accepted   |
+| RS-80 | `iam:PassRole` and `sagemaker:CreateNotebookInstance`                         | unsafe       | PG-IAM-004 | PG-IAM-004 |
+| RS-81 | An AWS Backup plan with a selection                                           | safe         | PG-IAM-003 | PG-IAM-003 |
+| RS-82 | An AWS Config recorder with the managed policy `AWS_ConfigRole`               | safe         | PG-IAM-003 | PG-IAM-003 |
+| RS-83 | An EC2 instance with `AmazonSSMManagedInstanceCore`                           | safe         | PG-IAM-003 | PG-IAM-003 |
+| RS-84 | An EventBridge Scheduler schedule                                             | safe         | accepted   | accepted   |
+
+- Five of the twelve are rejected (`PG-IAM-003`). Four use a managed policy outside the three that are read (Glue, Backup, Config, and SSM `AmazonSSMManagedInstanceCore`). One (RS-75) has a CodePipeline role whose trust policy names the account as an AWS principal written with `Fn::Join` and `Ref AWS::Partition`, which cannot be read. These are fail-closed rejections, not findings. They are likely adoption blockers, so two proposals follow.
+- The one miss is RS-79 (an unauthenticated Cognito identity pool, class D), as predicted.
+- RS-80 (SageMaker) is detected through the launch table.
+
+Two candidate changes would reduce `PG-IAM-003`. Both accept more templates, so they need the user's approval.
+
+1. Read an AWS principal of a trust policy that is written with `Fn::Join` and similar like a literal one, that is, ignore it (a literal AWS principal is already ignored and accepted; only the `Fn::Join` form is rejected today).
+2. Add managed policies such as `AmazonSSMManagedInstanceCore` to the table after their content is read from the documentation. A policy with S3 statements must be copied with its resources exactly.
 
 ## Trial with the current code (2026-11-22)
 

@@ -179,6 +179,34 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 - RS-59は、リゾルバの絞り込み（`GetAtt Arn`を`*`ではなくARNにする）の確認です。`*`と読んでいたら、プロジェクトAに一致して誤検出になります。
 - pathfinding.cloudの91経路は、52件を指摘するようになりました（修正前46件）。増えたのは、`lambda-003`、`lambda-004`、`lambda-005`、`codebuild-002`、`codebuild-003`、`stepfunctions-002`の6件です。指摘は52件、受理は39件（PassRoleの要らない残り16件、`principal-access`の14件、`self-escalation`の8件、`new-passrole`の1件）です。
 
+## 構成の試し、2回目（RS-73〜RS-84、Step 7、2026-11-22）
+
+実際のCDKでよく使う構成12個を、実行の前に予想をコミットして（`trial2-predictions.json`）から、`pnpm real-stacks --trial2`で試しました。12件すべて予想どおりでした（結果は`trial2-results.json`）。
+
+| ID    | 構成                                                          | 正解 | 予想       | 結果       |
+| ----- | ------------------------------------------------------------- | ---- | ---------- | ---------- |
+| RS-73 | Kinesis Data Firehoseの配信ストリームが保護対象バケットへ書く | 安全 | accepted   | accepted   |
+| RS-74 | Glueジョブのロールに管理ポリシー`AWSGlueServiceRole`          | 安全 | PG-IAM-003 | PG-IAM-003 |
+| RS-75 | S3ソース（保護対象バケット）とCodeBuildのCodePipeline         | 安全 | PG-IAM-003 | PG-IAM-003 |
+| RS-76 | LambdaオーソライザーつきのHTTP API                            | 安全 | accepted   | accepted   |
+| RS-77 | DynamoDBストリームからLambda                                  | 安全 | accepted   | accepted   |
+| RS-78 | Lambdaデータソースつきの AppSync API                          | 安全 | accepted   | accepted   |
+| RS-79 | 認証なしのCognito IDプールのロールが保護対象バケットを読む    | 危険 | accepted   | accepted   |
+| RS-80 | `iam:PassRole`と`sagemaker:CreateNotebookInstance`            | 危険 | PG-IAM-004 | PG-IAM-004 |
+| RS-81 | AWS Backupのプランと選択                                      | 安全 | PG-IAM-003 | PG-IAM-003 |
+| RS-82 | AWS Configのレコーダーと管理ポリシー`AWS_ConfigRole`          | 安全 | PG-IAM-003 | PG-IAM-003 |
+| RS-83 | `AmazonSSMManagedInstanceCore`つきのEC2インスタンス           | 安全 | PG-IAM-003 | PG-IAM-003 |
+| RS-84 | EventBridge Schedulerのスケジュール                           | 安全 | accepted   | accepted   |
+
+- 拒否（`PG-IAM-003`）は12件中5件です。4件は、読む管理ポリシー3件以外の管理ポリシーです（Glue、Backup、Config、SSMの`AmazonSSMManagedInstanceCore`）。1件（RS-75）は、CodePipelineのロールの信頼ポリシーが、アカウントを`Fn::Join`と`Ref AWS::Partition`で書いたAWSプリンシパルで、読めないためです。どれも、指摘ではなく、Fail Closedの拒否です。導入の障害になりやすいため、対応するかどうかを提案しました（下）。
+- 見逃しは、RS-79（認証なしのCognito IDプール、分類D）の1件で、予想どおりです。
+- RS-80（SageMaker）は、起動サービスの表で検出しました。
+
+次の2つは、PG-IAM-003を減らす変更の候補です。どちらも、受理を増やす（許容側へ動く）変更なので、あなたの承認が要ります。
+
+1. 信頼ポリシーのAWSプリンシパル（アカウント）が`Fn::Join`などで書かれていても、リテラルと同じように無視して読む（今は、リテラルのAWSプリンシパルは無視して受理し、`Fn::Join`の形だけを拒否しています）。
+2. 管理ポリシーの表に、ドキュメントで内容を読んでから、`AmazonSSMManagedInstanceCore`などを足す。S3のStatementを含むポリシーは、リソースまで正確に写す必要があります。
+
 ## 今のコードを使った試用（2026-11-22）
 
 1.1.1の試用と同じアプリ（18の変種）で、npmの1.1.2と、このリポジトリの今のコード（パッケージにしたtarball）を比べました。違いは1つだけです。

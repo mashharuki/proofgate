@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "description": "Predictions for the construct trials RS-73 to RS-84 (spec proofgate-brushup, Step 7, second round), written on 2026-11-22 BEFORE these Patterns existed or were run with ProofGate (main at 32f1c63). Never edit this file.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-73",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A Kinesis Data Firehose delivery stream (L1) writes to the protected bucket with its own role. Nobody can pass or change the role."
+    },
+    {
+      "id": "RS-74",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A Glue job with a role that has the AWS managed policy service-role/AWSGlueServiceRole and reads the protected bucket. A managed policy outside the three that are read is rejected."
+    },
+    {
+      "id": "RS-75",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A CodePipeline with an S3 source (the protected bucket) and a CodeBuild action. The pipeline role trusts the account (an AWS principal written with Fn::Join and Ref AWS::Partition), which cannot be read in a trust policy, so the template is rejected (as RS-52)."
+    },
+    {
+      "id": "RS-76",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An API Gateway HTTP API with a Lambda authorizer and a Lambda integration."
+    },
+    {
+      "id": "RS-77",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A DynamoDB table with a stream that triggers a Lambda function (the function role gets stream permissions)."
+    },
+    {
+      "id": "RS-78",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An AppSync GraphQL API with a Lambda data source (AppSync service role with an inline policy)."
+    },
+    {
+      "id": "RS-79",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A Cognito identity pool that allows unauthenticated identities, with an unauthenticated role (trust: the Federated principal cognito-identity.amazonaws.com with Conditions) that reads the protected bucket. Anyone on the internet can get the credentials. ProofGate reads service principals only, so it sees no path (class D, a known miss)."
+    },
+    {
+      "id": "RS-80",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A deploy role with iam:PassRole and sagemaker:CreateNotebookInstance, and a role that trusts SageMaker and reads the protected bucket."
+    },
+    {
+      "id": "RS-81",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An AWS Backup plan with a selection: CDK creates a role with AWS managed policies (the Backup service role policies). Rejected as managed policies outside the three."
+    },
+    {
+      "id": "RS-82",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An AWS Config configuration recorder with a role that has the managed policy service-role/AWS_ConfigRole."
+    },
+    {
+      "id": "RS-83",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An EC2 instance whose role has AmazonSSMManagedInstanceCore (the usual way to use Session Manager) and reads the protected bucket. Rejected as a managed policy outside the three."
+    },
+    {
+      "id": "RS-84",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An EventBridge Scheduler schedule (L1) with a role that trusts scheduler.amazonaws.com and may invoke a Lambda function."
+    }
+  ]
+}

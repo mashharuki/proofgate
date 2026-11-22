@@ -13,6 +13,7 @@ import { incidentProbeCatalog } from "./incident-probe/catalog.js";
 import { launchProbeCatalog } from "./launch-probe/catalog.js";
 import type { Pattern } from "./pattern.js";
 import { policyWriteProbeCatalog } from "./policy-write-probe/catalog.js";
+import { trial2ProbeCatalog } from "./trial2-probe/catalog.js";
 
 /**
  * 全Patternを、ProofGateなし・ありで合成し、実プラグインの結果を読み取って、
@@ -223,7 +224,15 @@ interface Options {
   readonly only: string | undefined;
   readonly cli: "none" | "sample" | "all";
   /** holdoutとprobeは、ホールドアウトと構成の試しのPatternを観測だけします（期待表はなく、--printと同じ出力です）。 */
-  readonly set: "main" | "holdout" | "probe" | "launch" | "incident" | "implicit" | "policy-write";
+  readonly set:
+    | "main"
+    | "holdout"
+    | "probe"
+    | "launch"
+    | "incident"
+    | "implicit"
+    | "policy-write"
+    | "trial2";
 }
 
 function parseArguments(argv: string[]): Options {
@@ -241,6 +250,7 @@ function parseArguments(argv: string[]): Options {
     else if (argument === "--incident") set = "incident";
     else if (argument === "--implicit") set = "implicit";
     else if (argument === "--policy-write") set = "policy-write";
+    else if (argument === "--trial2") set = "trial2";
     else if (argument === "--cli") {
       const mode = argv[++i];
       if (mode !== "none" && mode !== "sample" && mode !== "all") {
@@ -263,6 +273,7 @@ function main(): number {
     incident: incidentProbeCatalog,
     implicit: implicitProbeCatalog,
     "policy-write": policyWriteProbeCatalog,
+    trial2: trial2ProbeCatalog,
   };
   const patterns = sets[options.set].filter(
     (pattern) => options.only === undefined || pattern.id === options.only,

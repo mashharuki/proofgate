@@ -9,6 +9,7 @@ import { incidentProbeCatalog } from "./incident-probe/catalog.js";
 import { launchProbeCatalog } from "./launch-probe/catalog.js";
 import type { Pattern } from "./pattern.js";
 import { policyWriteProbeCatalog } from "./policy-write-probe/catalog.js";
+import { trial2ProbeCatalog } from "./trial2-probe/catalog.js";
 
 export interface CreateAppOptions {
   /** trueなら、実際のProofGateValidatorを登録します。 */
@@ -29,6 +30,7 @@ export function createApp(options: CreateAppOptions): App {
     ...incidentProbeCatalog,
     ...implicitProbeCatalog,
     ...policyWriteProbeCatalog,
+    ...trial2ProbeCatalog,
   ]);
   pattern.build(app);
   if (options.gated) {
