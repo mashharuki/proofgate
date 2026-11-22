@@ -16,3 +16,8 @@ Read on 2026-11-22 with `web_fetch` (the AWS MCP Server was not connected). Only
 
 ## Role properties in the CloudFormation resource types
 `AWS::Lambda::Function` `Role` (required), `AWS::CodeBuild::Project` `ServiceRole` (required), `AWS::StepFunctions::StateMachine` `RoleArn` (the ARN of the role, required unless the definition is given in a way that the service role is set elsewhere). To be re-checked on the resource pages in Step 2 (task 3.1) before the extractor reads them.
+
+## Step 2: statements whose Resource changed with the resolver narrowing (task 3.3)
+Checked on 2026-11-22 over every template of the 62 Patterns (63 templates), extractor of `main` against the new one. 14 statements changed, no template changed its unsupported findings, and the differential check against `main` (3038 inputs) lost no finding and added none.
+- RS-59, the developer role: `["*"]` became the ARN pattern of project B only (the purpose of the change).
+- 13 statements that CDK adds to the role of a CodeBuild project (RS-34, RS-56, RS-57, RS-59): the log-group resource `arn:...:log-group:/aws/codebuild/*` became `.../aws/codebuild/_generated_<LogicalId>` and the report-group resource `report-group/*-*` became `report-group/_generated_<LogicalId>-*`. These statements allow `logs:` and `codebuild:` report actions, which no existing rule reads.

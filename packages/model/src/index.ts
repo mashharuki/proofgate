@@ -17,10 +17,31 @@ export interface RoleModel {
   readonly statements: readonly StatementModel[];
 }
 
+/** ロールで動く既存のリソースの種類です（spec proofgate-implicit-role-paths）。 */
+export type ResourceKind = "lambda-function" | "codebuild-project" | "stepfunctions-state-machine";
+/**
+ * ロールを持つリソースです。主体がこのリソースを変更できると、`iam:PassRole`なしでそのロールの権限でコードを動かせます。
+ * A resource that runs as a role. A principal that can change it can run code as that role without `iam:PassRole`.
+ */
+export interface ResourceModel {
+  readonly logicalId: string;
+  readonly kind: ResourceKind;
+  /** テンプレートがリテラルで付けた物理名です。なければ、不透明な名前`_generated_<LogicalId>`として読みます。 */
+  readonly name?: string;
+  /** 物理名がintrinsicで、値を読めないときtrueです。どのResourceパターンも一致しうるものとして扱います（過剰検出の側）。 */
+  readonly nameUnknown?: boolean;
+  /** このリソースが引き受けるロール（同じテンプレート内）のLogical IDです。 */
+  readonly roleLogicalId?: string;
+  /** ロールを特定できないときtrueです（パラメータ、インポート、テンプレートにないロールなど）。このとき`roleLogicalId`はありません。 */
+  readonly roleUnknown?: boolean;
+  readonly sourcePath: string;
+}
 /** TypeScriptとLeanの間で受け渡す、CDKに依存しないスタックモデルです。 */
 export interface StackModel {
   readonly version: "1";
   readonly roles: readonly RoleModel[];
+  /** ロールで動くリソースです。なければ空として読みます。 */
+  readonly resources?: readonly ResourceModel[];
 }
 
 /** アプリケーションごとに指定するProofGateの安全条件です。 */

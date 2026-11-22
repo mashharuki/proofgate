@@ -1,5 +1,5 @@
 # Tasks: proofgate-implicit-role-paths
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Step 1 is done and waits for Checkpoint 1; nothing else is implemented.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 and 2 are done (Step 2 waits for Checkpoint 2); the rule itself is not implemented.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-21). Design: [design.md](./design.md).
 Time box: see design section 11 (freeze 2026-11-29 for the brushup, deadline 2026-12-04 14:00 PT).
 Branches: one per step, from `main`: `implicit/step-1-evidence`, `implicit/step-2-extractor`, `implicit/step-3-core-lean`, `implicit/step-4-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
@@ -14,11 +14,11 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 - [ ] 2. **Checkpoint 1.** Report the evidence, the Patterns, and the baseline. Wait for the user's approval to start Step 2.
 
 ## Step 2: Model and extractor
-- [ ] 3. Create branch `implicit/step-2-extractor`.
-  - [ ] 3.1 Tests first (extractor level): the three resource types with a role by `GetAtt Arn`, by a literal ARN of a role of the template, by a parameter (`roleUnknown`), by `Fn::ImportValue` (`roleUnknown`), a missing property (`roleUnknown`); names (literal, opaque); a template without these types gives no `resources`. Show them red.
-  - [ ] 3.2 Add `ResourceModel` and the optional `resources` to `packages/model`. Implement the reading in the extractor as a table. Gate.
-  - [ ] 3.3 Tests first for the resolver narrowing (section 3 of the design): `Ref` and `GetAtt Arn` of the three kinds give the ARN pattern, not `*`; other kinds still give `*`. Implement. Differential against `main`: no finding lost, and list every statement whose Resource changed.
-  - [ ] 3.4 Extractor-level generator stream and mutants (design section 8). Docs: `docs/SUPPORTED_IAM.md`. Gate; usage-log row.
+- [x] 3. Create branch `implicit/step-2-extractor`.
+  - [x] 3.1 Tests first (extractor level): the three resource types with a role by `GetAtt Arn`, by a literal ARN of a role of the template, by a parameter (`roleUnknown`), by `Fn::ImportValue` (`roleUnknown`), a missing property (`roleUnknown`); names (literal, opaque); a template without these types gives no `resources`. Show them red.
+  - [x] 3.2 Add `ResourceModel` and the optional `resources` to `packages/model`. Implement the reading in the extractor as a table. Gate.
+  - [x] 3.3 Tests first for the resolver narrowing (section 3 of the design): `Ref` and `GetAtt Arn` of the three kinds give the ARN pattern, not `*`; other kinds still give `*`. Implement. Differential against `main`: no finding lost, and list every statement whose Resource changed.
+  - [x] 3.4 Extractor-level generator stream and mutants (design section 8). Docs: `docs/SUPPORTED_IAM.md`. Gate; usage-log row.
 - [ ] 4. **Checkpoint 2.**
 
 ## Step 3: Oracle, core, Lean

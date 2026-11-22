@@ -5,7 +5,12 @@
  * 未対応の断片では、対応するレシピへ「毒」を1つだけ混ぜ、期待するsourcePathを記録します。
  * このファイルは@proofgate-cdk/extractorの型とモデル型だけに依存し、Leanも本番の評価器も使いません。
  */
-import type { ExtractionResult, StackModel, StatementModel } from "@proofgate-cdk/model";
+import type {
+  ExtractionResult,
+  ResourceModel,
+  StackModel,
+  StatementModel,
+} from "@proofgate-cdk/model";
 import { createRng, type Rng } from "./prng.js";
 
 interface StatementRecipe {
@@ -349,7 +354,18 @@ function expectedModel(recipe: TemplateRecipe): StackModel {
     };
   });
   roles.sort((a, b) => (a.logicalId < b.logicalId ? -1 : 1));
-  return { version: "1", roles };
+  // Changed for spec proofgate-implicit-role-paths, Step 2 (listed for the user's approval at Checkpoint 2): the noise
+  // Lambda functions (every second noise resource, with no Role property) are now read as role-bearing resources whose role
+  // is unknown. The expectation is computed from the recipe, not from the extractor, so this checks the new field.
+  const resources: ResourceModel[] = Array.from({ length: recipe.noise }, (_, i) => i)
+    .filter((i) => i % 2 === 1)
+    .map((i) => ({
+      logicalId: `Noise${i}`,
+      kind: "lambda-function" as const,
+      roleUnknown: true,
+      sourcePath: `Resources.Noise${i}.Properties.Role`,
+    }));
+  return { version: "1", roles, ...(resources.length > 0 ? { resources } : {}) };
 }
 
 // ---------------------------------------------------------------------------------------------

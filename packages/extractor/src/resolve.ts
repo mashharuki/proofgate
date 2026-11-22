@@ -16,6 +16,8 @@
  * colons, so `arn:*:s3:::x/*` would always intersect the protected objects (a false alarm for every bucket).
  * The list is from https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html (checked 2026-11-19).
  */
+import { ROLE_BEARING } from "./role-bearing.js";
+
 type JsonObject = Record<string, unknown>;
 const isObject = (value: unknown): value is JsonObject =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -69,6 +71,15 @@ function resolveRef(target: unknown, context: ResolveContext): Alternatives | un
   if (resource === undefined) return undefined; // パラメータや、テンプレートにない名前
   if (resource.Type === "AWS::S3::Bucket") return one(physicalName(resource, target, "BucketName"));
   if (resource.Type === "AWS::IAM::Role") return one(physicalName(resource, target, "RoleName"));
+  // ロールで動く3種類のリソースは、名前かARNを正確に読みます（spec proofgate-implicit-role-paths, 設計3）。
+  // 読まないと、1つの関数に向けた権限が`*`として、すべての関数に一致してしまいます。
+  // Exact for the three role-bearing kinds; otherwise a statement on one function would read as `*` and match every function.
+  const bearing = typeof resource.Type === "string" ? ROLE_BEARING[resource.Type] : undefined;
+  if (bearing !== undefined) {
+    const name = physicalName(resource, target, bearing.nameProperty);
+    if (name === undefined) return undefined;
+    return bearing.ref === "name" ? [name] : PARTITIONS.map((p) => bearing.arn(p, name));
+  }
   return ["*"]; // ほかのリソースの物理IDは未知ですが、必ず存在します。
 }
 
@@ -86,6 +97,11 @@ function resolveGetAtt(target: unknown, context: ResolveContext): Alternatives |
   if (resource.Type === "AWS::IAM::Role") {
     const name = attribute === "Arn" ? physicalName(resource, id, "RoleName") : undefined;
     return name === undefined ? undefined : PARTITIONS.map((p) => `arn:${p}:iam::*:role/${name}`);
+  }
+  const bearing = typeof resource.Type === "string" ? ROLE_BEARING[resource.Type] : undefined;
+  if (bearing !== undefined && attribute === "Arn") {
+    const name = physicalName(resource, id, bearing.nameProperty);
+    return name === undefined ? undefined : PARTITIONS.map((p) => bearing.arn(p, name));
   }
   return ["*"];
 }
