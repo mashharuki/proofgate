@@ -1,13 +1,15 @@
 # AGENTS.md
 
-ProofGate is a pre-deployment gate for AWS CDK. It extracts IAM information from synthesized CloudFormation and uses Lean 4 to check an application-specific safety rule (`PG-IAM-004`, a PassRole plus Lambda path to a protected S3 bucket). TypeScript, Lean 4, pnpm workspaces, Node.js 26 or later.
+ProofGate is a pre-deployment gate for AWS CDK. It extracts IAM information from synthesized CloudFormation and uses Lean 4 to check an application-specific safety rule (`PG-IAM-004`, a path from `iam:PassRole` plus a launch action of a service, such as Lambda, ECS, or EC2, to a protected S3 bucket). TypeScript, Lean 4, pnpm workspaces, Node.js 26 or later.
 
 ## Where the details are
 
 This file lists only what an agent must not get wrong. The details are in these places and are not repeated here.
 
 - `.kiro/steering/`: product, tech, structure, security, development. `kiroween.md` is included manually.
-- `.kiro/specs/proofgate-cdk-construct-support/`: the active spec (`requirements.md`, `design.md`, `tasks.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
+- `.kiro/specs/proofgate-brushup/`: the active spec (`requirements.md`, `design.md`, `tasks.md`, `data-verification.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
+- `.kiro/specs/proofgate-implicit-role-paths/`: approved requirements for paths without `iam:PassRole`; starts after `proofgate-brushup`.
+- `.kiro/specs/proofgate-cdk-construct-support/`: finished and merged.
 - `.kiro/specs/proofgate-real-stack-validation/`: the 14 realistic CDK Patterns and `pnpm real-stacks`. Its Phase 4 is done; results are in `docs/REAL_STACKS.md`.
 - `.kiro/specs/proofgate-verification-hardening/`: finished and merged.
 - `tests/pbt/`: generated tests (seeded generator, independent oracle, batched Lean runner, shrinker). How to run and replay them is in `.kiro/steering/development.md`.
@@ -29,7 +31,7 @@ Run `nvm use` first (`.nvmrc` pins Node.js 26.13.1). A shell with an older Node.
 - TypeScript and Lean must give the same verdict. A disagreement stays a rejection (`PG-IAM-003`).
 - Do not describe the Lean check as an independent proof of CloudFormation or IAM semantics. It checks four Booleans computed by TypeScript.
 - Do not weaken, skip, or delete an existing test or assertion without the user's approval.
-- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` (finished spec) and `realstacks/phase-*` (spec `proofgate-real-stack-validation`), and `support/phase-*` (active spec `proofgate-cdk-construct-support`); elsewhere, commit only when asked.
+- Do not push, merge, or update dependencies unless the user asks. Committing is allowed on the stacked phase branches `hardening/phase-*` (finished spec) and `realstacks/phase-*` (spec `proofgate-real-stack-validation`), `support/phase-*` (spec `proofgate-cdk-construct-support`), and `brushup/*` (active spec `proofgate-brushup`); elsewhere, commit only when asked.
 - Stop at every checkpoint in `tasks.md` and wait for the user.
 - A change to a matching rule may only add findings or rejections. Turning unsafe into safe needs the user's approval.
 - Do not edit generated output: `dist/`, `cdk.out/`, `.lake/`, `Generated.lean`, `.pack/`.

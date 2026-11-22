@@ -24,7 +24,7 @@ import type {
 const HINTS: readonly (readonly [string, string])[] = [
   [
     "Managed policies",
-    "ProofGate reads only the AWS managed policy AWSLambdaBasicExecutionRole. Other managed policies cannot be checked yet.",
+    "ProofGate reads only the AWS managed policies AWSLambdaBasicExecutionRole, AWSLambdaVPCAccessExecutionRole, and AmazonAPIGatewayPushToCloudWatchLogs. Other managed policies cannot be checked yet.",
   ],
   [
     "must be literal strings",

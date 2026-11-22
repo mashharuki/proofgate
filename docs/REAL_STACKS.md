@@ -90,6 +90,51 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 - `cross-stack`は、ARNをスタック間参照で渡したため`PG-IAM-003`になりました。ARNを文字列で直接書いた場合（RS-13）は受理されます。
 - 保護バケットには`bucketName`を付けて、リテラルのARNで指定しました。名前のないバケットを保護対象にすると経路を見逃します（`docs/ASSUMPTIONS.md`）。
 
+## 構成の試し（RS-23〜RS-38）と起動サービス（RS-39〜RS-47）（spec proofgate-brushup、2026-11-21）
+
+よく使うCDKの構成16個を、1.1.2と今のコードで試しました。今のコードの結果は、実装の前にコミットした予想（`examples/real-stacks/data/construct-probe-predictions.json`）とすべて一致しました。どれも危険な経路はありません（正解は安全）。1.1.2では5件が`PG-IAM-003`でした。原因は、管理ポリシー`AWSLambdaVPCAccessExecutionRole`、IAMリソースのないテンプレート（2件）、`Fn::Sub`（2件）です。
+
+| ID    | 構成                                                           | 1.1.2      | 今のコード |
+| ----- | -------------------------------------------------------------- | ---------- | ---------- |
+| RS-23 | VPC内のLambda関数                                              | PG-IAM-003 | accepted   |
+| RS-24 | X-Rayのトレースを有効にしたLambda関数                          | accepted   | accepted   |
+| RS-25 | logRetentionを付けたLambda関数                                 | accepted   | accepted   |
+| RS-26 | 専用のロググループを持つLambda関数                             | accepted   | accepted   |
+| RS-27 | Lambdaを購読するSNSトピック                                    | accepted   | accepted   |
+| RS-28 | Kinesisストリームの`grantRead`                                 | accepted   | accepted   |
+| RS-29 | Secrets Managerのシークレットの`grantRead`                     | accepted   | accepted   |
+| RS-30 | Cognitoのユーザープール                                        | PG-IAM-003 | accepted   |
+| RS-31 | 保護対象バケットをS3オリジンにしたCloudFront                   | PG-IAM-003 | accepted   |
+| RS-32 | 保護対象バケットへのBucketDeployment                           | PG-IAM-003 | accepted   |
+| RS-33 | SSMを呼ぶAwsCustomResource                                     | accepted   | accepted   |
+| RS-34 | インラインのbuildspecを持つCodeBuildプロジェクト               | accepted   | accepted   |
+| RS-35 | ALB付きのFargateサービス                                       | accepted   | accepted   |
+| RS-36 | Lambdaを呼ぶEventBridgeの定期ルール                            | accepted   | accepted   |
+| RS-37 | `autoDeleteObjects`を付けたバケット                            | PG-IAM-003 | accepted   |
+| RS-38 | アカウントとリージョンから作ったSSMのStatementを持つLambda関数 | accepted   | accepted   |
+
+起動サービスの9 Patternは、`pnpm real-stacks --launch`で試します。今のコードの結果は、予想（`launch-probe-predictions.json`）とすべて一致しました。1.1.2は、危険な8件のうち7件を受理していました（見逃し）。RS-40は、インスタンスプロファイルを読めなかったため`PG-IAM-003`でした。
+
+| ID    | 構成                                                               | 正解                   | 1.1.2      | 今のコード |
+| ----- | ------------------------------------------------------------------ | ---------------------- | ---------- | ---------- |
+| RS-39 | `iam:PassRole`と`ecs:RunTask`                                      | 危険                   | accepted   | PG-IAM-004 |
+| RS-40 | `iam:PassRole`と`ec2:RunInstances`（インスタンスプロファイル付き） | 危険                   | PG-IAM-003 | PG-IAM-004 |
+| RS-41 | `iam:PassRole`と`codebuild:CreateProject`                          | 危険                   | accepted   | PG-IAM-004 |
+| RS-42 | `iam:PassRole`と`cloudformation:CreateStack`                       | 危険                   | accepted   | PG-IAM-004 |
+| RS-43 | `iam:PassRole`と`states:CreateStateMachine`                        | 危険                   | accepted   | PG-IAM-004 |
+| RS-44 | Lambdaの経路で、データロールが`s3:GetObjectVersion`だけ            | 危険                   | accepted   | PG-IAM-004 |
+| RS-45 | Lambdaの経路で、データロールが`s3:PutBucketPolicy`だけ             | 危険                   | accepted   | PG-IAM-004 |
+| RS-46 | RS-39から`ecs:RunTask`を除いたもの                                 | 安全                   | accepted   | accepted   |
+| RS-47 | ProofGateの知らないサービスを信頼する、渡せるロール                | 不明（危険として記録） | accepted   | PG-IAM-003 |
+
+## 今のコードを使った試用（2026-11-22）
+
+1.1.1の試用と同じアプリ（18の変種）で、npmの1.1.2と、このリポジトリの今のコード（パッケージにしたtarball）を比べました。違いは1つだけです。
+
+- `apigw`（REST APIのCloudWatchロールに管理ポリシー`AmazonAPIGatewayPushToCloudWatchLogs`が付く）: 1.1.2では`PG-IAM-003`、今のコードでは受理です。`cloudWatchRole: false`は不要になりました。
+- そのほかの17の変種は同じ結果です（`update-config-only`は1.1.2から`PG-IAM-004`）。`ecs`のタスクロールは保護対象バケットを読みますが、ロールを渡せる主体がないため受理します。
+- 違反の文面は、サービスと起動アクションを書くようになりました（例: `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`）。
+
 ## Leanの検査が示すこと
 
-Leanは、TypeScriptが計算した4つの事実（`canPassRole`、`canControlLambda`、`targetIsLambdaAssumable`、`targetCanAccess`）を検査します。CloudFormationテンプレートやIAM Statementの意味そのものを検証するものではありません。抽出器、値リゾルバ、管理ポリシーの表は信頼する実装です（`docs/ASSUMPTIONS.md`）。
+Leanは、TypeScriptが計算した4つの事実（`canPassRole`、`canLaunch`、`targetTrustsService`、`targetCanAccess`。1.1.2までは`canControlLambda`と`targetIsLambdaAssumable`）を検査します。CloudFormationテンプレートやIAM Statementの意味そのものを検証するものではありません。抽出器、値リゾルバ、管理ポリシーの表は信頼する実装です（`docs/ASSUMPTIONS.md`）。

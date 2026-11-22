@@ -4,7 +4,7 @@
 
 ProofGateは、AWS CDKが生成したCloudFormationを解析し、危険なIAM権限昇格経路が存在しないことをデプロイ前にLeanで機械検証するCDK Validation Pluginです。
 
-現在の実装では、対応範囲内のIAM構成において、`iam:PassRole`とLambda操作権限を組み合わせ、Lambda実行ロールを経由して保護対象S3バケットへ到達する経路を検査します。安全条件を満たさないスタックは、通常のCDKワークフロー内でデプロイ前に拒否されます。
+現在の実装では、対応範囲内のIAM構成において、`iam:PassRole`と起動サービス（Lambda、ECS、EC2、CodeBuild、Step Functionsなど、ロールを渡して動かせるサービス）の操作権限を組み合わせ、渡したロールを経由して保護対象S3バケットへ到達する経路を検査します。安全条件を満たさないスタックは、通常のCDKワークフロー内でデプロイ前に拒否されます。
 
 ![ProofGateのアーキテクチャ概念図](docs/images/proofgate-architecture-ja.png)
 
@@ -16,8 +16,8 @@ ProofGateは、AWS CDKが生成したCloudFormationを解析し、危険なIAM�
 IAMの危険性は、単一のポリシーや単一のロールだけを見ても分からない場合があります。個別には正当そうに見える権限でも、次の権限が異なるロールをまたいで組み合わさると、保護データへ到達する権限昇格経路になります。
 
 1. IAMプリンシパルが対象ロールに対する`iam:PassRole`権限を持っている
-2. 同じプリンシパルがLambda関数を作成できる、または既存のLambda関数の設定を更新できる（設定の更新では実行ロールとレイヤーを変えられるため、コードの更新権限は要りません。1.1.1までは、ロール設定とコードの両方の更新を要求していました）
-3. 対象ロールがLambdaサービスを信頼している
+2. 同じプリンシパルが、ロールを渡してサービスを動かす操作（起動アクション）を持っている。たとえば、Lambda関数の作成や設定の更新、ECSのタスクの実行、EC2のインスタンスの起動、CodeBuildのプロジェクトの作成です（Lambdaの設定の更新では実行ロールとレイヤーを変えられるため、コードの更新権限は要りません。1.1.1までは、ロール設定とコードの両方の更新を要求していました。1.1.2まではLambdaだけを検査していました）
+3. 対象ロールが、そのサービスを信頼している
 4. 対象ロールが設定で指定された保護対象S3バケットへアクセスできる
 
 通常の`cdk synth`は有効なCloudFormationを生成できますが、その構成がアプリケーション固有の安全条件を満たしているかまでは判断しません。人手によるレビューだけで、複数のIAM Statement、信頼ポリシー、Lambda操作権限、S3アクセスの関係を継続的に追跡することも困難です。
@@ -30,7 +30,7 @@ ProofGateは、CDKの合成処理に次の検証パイプラインを追加し�
 
 1. **CloudFormationを取得する**: CDK Validation Pluginとして、`cdk synth`が生成したテンプレートを受け取ります。
 2. **IAM情報を抽出する**: ロール、インラインポリシー、信頼関係、`Action`、`Resource`を、CDKに依存しない中間モデルへ変換します。
-3. **候補経路を評価する**: TypeScript評価器が、PassRole、Lambda操作、Lambda信頼、保護対象S3アクセスの組み合わせを列挙します。
+3. **候補経路を評価する**: TypeScript評価器が、PassRole、起動アクション、そのサービスへの信頼、保護対象S3アクセスの組み合わせを、サービスごとに列挙します。起動アクションは、AWS Service Referenceから生成した表（879件）です。
 4. **Leanで安全条件を検査する**: 候補経路からLeanモジュールを生成し、完全な権限昇格経路が存在しないことを固定されたLeanツールチェーンで判定します。
 5. **CDKへ結果を返す**: 危険な経路は`PG-IAM-004`として拒否し、未対応構文やTypeScriptとLeanの判定不一致は`PG-IAM-003`としてFail Closedで拒否します。
 
@@ -104,6 +104,35 @@ Validations.of(app).addPlugins(
 ```
 
 プラグインは`IPolicyValidationContext.templatePaths`を読み取り、意図的に範囲を限定したIAMモデルを抽出します。次に、具体的なLeanモジュールを生成し、完全な権限昇格経路が存在しないことをLeanカーネルに検査させます。未対応のポリシー構文は`PG-IAM-003`として報告し、Fail Closedで拒否します。
+
+## 導入ガイド
+
+試用アプリ（npmの1.1.2と、このリポジトリの現在のコード）で確かめた手順と注意点です。
+
+1. **すべてのスタックが検査されます。** プラグインは、アプリの中のすべてのスタックのテンプレートを読みます。保護対象バケットの設定は、すべてのスタックで共通です。
+2. **保護対象バケットには、固定の名前とリテラルのARNを使います。** `protectedBucketArns`には`arn:aws:s3:::my-data`のような文字列を書きます。`bucket.bucketArn`はトークンなので使えません。バケットに`bucketName`を付けてください。名前のないバケットは、リテラルの保護対象バケットとは一致しないものとして読みます（`docs/ASSUMPTIONS.md`）。
+3. **普段の`cdk synth`と`cdk deploy`に影響させないために、環境変数で登録します。**
+
+   ```ts
+   if (process.env.PROOFGATE === "1") {
+     Validations.of(app).addPlugins(
+       new ProofGateValidator({ protectedBucketArns: ["arn:aws:s3:::my-data"] }),
+     );
+   }
+   ```
+
+   `PROOFGATE=1 npx cdk synth`で検査します。違反があると終了コード1です。
+4. **Leanが必要です。** `elan`でLean 4とLakeを入れてください。初回の検査で、同梱のLeanプロジェクトをビルドします。
+5. **よくある`PG-IAM-003`と直し方**
+   - 表にない管理ポリシー（`AdministratorAccess`など）: ProofGateが読む管理ポリシーは、`AWSLambdaBasicExecutionRole`、`AWSLambdaVPCAccessExecutionRole`、`AmazonAPIGatewayPushToCloudWatchLogs`の3件だけです。ほかの管理ポリシーは、インラインポリシーに書き直すか、そのロールを別のアプリに分けてください。1.1.2では、API Gatewayの`RestApi`が作るCloudWatchロールの管理ポリシーを読めなかったため、`cloudWatchRole: false`が必要でした。今のコードでは不要です。
+   - `Resource`のパラメータ（`CfnParameter`）や`Fn::ImportValue`（スタックをまたぐ参照）: 値が分からないため読みません。リテラルか、同じスタックのリソースへの参照にしてください。
+   - `Resource`のIAMポリシー変数（`${aws:username}`など）: 変数を使わない書き方にしてください。
+   - 渡せて保護対象バケットに届くロールが、ProofGateの表にないサービスを信頼している: そのサービスがロールでコードを動かすかどうかを判断できないため拒否します。ロールを渡せないようにするか、バケットへのアクセスを外してください。
+6. **IAMリソースのないテンプレートは受理します。** 検査するプリンシパルがないからで、「安全と証明した」という意味ではありません。ネストしたスタック、`Transform`、`AWS::Serverless::`のリソースを含むテンプレートは拒否します。
+7. **モデルの外にあるもの**: SCP、Permissions Boundary、リソースポリシー、Explicit Deny、条件（`iam:PassedToService`など）、スタックやアカウントをまたぐ参照、`iam:PassRole`の要らない経路（既存の関数のコードの更新など）、デプロイ後のドリフトです。詳しくは[前提・信頼境界](docs/ASSUMPTIONS.md)を見てください。
+8. **`Validations.of(app).acknowledge`で`ProofGate::PG-IAM-004`を認めると、そのsynthは成功します。** 本当に例外にする場合だけ使ってください。
+
+English: an adoption guide checked with the trial app. Every stack is checked; the protected bucket needs a fixed name and a literal ARN; register the plugin only when `PROOFGATE=1`; install Lean with `elan`. Common `PG-IAM-003` causes: a managed policy outside the three that are read, a parameter or `Fn::ImportValue` in a `Resource`, an IAM policy variable, and a passable, bucket-reaching role that trusts a service ProofGate does not know. A template without IAM resources is accepted because there is no principal to check, not because it was proved safe. SCPs, permissions boundaries, resource policies, explicit deny, conditions, cross-stack references, paths without `iam:PassRole`, and drift are outside the model. An acknowledgement of `ProofGate::PG-IAM-004` makes the synth succeed.
 
 ## 現在の対応範囲
 

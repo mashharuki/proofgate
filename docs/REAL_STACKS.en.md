@@ -90,6 +90,51 @@ What the trial showed:
 - `cross-stack` gives `PG-IAM-003` because the ARN is passed by a cross-stack reference. With the ARN written as a literal (RS-13), the template is accepted.
 - The protected bucket has a `bucketName` and is given as a literal ARN. An unnamed protected bucket makes ProofGate miss the path (`docs/ASSUMPTIONS.md`).
 
+## Construct probe (RS-23 to RS-38) and launch services (RS-39 to RS-47) (spec proofgate-brushup, 2026-11-21)
+
+Sixteen common CDK constructs were run with 1.1.2 and with the current code. The current results all match the predictions committed before the implementation (`examples/real-stacks/data/construct-probe-predictions.json`). None has an escalation path (ground truth safe). On 1.1.2 five gave `PG-IAM-003`: the managed policy `AWSLambdaVPCAccessExecutionRole`, a template without IAM resources (two), and `Fn::Sub` (two).
+
+| ID    | Construct                                                                       | 1.1.2      | Current code |
+| ----- | ------------------------------------------------------------------------------- | ---------- | ------------ |
+| RS-23 | A Lambda function in a VPC                                                      | PG-IAM-003 | accepted     |
+| RS-24 | A Lambda function with active X-Ray tracing                                     | accepted   | accepted     |
+| RS-25 | A Lambda function with logRetention                                             | accepted   | accepted     |
+| RS-26 | A Lambda function with its own log group                                        | accepted   | accepted     |
+| RS-27 | An SNS topic with a Lambda subscription                                         | accepted   | accepted     |
+| RS-28 | A Kinesis stream with grantRead to a Lambda function                            | accepted   | accepted     |
+| RS-29 | A Secrets Manager secret with grantRead to a Lambda function                    | accepted   | accepted     |
+| RS-30 | A Cognito user pool                                                             | PG-IAM-003 | accepted     |
+| RS-31 | A CloudFront distribution with the protected bucket as an S3 origin             | PG-IAM-003 | accepted     |
+| RS-32 | A BucketDeployment into the protected bucket                                    | PG-IAM-003 | accepted     |
+| RS-33 | An AwsCustomResource calling SSM                                                | accepted   | accepted     |
+| RS-34 | A CodeBuild project with an inline buildspec                                    | accepted   | accepted     |
+| RS-35 | An Application Load Balanced Fargate service                                    | accepted   | accepted     |
+| RS-36 | A scheduled EventBridge rule with a Lambda target                               | accepted   | accepted     |
+| RS-37 | A bucket with autoDeleteObjects                                                 | PG-IAM-003 | accepted     |
+| RS-38 | A Lambda function with an SSM statement built from the stack account and region | accepted   | accepted     |
+
+The nine launch-service Patterns run with `pnpm real-stacks --launch`. The current results all match the predictions (`launch-probe-predictions.json`). 1.1.2 accepted seven of the eight unsafe ones (missed paths); RS-40 gave `PG-IAM-003` because the instance profile could not be read.
+
+| ID    | Layout                                                           | Ground truth                 | 1.1.2      | Current code |
+| ----- | ---------------------------------------------------------------- | ---------------------------- | ---------- | ------------ |
+| RS-39 | `iam:PassRole` and `ecs:RunTask`                                 | unsafe                       | accepted   | PG-IAM-004   |
+| RS-40 | `iam:PassRole` and `ec2:RunInstances` (with an instance profile) | unsafe                       | PG-IAM-003 | PG-IAM-004   |
+| RS-41 | `iam:PassRole` and `codebuild:CreateProject`                     | unsafe                       | accepted   | PG-IAM-004   |
+| RS-42 | `iam:PassRole` and `cloudformation:CreateStack`                  | unsafe                       | accepted   | PG-IAM-004   |
+| RS-43 | `iam:PassRole` and `states:CreateStateMachine`                   | unsafe                       | accepted   | PG-IAM-004   |
+| RS-44 | The Lambda path, the data role has only `s3:GetObjectVersion`    | unsafe                       | accepted   | PG-IAM-004   |
+| RS-45 | The Lambda path, the data role has only `s3:PutBucketPolicy`     | unsafe                       | accepted   | PG-IAM-004   |
+| RS-46 | RS-39 without `ecs:RunTask`                                      | safe                         | accepted   | accepted     |
+| RS-47 | A passable role that trusts a service ProofGate does not know    | unknown (recorded as unsafe) | accepted   | PG-IAM-003   |
+
+## Trial with the current code (2026-11-22)
+
+The same app as the 1.1.1 trial (18 variants) was run with 1.1.2 from npm and with the current code of this repository (packed tarballs). One result differs:
+
+- `apigw` (the REST API logging role gets the managed policy `AmazonAPIGatewayPushToCloudWatchLogs`): `PG-IAM-003` on 1.1.2, accepted now. `cloudWatchRole: false` is no longer needed.
+- The other 17 variants give the same result (`update-config-only` is `PG-IAM-004` since 1.1.2). The `ecs` task role reads the protected bucket but nobody can pass it, so it is accepted.
+- The violation text now names the service and the launch action (for example `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`).
+
 ## What the Lean check shows
 
-Lean checks four facts that TypeScript computes (`canPassRole`, `canControlLambda`, `targetIsLambdaAssumable`, `targetCanAccess`). It does not verify the CloudFormation template or the IAM statements. The extractor, the value resolver, and the managed-policy table are trusted code (`docs/ASSUMPTIONS.md`).
+Lean checks four facts that TypeScript computes (`canPassRole`, `canLaunch`, `targetTrustsService`, `targetCanAccess`; up to 1.1.2 `canControlLambda` and `targetIsLambdaAssumable`). It does not verify the CloudFormation template or the IAM statements. The extractor, the value resolver, and the managed-policy table are trusted code (`docs/ASSUMPTIONS.md`).

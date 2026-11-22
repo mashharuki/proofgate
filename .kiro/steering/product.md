@@ -9,8 +9,8 @@ Individually reasonable IAM statements can combine into a privilege-escalation p
 The first rule (`PG-IAM-004`) detects this path to a protected S3 bucket:
 
 1. A principal holds `iam:PassRole` for a target role.
-2. The same principal can create a Lambda function, or update the configuration of an existing one (`lambda:UpdateFunctionConfiguration` can change `Role` and `Layers`; up to 1.1.1 both a configuration and a code update were required).
-3. The target role trusts the Lambda service.
+2. The same principal holds a launch action: an action that hands a role to a service, from the table generated from the AWS Service Reference (879 actions: Lambda `CreateFunction` and `UpdateFunctionConfiguration`, ECS `RunTask`, EC2 `RunInstances`, CodeBuild, CloudFormation, Step Functions, Glue, and others). Up to 1.1.2 only Lambda was checked; up to 1.1.1 a Lambda configuration update counted only with a code update.
+3. The target role trusts the service that the launch action hands the role to (a regional principal is read as the global one; trust `*` counts for every service).
 4. The target role can access a protected S3 bucket.
 
 ## Users
@@ -22,7 +22,8 @@ The first rule (`PG-IAM-004`) detects this path to a protected S3 bucket:
 
 - Plain `cdk synth` still succeeds for both example apps.
 - With ProofGate enabled, `safe-app` passes and `vulnerable-app` is rejected with `PG-IAM-004`.
-- Anything ProofGate cannot model is rejected with `PG-IAM-003`, never assumed safe.
+- Anything ProofGate cannot model is rejected with `PG-IAM-003`, never assumed safe. This includes a passable, bucket-reaching role that trusts a service that is in no value of the launch table.
+- A template without any `AWS::IAM::` resource is accepted with nothing to check; that is not a proof.
 
 ## Non-goals
 

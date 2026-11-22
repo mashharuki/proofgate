@@ -6,14 +6,14 @@
 | ------------ | ----------------------------------------------------------------------------------------------------- |
 | `model`      | CDK-independent types: `StackModel`, `RoleModel`, `ProofGateConfig`, `Violation`, rule ID             |
 | `extractor`  | CloudFormation JSON to `StackModel`. Reports unsupported syntax with the source JSON path             |
-| `core`       | TypeScript reference evaluator (`evaluate`) and Lean module generator (`generateLean`)                |
+| `core`       | TypeScript reference evaluator (`evaluate`, `unknownTrustFindings`), Lean module generator (`generateLean`), and the tables generated from the AWS Service Reference (`aws-tables.generated.ts`, by `scripts/sync-service-reference.mjs`) |
 | `cdk-plugin` | `ProofGateValidator` for the CDK plugin API. Runs Lean, compares results, maps them to CDK violations |
 
 Dependencies: `cdk-plugin` depends on `core`, `extractor`, and `model`. `core` and `extractor` depend on `model`. `model` has no dependencies.
 
 ## Lean project (`packages/cdk-plugin/lean/`)
 
-- `ProofGate/Model.lean`: `EscalationPath` with four Boolean facts.
+- `ProofGate/Model.lean`: `EscalationPath` with four Boolean facts (`canPassRole`, `canLaunch`, `targetTrustsService`, `targetCanAccess`) and a `service` string for explanation.
 - `ProofGate/Security.lean`: `isEscalation`, `safe`, and the supporting theorems.
 - `lean-toolchain`, `lakefile.toml`, `lake-manifest.json`: pinned build definition, shipped in the npm tarball.
 - `.lake/` is generated. Do not edit it.

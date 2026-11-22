@@ -63,10 +63,10 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 
 ## Step 6: Adoption guide and final verification
 
-- [ ] 12. Create branch `brushup/phase-6-guide`.
-  - [ ] 12.1 Write the guide (design 9) in `README.md` and `packages/cdk-plugin/README.md`; check each statement against the trial app.
-  - [ ] 12.2 Update `docs/REAL_STACKS.md` and the English file with the new Patterns and the trial. Update Serena memories, `AGENTS.md`, and steering.
-  - [ ] 12.3 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app, differential, Lean audit, `git diff --check`, and a scan of added lines for credentials.
+- [x] 12. Create branch `brushup/phase-6-guide`.
+  - [x] 12.1 Write the guide (design 9) in `README.md` and `packages/cdk-plugin/README.md`; check each statement against the trial app.
+  - [x] 12.2 Update `docs/REAL_STACKS.md` and the English file with the new Patterns and the trial. Update Serena memories, `AGENTS.md`, and steering.
+  - [x] 12.3 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app, differential, Lean audit, `git diff --check`, and a scan of added lines for credentials.
 - [ ] 13. **Checkpoint 6.** Version, publish, tags, and releases only on the user's instruction (proposal: 1.2.0).
 
 ## Step 7: More trials until 2026-11-29
