@@ -28,8 +28,9 @@ English: the other shape (no `iam:PassRole`) needs three conditions: the princip
 - SCP、Permissions Boundary、Session Policy、Resource Policy、Explicit Denyの評価
 - 推移的なロール引き受け、スタック間参照、クロスアカウント参照
 - サービス信頼以外の各サービス固有の制約（たとえば、ECSのインフラストラクチャロールのように、渡せてもS3に触れないロール。表は経路を多めに数えます）と`iam:PassedToService` Condition
-- `iam:PassRole`を必要としない経路（既存の関数のコード更新、CodeBuildのbuildspecの上書きなど）。spec `proofgate-implicit-role-paths`で扱います
-- 表にないManaged Policy（`AWSLambdaBasicExecutionRole`、`AWSLambdaVPCAccessExecutionRole`、`AmazonAPIGatewayPushToCloudWatchLogs`の3件だけを読みます）、ポリシー変数、大部分のCloudFormation intrinsic function、権限StatementのIAM Condition
+- `iam:PassRole`を必要としない経路のうち、Lambda関数、CodeBuildプロジェクト、ステートマシン以外のサービスのもの（ECS、SSM、Glueなど）
+- IAMユーザー、グループ、アクセスキー、カスタマー管理ポリシーの書き換え。ロール自身がIAMを書き換える経路は`PG-IAM-005`で検査します（後述）
+- 表にないManaged Policy（`docs/SUPPORTED_IAM.md`の7件だけを読みます）、ポリシー変数、大部分のCloudFormation intrinsic function、権限StatementのIAM Condition
 - 検査済みのCDK synthを経由しない変更やデプロイ後のドリフト
 
 Extractorは、未対応の構文を安全とみなさず拒否します。AWSへのデプロイは、意図的にこのリポジトリのデモとテストの対象外にしています。
@@ -71,6 +72,11 @@ English: accepting a template without IAM resources rests only on what the templ
 表のアクションは、リソースを変更できるだけで、新しいコードが動くことを要求しません。動かすのは、呼び出し、トリガー、`StartExecution`、スケジュールなど、別の操作です。その操作は要求しないため、指摘は多めになります（過大判定）。Lambdaのコード署名は、見えません。アクションに付いたCondition（たとえば`buildspecOverride`を禁じる条件）は、今までどおり`PG-IAM-003`で拒否します。名前のないリソースの`Resource`は、名前の部分にワイルドカードがあれば、実際の生成名に一致しうるものとして数えます（過大判定）。`allowedPassRoleTargets`に挙げたロールは、PassRoleの要らない経路も許可したものとして扱います（利用者の決定、2026-11-22）。CloudFormationのスタックロールは、テンプレートから見えないため、対象外です。ECS、SSM、Glue、SageMakerなど、ほかのサービスは、ドキュメントで確認できたものから表に足します。
 
 English: an action of the table only has to be able to change the resource; running the new code (an invoke, a trigger, `StartExecution`, a schedule) is not required, so findings are too many. Lambda code signing is not visible. A `Condition` on the statement stays rejected with `PG-IAM-003`. For an unnamed resource a wildcard in the name part of the Resource counts. A role in `allowedPassRoleTargets` also allows the paths without `iam:PassRole` (the user's decision of 2026-11-22). CloudFormation stack roles are not visible in a template and are out of scope. More services are added to the table after their documentation is read.
+
+## IAMを書き換える経路の表（spec proofgate-self-escalation）
+
+`PG-IAM-005`は、IAMを書き換えた後に何ができるかを調べません。自分への付与と作成して付与は、任意のポリシーを付けられるものとして、どの保護対象バケットにも届くと読みます（過大判定）。管理者ロール（`Action: "*"`）、意図してIAMを書き換えるパイプラインのロールは指摘されます。そのようなロールは`allowedPolicyWriters`に入れるか、`Resource`をバケットに届かないロールのARNに絞ってください。作成して付与は、2つの`Resource`が交わるかだけを見ます。作ったロールを使えるか（信頼ポリシー、`iam:PassRole`、`sts:AssumeRole`）は見ません。乗っ取りは、信頼ポリシーを書き換えた後に`sts:AssumeRole`できると仮定します。`iam:PermissionsBoundary`などの`Condition`で付与を制限したStatementは、`PG-IAM-003`で拒否します（条件を読まないため、受理はしません）。IAMユーザー、グループ、アクセスキー（`iam:CreateAccessKey`）、カスタマー管理ポリシーの版（`iam:CreatePolicyVersion`）、ロールの連鎖（別のロールを引き受けてから書き換える経路）、テンプレートの外の主体によるデプロイ後の変更は、モデルの外です。
+English: `PG-IAM-005` does not check what happens after the IAM write. A self-grant and a creation grant are read as able to attach any policy, so they reach every protected bucket (over-approximation). Administrator roles and pipeline roles that write IAM on purpose are reported; list them in `allowedPolicyWriters` or scope the Resource to roles that cannot reach the bucket. A creation grant only checks that the two Resources intersect; whether the created role can be used is not checked. A take-over assumes that `sts:AssumeRole` works after the trust policy is rewritten. A statement whose grant is limited by a `Condition` (for example `iam:PermissionsBoundary`) is rejected with `PG-IAM-003`. Users, groups, access keys, customer managed policy versions, role chains, and changes after deployment by an actor outside the template are outside the model.
 
 ## 起動アクションの表（spec proofgate-brushup, Step 5）
 

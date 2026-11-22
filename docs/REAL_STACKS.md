@@ -10,6 +10,7 @@
 pnpm build
 pnpm real-stacks            # 14 Patternを期待表と比べます（0: 一致、1: 差がある、2: ハーネスの異常）
 pnpm real-stacks --cli all   # 実際のcdk synthのCLIでも確かめます（約1分）
+pnpm real-stacks --policy-write --cli none   # RS-63〜RS-72（ロール自身がIAMを書き換える経路）
 ```
 
 1つのPatternを合成するには、`examples/real-stacks`で`pnpm exec cdk synth -c pattern=RS-02`（ProofGateあり: `PROOFGATE=1`）を使います。
@@ -179,6 +180,30 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 - RS-59は、リゾルバの絞り込み（`GetAtt Arn`を`*`ではなくARNにする）の確認です。`*`と読んでいたら、プロジェクトAに一致して誤検出になります。
 - pathfinding.cloudの91経路は、52件を指摘するようになりました（修正前46件）。増えたのは、`lambda-003`、`lambda-004`、`lambda-005`、`codebuild-002`、`codebuild-003`、`stepfunctions-002`の6件です。指摘は52件、受理は39件（PassRoleの要らない残り16件、`principal-access`の14件、`self-escalation`の8件、`new-passrole`の1件）です。
 
+## ロール自身がIAMを書き換える経路（RS-63〜RS-72、spec proofgate-self-escalation、2026-11-23）
+
+10のPatternを、ルールのコードを書く前に予想をコミットしてから（`policy-write-probe-predictions.json`）、`pnpm real-stacks --policy-write`で試しました。実装前の`main`では、10件すべてが受理でした（`policy-write-probe-baseline.json`）。実装後の結果は`policy-write-probe-results.json`にあります。
+
+| ID    | 構成                                                                  | `main`（実装前） | 予想       | 結果       |
+| ----- | --------------------------------------------------------------------- | ---------------- | ---------- | ---------- |
+| RS-63 | 自分のロールに`iam:PutRolePolicy`                                     | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-64 | 自分のロールに`iam:AttachRolePolicy`                                  | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-65 | `iam:PutRolePolicy`を`arn:aws:iam::*:role/*`に                        | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-66 | 誰も使えない別のロールに`iam:PutRolePolicy`                           | accepted         | accepted   | accepted   |
+| RS-67 | バケットを読むロールに`iam:UpdateAssumeRolePolicy`                    | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-68 | バケットに届かないロールに`iam:UpdateAssumeRolePolicy`                | accepted         | accepted   | accepted   |
+| RS-69 | 作成して付与: `iam:CreateRole`と`iam:AttachRolePolicy`を`role/ci-*`に | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-70 | 作成して付与: `role/ci-*`と`role/data-*`、アカウントは`*`             | accepted         | accepted   | PG-IAM-005 |
+| RS-71 | 管理者ロール（`Action: "*"`を`*`に）                                  | accepted         | PG-IAM-005 | PG-IAM-005 |
+| RS-72 | 意図してIAMを書き換えるロールを`allowedPolicyWriters`に入れる         | accepted         | accepted   | accepted   |
+
+- 予想と違ったのはRS-70だけです。間違っていたのは予想のほうでした。`iam:CreateRole`の`Path`にはコロンを使えるため（IAM APIリファレンス）、`Path`が`/ci-a:role/data-/`のロールのARNは、アカウントが`*`の2つのパターンの両方に一致します。利用者の承認を得て、正解を「安全」から「危険」に直しました（予想とベースラインのファイルは直していません）。
+- RS-72は、作者が承知した経路です（範囲外、`allowedPolicyWriters`）。
+- インシデントの形のRS-49（Unit 42 2024型、`iam:AttachRolePolicy`を`*`に）は、実装前は見逃しでしたが、今は`PG-IAM-005`です。
+- 最初の実行は、ハーネスの異常で止まりました。実スタックのランナーが、結果として`PG-IAM-003`と`PG-IAM-004`しか知らなかったためです。ランナーを直してから試しました。
+- ほかのPattern群（評価用、ホールドアウト、構成の試し、起動サービス、PassRoleの要らない経路、2回目の試し）は、結果が変わらず、`PG-IAM-005`も出ません。
+- pathfinding.cloudの91経路は、60件を指摘するようになりました（実装前52件）。増えたのは、予想した`iam-005`、`iam-009`、`iam-012`、`iam-014`、`iam-017`、`iam-019`、`iam-020`、`iam-021`の8件で、すべて`PG-IAM-005`です。受理は31件（PassRoleの要らない残り16件、`principal-access`の8件、`self-escalation`の6件、`new-passrole`の1件）です。
+
 ## 構成の試し、2回目（RS-73〜RS-84、Step 7、2026-11-22）
 
 実際のCDKでよく使う構成12個を、実行の前に予想をコミットして（`trial2-predictions.json`）から、`pnpm real-stacks --trial2`で試しました。12件すべて予想どおりでした（結果は`trial2-results.json`）。
@@ -219,6 +244,7 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 - 4つの変種を足しました（PassRoleの要らない経路、予想を実行の前に書きました）。1.1.2では4件とも受理、今のコードでは次のとおりです。`implicit-code`（`lambda:UpdateFunctionCode`を`*`に）は`PG-IAM-004`、`implicit-function-arn`（Resourceが`reader.functionArn`）は`PG-IAM-004`、`implicit-codebuild`（バケットを読むCodeBuildプロジェクトと`codebuild:StartBuild`）は`PG-IAM-004`、`implicit-other-function`（バケットに届かない別の関数のARN）は受理です。22の変種のうち、結果が変わったのは`apigw`と、この4つのうちの3つです。
 - 元の18のうち、そのほかの17の変種は同じ結果です（`update-config-only`は1.1.2から`PG-IAM-004`）。`ecs`のタスクロールは保護対象バケットを読みますが、ロールを渡せる主体がないため受理します。
 - 違反の文面は、サービスと起動アクションを書くようになりました（例: `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`）。
+- 2026-11-23に、2つの変種を足しました（ロール自身がIAMを書き換える経路。予想を実行の前に書きました）。`policy-attach-star`（デプロイ用ロールが`iam:AttachRolePolicy`を`*`に持つ）は、1.1.2では受理、今のコードでは`PG-IAM-005`です（文面: `Deployer92EF8763 can write a policy to its own role (iam:AttachRolePolicy), so it can give itself access to arn:aws:s3:::proofgate-trial-customer-data and every other bucket.`）。`policy-writer-allowed`（同じロールを`allowedPolicyWriters`に入れる）は、どちらでも受理です。24の変種すべてが予想どおりで、元の22の変種の結果は変わりません。
 
 ## Leanの検査が示すこと
 

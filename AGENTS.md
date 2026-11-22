@@ -1,6 +1,6 @@
 # AGENTS.md
 
-ProofGate is a pre-deployment gate for AWS CDK. It extracts IAM information from synthesized CloudFormation and uses Lean 4 to check an application-specific safety rule (`PG-IAM-004`: a path to a protected S3 bucket from `iam:PassRole` plus a launch action of a service such as Lambda, ECS, or EC2, or from a change of an existing Lambda function, CodeBuild project, or state machine that already runs as a role). TypeScript, Lean 4, pnpm workspaces, Node.js 26 or later.
+ProofGate is a pre-deployment gate for AWS CDK. It extracts IAM information from synthesized CloudFormation and uses Lean 4 to check an application-specific safety rule (`PG-IAM-004`: a path to a protected S3 bucket from `iam:PassRole` plus a launch action of a service such as Lambda, ECS, or EC2, or from a change of an existing Lambda function, CodeBuild project, or state machine that already runs as a role; and `PG-IAM-005`: a role that can change IAM itself). TypeScript, Lean 4, pnpm workspaces, Node.js 26 or later.
 
 ## Where the details are
 
@@ -8,7 +8,8 @@ This file lists only what an agent must not get wrong. The details are in these 
 
 - `.kiro/steering/`: product, tech, structure, security, development. `kiroween.md` is included manually.
 - `.kiro/specs/proofgate-brushup/`: the active spec (`requirements.md`, `design.md`, `tasks.md`, `data-verification.md`). Follow the task order and stop at each checkpoint in `tasks.md`. Do not start a task that is not approved.
-- `.kiro/specs/proofgate-implicit-role-paths/`: paths without `iam:PassRole` (requirements, design, tasks, `data-verification.md`). Steps 1 to 3 are merged; Step 4 is documentation and release preparation. After it: `.kiro/steering/direction-research.md` lists the next directions (self-escalation with rule ID `PG-IAM-005`, data perimeter, role chains), in the order the user approved.
+- `.kiro/specs/proofgate-implicit-role-paths/`: paths without `iam:PassRole` (requirements, design, tasks, `data-verification.md`). All four steps are merged.
+- `.kiro/specs/proofgate-self-escalation/`: `PG-IAM-005`, roles that change IAM themselves (requirements, design, tasks, `data-verification.md`). Steps 1 and 2 are merged; Step 3 is documentation and release preparation. After it: `.kiro/steering/direction-research.md` lists the next directions (data perimeter, role chains), in the order the user approved.
 - `.kiro/specs/proofgate-cdk-construct-support/`: finished and merged.
 - `.kiro/specs/proofgate-real-stack-validation/`: the 14 realistic CDK Patterns and `pnpm real-stacks`. Its Phase 4 is done; results are in `docs/REAL_STACKS.md`.
 - `.kiro/specs/proofgate-verification-hardening/`: finished and merged.

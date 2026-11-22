@@ -11,7 +11,7 @@ pnpm build
 pnpm real-stacks            # compares the 14 Patterns with the expected table (0 match, 1 difference, 2 harness error)
 pnpm real-stacks --cli all   # also runs the real cdk synth CLI (about one minute)
 pnpm real-stacks --trial2 --cli none   # the twelve construct trials RS-73 to RS-84 (second round)
-pnpm real-stacks --policy-write --cli none   # the ten Patterns RS-63 to RS-72 (self-escalation, baseline before the rule)
+pnpm real-stacks --policy-write --cli none   # the ten Patterns RS-63 to RS-72 (roles that change IAM themselves, PG-IAM-005)
 pnpm real-stacks --implicit --cli none   # the nine Patterns RS-54 to RS-62 (paths without iam:PassRole)
 pnpm real-stacks --incident --cli none   # the six incident-shaped Patterns RS-48 to RS-53 (observed only; --holdout, --probe, --launch work the same way)
 ```
@@ -183,6 +183,30 @@ Nine Patterns were run with `pnpm real-stacks --implicit` after their prediction
 - RS-59 checks the resolver narrowing (`GetAtt Arn` as an ARN instead of `*`). Read as `*` it would match project A and be a false alarm.
 - The 91 pathfinding.cloud paths: 52 are reported now (46 before). The six new ones are `lambda-003`, `lambda-004`, `lambda-005`, `codebuild-002`, `codebuild-003`, `stepfunctions-002`. 39 are accepted (the other 16 paths without PassRole, 14 `principal-access`, 8 `self-escalation`, 1 `new-passrole`).
 
+## Roles that change IAM themselves (RS-63 to RS-72, spec proofgate-self-escalation, 2026-11-23)
+
+Ten Patterns were run with `pnpm real-stacks --policy-write` after their predictions were committed, before any code of the rule (`policy-write-probe-predictions.json`). On `main` before the implementation all ten were accepted (`policy-write-probe-baseline.json`). The results after the implementation are in `policy-write-probe-results.json`.
+
+| ID    | Pattern                                                                    | `main` (before) | Predicted  | Observed   |
+| ----- | -------------------------------------------------------------------------- | --------------- | ---------- | ---------- |
+| RS-63 | `iam:PutRolePolicy` on its own role                                        | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-64 | `iam:AttachRolePolicy` on its own role                                     | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-65 | `iam:PutRolePolicy` on `arn:aws:iam::*:role/*`                             | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-66 | `iam:PutRolePolicy` on another role that nobody can use                    | accepted        | accepted   | accepted   |
+| RS-67 | `iam:UpdateAssumeRolePolicy` on the role that reads the bucket             | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-68 | `iam:UpdateAssumeRolePolicy` on a role that cannot reach the bucket        | accepted        | accepted   | accepted   |
+| RS-69 | creation grant: `iam:CreateRole` and `iam:AttachRolePolicy` on `role/ci-*` | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-70 | creation grant: `role/ci-*` and `role/data-*`, account `*`                 | accepted        | accepted   | PG-IAM-005 |
+| RS-71 | an administrator role (`Action: "*"` on `*`)                               | accepted        | PG-IAM-005 | PG-IAM-005 |
+| RS-72 | a role that writes IAM on purpose, listed in `allowedPolicyWriters`        | accepted        | accepted   | accepted   |
+
+- Only RS-70 differs from the prediction, and the prediction was wrong. `iam:CreateRole` accepts a `Path` with a colon (IAM API Reference), so the ARN of a role with Path `/ci-a:role/data-/` matches both patterns with account `*`. With the user's approval the ground truth was corrected from safe to unsafe (the prediction and baseline files are not edited).
+- RS-72 is a path the author acknowledged (out of scope, `allowedPolicyWriters`).
+- The incident Pattern RS-49 (the Unit 42 2024 shape, `iam:AttachRolePolicy` on `*`) was a miss before and is `PG-IAM-005` now.
+- The first run stopped with a harness error: the real-stack runner knew only `PG-IAM-003` and `PG-IAM-004` as results. The runner was fixed before the run.
+- The other Pattern sets (acceptance, hold-out, construct probe, launch services, paths without PassRole, second trial round) are unchanged, and none gives `PG-IAM-005`.
+- The 91 pathfinding.cloud paths: 60 are reported now (52 before). The eight new ones are the predicted `iam-005`, `iam-009`, `iam-012`, `iam-014`, `iam-017`, `iam-019`, `iam-020`, `iam-021`, all `PG-IAM-005`. 31 are accepted (the other 16 paths without PassRole, 8 `principal-access`, 6 `self-escalation`, 1 `new-passrole`).
+
 ## Construct trials, second round (RS-73 to RS-84, Step 7, 2026-11-22)
 
 Twelve common CDK constructs were run with `pnpm real-stacks --trial2` after their predictions were committed (`trial2-predictions.json`). All twelve results match the predictions (results in `trial2-results.json`).
@@ -223,6 +247,7 @@ The same app as the 1.1.1 trial (18 variants) was run with 1.1.2 from npm and wi
 - Four variants were added (paths without PassRole; the expected results were written before the run). On 1.1.2 all four are accepted; on the current code `implicit-code` (`lambda:UpdateFunctionCode` on `*`), `implicit-function-arn` (the Resource is `reader.functionArn`), and `implicit-codebuild` (a CodeBuild project that reads the bucket and `codebuild:StartBuild`) give `PG-IAM-004`, and `implicit-other-function` (the ARN of another function that cannot reach the bucket) is accepted. Of the 22 variants, `apigw` and three of these four differ between 1.1.2 and the current code.
 - Of the original 18, the other 17 variants give the same result (`update-config-only` is `PG-IAM-004` since 1.1.2). The `ecs` task role reads the protected bucket but nobody can pass it, so it is accepted.
 - The violation text now names the service and the launch action (for example `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`).
+- Two variants were added on 2026-11-23 (roles that change IAM themselves; the expected results were written before the run). `policy-attach-star` (the deploy role holds `iam:AttachRolePolicy` on `*`) is accepted on 1.1.2 and `PG-IAM-005` on the current code (text: `Deployer92EF8763 can write a policy to its own role (iam:AttachRolePolicy), so it can give itself access to arn:aws:s3:::proofgate-trial-customer-data and every other bucket.`). `policy-writer-allowed` (the same role in `allowedPolicyWriters`) is accepted on both. All 24 variants match the predictions, and the 22 earlier variants are unchanged.
 
 ## What the Lean check shows
 

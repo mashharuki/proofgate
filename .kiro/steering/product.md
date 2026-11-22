@@ -15,6 +15,8 @@ The first rule (`PG-IAM-004`) detects this path to a protected S3 bucket:
 
 A second shape needs no `iam:PassRole` (spec `proofgate-implicit-role-paths`): a principal can change an existing Lambda function (`lambda:UpdateFunctionCode`, `lambda:UpdateFunctionConfiguration`), CodeBuild project (`codebuild:StartBuild`, `codebuild:StartBuildBatch`), or Step Functions state machine (`states:UpdateStateMachine`) that already runs as a role that can access a protected S3 bucket. Both shapes are `PG-IAM-004`. A resource whose role cannot be identified and that a principal can change is `PG-IAM-003`. `allowedPassRoleTargets` allows both shapes.
 
+A third rule, `PG-IAM-005` (spec `proofgate-self-escalation`), reports a role that can change IAM itself: a self-grant (`iam:PutRolePolicy` or `iam:AttachRolePolicy` on its own role), a take-over (`iam:UpdateAssumeRolePolicy` on another role that reaches a protected bucket), or a creation grant (`iam:CreateRole` with a grant action on intersecting role-ARN Resources). A self-grant is reported even if the role reaches no bucket today; administrator roles are reported. `allowedPolicyWriters` allows a role that writes IAM on purpose.
+
 ## Users
 
 - Platform and security engineers who own CDK-based AWS infrastructure and need deploy-time guardrails.
