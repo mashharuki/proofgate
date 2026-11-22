@@ -1,5 +1,5 @@
 # Design: proofgate-implicit-role-paths
-Status: DRAFT, written 2026-11-22 after the approval of the requirements (open questions 1 to 5 answered). The points that need the user's decision are in section 10. No code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-22 with the five points of section 10 (answers recorded there). No code has been changed for this spec yet.
 Requirements: [requirements.md](./requirements.md).
 
 ## 1. What changes, in one paragraph
@@ -94,7 +94,10 @@ def safeImplicit (ps : List ImplicitPath) : Bool := ps.all fun p => !(isImplicit
 ## 9. Soundness and false alarms
 Only adds findings and `PG-IAM-003` rejections. False alarms are expected where the second step cannot happen (a function nobody invokes, a state machine nobody starts) and where a statement is scoped by a Condition (rejected, so not a false alarm). A CI role that deploys a function and so may update its code is a real finding under this rule (code update runs as the function role); the user handles it with `allowedPassRoleTargets` (point 10.1) or by removing the permission.
 
-## 10. Points for the user's decision
+## 10. Points decided by the user (2026-11-22)
+All five proposals were approved. Point 1 as the user worded it: `allowedPassRoleTargets` also allows the paths without `iam:PassRole`.
+
+The points as proposed:
 1. **`allowedPassRoleTargets` also silences implicit paths to that role.** The option is documented as "explicitly allowed PassRole targets". Proposal: yes, a listed role is a role the team accepts as powerful; the alternative is a new option name (`allowedImplicitTargets`), which is more explicit but adds configuration.
 2. **Resolver narrowing for the three kinds (section 3).** It makes `GetAtt Arn` precise instead of `*`. It cannot remove a finding of an old rule, but it changes what the extractor returns for those statements. Proposal: yes.
 3. **Two entries beyond the requirements' first set**: `lambda:UpdateFunctionConfiguration` (already accepted as Lambda control) and `codebuild:StartBuildBatch`. Proposal: yes, if task 1.1 confirms the second in the documentation.
