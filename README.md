@@ -4,7 +4,7 @@
 
 ProofGateは、AWS CDKが生成したCloudFormationを解析し、危険なIAM権限昇格経路が存在しないことをデプロイ前にLeanで機械検証するCDK Validation Pluginです。
 
-現在の実装では、対応範囲内のIAM構成において、`iam:PassRole`と起動サービス（Lambda、ECS、EC2、CodeBuild、Step Functionsなど、ロールを渡して動かせるサービス）の操作権限を組み合わせ、渡したロールを経由して保護対象S3バケットへ到達する経路を検査します。安全条件を満たさないスタックは、通常のCDKワークフロー内でデプロイ前に拒否されます。
+現在の実装では、対応範囲内のIAM構成において、`iam:PassRole`と起動サービス（Lambda、ECS、EC2、CodeBuild、Step Functionsなど、ロールを渡して動かせるサービス）の操作権限を組み合わせ、渡したロールを経由して保護対象S3バケットへ到達する経路を検査します。さらに、`iam:PassRole`がなくても、すでにそのロールで動いているLambda関数、CodeBuildプロジェクト、Step Functionsのステートマシンを変更できる経路も検査します。安全条件を満たさないスタックは、通常のCDKワークフロー内でデプロイ前に拒否されます。
 
 ![ProofGateのアーキテクチャ概念図](docs/images/proofgate-architecture-ja.png)
 
@@ -19,6 +19,8 @@ IAMの危険性は、単一のポリシーや単一のロールだけを見て�
 2. 同じプリンシパルが、ロールを渡してサービスを動かす操作（起動アクション）を持っている。たとえば、Lambda関数の作成や設定の更新、ECSのタスクの実行、EC2のインスタンスの起動、CodeBuildのプロジェクトの作成です（Lambdaの設定の更新では実行ロールとレイヤーを変えられるため、コードの更新権限は要りません。1.1.1までは、ロール設定とコードの両方の更新を要求していました。1.1.2まではLambdaだけを検査していました）
 3. 対象ロールが、そのサービスを信頼している
 4. 対象ロールが設定で指定された保護対象S3バケットへアクセスできる
+
+`iam:PassRole`が要らない形もあります。主体が、保護対象バケットを読めるロールで動いている既存のLambda関数のコードを書き換えられる（`lambda:UpdateFunctionCode`）、既存のCodeBuildプロジェクトのビルドを`buildspecOverride`付きで始められる（`codebuild:StartBuild`）、既存のステートマシンの定義を更新できる（`states:UpdateStateMachine`）場合です。新しいコードや定義は、そのロールの権限で動きます。
 
 通常の`cdk synth`は有効なCloudFormationを生成できますが、その構成がアプリケーション固有の安全条件を満たしているかまでは判断しません。人手によるレビューだけで、複数のIAM Statement、信頼ポリシー、Lambda操作権限、S3アクセスの関係を継続的に追跡することも困難です。
 
@@ -130,9 +132,10 @@ Validations.of(app).addPlugins(
    - 渡せて保護対象バケットに届くロールが、ProofGateの表にないサービスを信頼している: そのサービスがロールでコードを動かすかどうかを判断できないため拒否します。ロールを渡せないようにするか、バケットへのアクセスを外してください。
 6. **IAMリソースのないテンプレートは受理します。** 検査するプリンシパルがないからで、「安全と証明した」という意味ではありません。ネストしたスタック、`Transform`、`AWS::Serverless::`のリソースを含むテンプレートは拒否します。
 7. **モデルの外にあるもの**: SCP、Permissions Boundary、リソースポリシー、Explicit Deny、条件（`iam:PassedToService`など）、スタックやアカウントをまたぐ参照、`iam:PassRole`の要らない経路（既存の関数のコードの更新など）、デプロイ後のドリフトです。詳しくは[前提・信頼境界](docs/ASSUMPTIONS.md)を見てください。
-8. **`Validations.of(app).acknowledge`で`ProofGate::PG-IAM-004`を認めると、そのsynthは成功します。** 本当に例外にする場合だけ使ってください。
+8. **PassRoleの要らない経路の直し方。** 保護対象バケットを読めるロールで動いているLambda関数、CodeBuildプロジェクト、ステートマシンを、主体が変更できると`PG-IAM-004`になります（文面は「`X` can change `Y` (`<action>`), which runs as `Z`」）。変更の権限を外すか、`Resource`をバケットに届かないリソースのARNに絞るか、ロールからバケットへのアクセスを外してください。チームが承知しているロールなら、`allowedPassRoleTargets`にそのロールの論理IDを入れると、この経路も許可します。関数のロールが`Fn::ImportValue`やパラメータで、テンプレートから特定できないときは、その関数を変更できる主体がいる場合に`PG-IAM-003`になります。関数のロールは、同じテンプレートのロールを`Fn::GetAtt`で参照してください。CDKの`Function`、`Project`、`StateMachine`を普通に使えば、そうなります。
+9. **`Validations.of(app).acknowledge`で`ProofGate::PG-IAM-004`を認めると、そのsynthは成功します。** 本当に例外にする場合だけ使ってください。
 
-English: an adoption guide checked with the trial app. Every stack is checked; the protected bucket needs a fixed name and a literal ARN; register the plugin only when `PROOFGATE=1`; install Lean with `elan`. Common `PG-IAM-003` causes: a managed policy outside the three that are read, a parameter or `Fn::ImportValue` in a `Resource`, an IAM policy variable, and a passable, bucket-reaching role that trusts a service ProofGate does not know. A template without IAM resources is accepted because there is no principal to check, not because it was proved safe. SCPs, permissions boundaries, resource policies, explicit deny, conditions, cross-stack references, paths without `iam:PassRole`, and drift are outside the model. An acknowledgement of `ProofGate::PG-IAM-004` makes the synth succeed.
+English: an adoption guide checked with the trial app. A path without `iam:PassRole` is reported too: a principal that can change an existing Lambda function, CodeBuild project, or state machine that runs as a role reaching the protected bucket; fix it by removing the permission, scoping the `Resource` to resources whose role cannot reach the bucket, or listing the role in `allowedPassRoleTargets`. Every stack is checked; the protected bucket needs a fixed name and a literal ARN; register the plugin only when `PROOFGATE=1`; install Lean with `elan`. Common `PG-IAM-003` causes: a managed policy outside the three that are read, a parameter or `Fn::ImportValue` in a `Resource`, an IAM policy variable, and a passable, bucket-reaching role that trusts a service ProofGate does not know. A template without IAM resources is accepted because there is no principal to check, not because it was proved safe. SCPs, permissions boundaries, resource policies, explicit deny, conditions, cross-stack references, paths without `iam:PassRole`, and drift are outside the model. An acknowledgement of `ProofGate::PG-IAM-004` makes the synth succeed.
 
 ## 現在の対応範囲
 
@@ -140,4 +143,4 @@ English: an adoption guide checked with the trial app. Every stack is checked; t
 
 1.1.0では、これに加えて、Resourceの`Fn::Join`、疑似パラメータ、同じテンプレート内のバケットとロールへの`Ref`・`Fn::GetAtt`、管理ポリシー`AWSLambdaBasicExecutionRole`、信頼ポリシーの`Allow`に付いた`Condition`を読みます。実際のCDKコードに近い14の構成で試したところ、1.0.1では8件が未対応（`PG-IAM-003`）でした。主な原因は、管理ポリシー、リテラルではない`Resource`、信頼ポリシーの`Condition`です。1.1.0では、未対応は14件中1件（IAMポリシー変数）、実装の後に1回だけ試した別の8構成では1件（表にない管理ポリシー）です。これらは標本であり、ほかのプロジェクトで同じ結果になるとは限りません。結果の表は[実スタックでの試験結果](docs/REAL_STACKS.md)にあります。
 
-IAMリソースを含まないテンプレート（ロールのないスタック）は、検査するプリンシパルがないため受理します。「証明済み」という意味ではありません（`docs/SUPPORTED_IAM.md`）。S3アクセスは、保護対象バケット内の一部（プレフィックスや単一オブジェクト）へのアクセスも検出します。オブジェクトの過去の版の読み取りと削除、ACLの変更、複製といったAction（44個）に加えて、バケットポリシーやACLを変えられるAction、複製とライフサイクルの設定も数えます（`docs/SUPPORTED_IAM.md`）。`Resource`にIAMポリシー変数（`${aws:username}`など）を含むStatementは評価せず、`PG-IAM-003`で拒否します。
+ロールで動くリソース（Lambda関数、CodeBuildプロジェクト、ステートマシン）を主体が変更できる経路は、`iam:PassRole`がなくても検査します。IAMリソースを含まないテンプレート（ロールのないスタック）は、検査するプリンシパルがないため受理します。「証明済み」という意味ではありません（`docs/SUPPORTED_IAM.md`）。S3アクセスは、保護対象バケット内の一部（プレフィックスや単一オブジェクト）へのアクセスも検出します。オブジェクトの過去の版の読み取りと削除、ACLの変更、複製といったAction（44個）に加えて、バケットポリシーやACLを変えられるAction、複製とライフサイクルの設定も数えます（`docs/SUPPORTED_IAM.md`）。`Resource`にIAMポリシー変数（`${aws:username}`など）を含むStatementは評価せず、`PG-IAM-003`で拒否します。

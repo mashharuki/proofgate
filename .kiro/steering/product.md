@@ -13,6 +13,8 @@ The first rule (`PG-IAM-004`) detects this path to a protected S3 bucket:
 3. The target role trusts the service that the launch action hands the role to (a regional principal is read as the global one; trust `*` counts for every service).
 4. The target role can access a protected S3 bucket.
 
+A second shape needs no `iam:PassRole` (spec `proofgate-implicit-role-paths`): a principal can change an existing Lambda function (`lambda:UpdateFunctionCode`, `lambda:UpdateFunctionConfiguration`), CodeBuild project (`codebuild:StartBuild`, `codebuild:StartBuildBatch`), or Step Functions state machine (`states:UpdateStateMachine`) that already runs as a role that can access a protected S3 bucket. Both shapes are `PG-IAM-004`. A resource whose role cannot be identified and that a principal can change is `PG-IAM-003`. `allowedPassRoleTargets` allows both shapes.
+
 ## Users
 
 - Platform and security engineers who own CDK-based AWS infrastructure and need deploy-time guardrails.

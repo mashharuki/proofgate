@@ -10,6 +10,10 @@ ProofGateは抽出した有限モデルについて、次の4条件を同時に�
 - 対象ロールが設定された保護対象S3バケットへ、対応範囲内のアクセス権限を持っている
   - 保護対象バケット内の一部のプレフィックスや単一オブジェクトへのアクセスも、アクセスを持つものとして扱います
 
+もう1つの形（`iam:PassRole`が要らない経路）は、次の3条件です。主体が、ロールで動いている既存のリソース（Lambda関数、CodeBuildプロジェクト、ステートマシン）を変更する表のアクションを、そのリソースに対して持つこと。そのリソースが、テンプレート内のロールで動いていること。そのロールが、保護対象バケットへアクセスできること。
+
+English: the other shape (no `iam:PassRole`) needs three conditions: the principal holds an action of the table that changes an existing role-bearing resource (Lambda function, CodeBuild project, state machine) on that resource; the resource runs as a role of the template; and that role can access a protected bucket.
+
 ## 信頼するもの
 
 - CloudFormation ExtractorとAction・Resource Matcherの実装
