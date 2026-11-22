@@ -1,5 +1,10 @@
 /** 権限昇格経路を検出するルールの安定した識別子です。 */
 export const RULE_ID = "PG-IAM-004" as const;
+/**
+ * IAMを書き換えて権限を得る経路（自己昇格）のルールIDです（spec proofgate-self-escalation）。
+ * The rule ID of paths in which a role changes IAM itself (self-escalation).
+ */
+export const RULE_ID_POLICY_WRITE = "PG-IAM-005" as const;
 
 /** CloudFormationのPolicy Statementを、出典付きで正規化した表現です。 */
 export interface StatementModel {
@@ -50,11 +55,16 @@ export interface ProofGateConfig {
   readonly protectedBucketArns: readonly string[];
   /** 明示的に許可するPassRole先のLogical IDです。 */
   readonly allowedPassRoleTargets?: readonly string[];
+  /**
+   * IAMを書き換えることが意図されたロールのLogical IDです。`PG-IAM-005`の対象から除きます（spec proofgate-self-escalation）。
+   * Logical IDs of roles that write IAM on purpose; they are excluded from `PG-IAM-005`. An ID that matches no role is ignored.
+   */
+  readonly allowedPolicyWriters?: readonly string[];
 }
 
 /** PG-IAM-004で検出した経路と、診断表示に必要な根拠です。 */
 export interface Violation {
-  readonly ruleId: typeof RULE_ID;
+  readonly ruleId: typeof RULE_ID | typeof RULE_ID_POLICY_WRITE;
   readonly principalLogicalId: string;
   readonly targetRoleLogicalId: string;
   readonly protectedBucketArn: string;

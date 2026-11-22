@@ -7,10 +7,11 @@ import type {
   UnsupportedFinding,
   Violation,
 } from "@proofgate-cdk/model";
-import { RULE_ID } from "@proofgate-cdk/model";
+import { RULE_ID, RULE_ID_POLICY_WRITE } from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
 import { IMPLICIT_ACTIONS } from "./implicit-actions.js";
 import { LAUNCH_SUPPLEMENTS } from "./launch-supplements.js";
+import { POLICY_WRITE_ACTIONS, type PolicyWriteShape } from "./policy-write-actions.js";
 
 /**
  * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、
@@ -298,19 +299,23 @@ const RESOURCE_SHAPES: Readonly<
   "codebuild-project": { service: "codebuild", separator: ":project/" },
   "stepfunctions-state-machine": { service: "states", separator: ":stateMachine:" },
 };
+/** ARNの形です（サービスと、名前の前の区切り）。 */
+interface ArnShape {
+  readonly service: string;
+  readonly separator: string;
+}
+/** IAMのロールのARNの形です。`arn:<p>:iam::<account>:role/<name>`（リージョンは空です）。 */
+const ROLE_SHAPE: ArnShape = { service: "iam", separator: ":role/" };
 /** `arn:<NSTAR>:<service>:<NSTAR>:<NSTAR><separator>`の部分です。 */
-const arnPrefix = (resource: ResourceModel): StructuredToken[] => {
-  const { service, separator } = RESOURCE_SHAPES[resource.kind];
-  return [
-    ...literalOf("arn:"),
-    NSTAR,
-    ...literalOf(`:${service}:`),
-    NSTAR,
-    ...literalOf(":"),
-    NSTAR,
-    ...literalOf(separator),
-  ];
-};
+const arnPrefixOf = ({ service, separator }: ArnShape): StructuredToken[] => [
+  ...literalOf("arn:"),
+  NSTAR,
+  ...literalOf(`:${service}:`),
+  NSTAR,
+  ...literalOf(":"),
+  NSTAR,
+  ...literalOf(separator),
+];
 /** `*`はどの文字列、NSTARはコロンを含まない文字列を表すglobの交差判定です。 */
 function intersectsStructured(
   a: readonly StructuredToken[],
@@ -343,24 +348,44 @@ function intersectsStructured(
   };
   return go(0, 0);
 }
-function resourceDenoted(pattern: string, resource: ResourceModel): boolean {
+/** 名前の情報です。literalは物理名、unknownは読めない名前、opaqueは名前のないときの不透明な名前です。 */
+interface NameInfo {
+  readonly literal: string | undefined;
+  readonly unknown: boolean;
+  readonly opaque: string;
+}
+/**
+ * パターンがARNの集合（形と名前で決まる）に交わるかを調べます。名前のない対象は不透明な名前として読み、
+ * 名前の部分にワイルドカードのあるパターンは、実際の生成名に一致しうるので数えます。
+ */
+function denotesArn(pattern: string, shape: ArnShape, name: NameInfo): boolean {
   if (/^\*+$/.test(pattern)) return true;
-  const { separator } = RESOURCE_SHAPES[resource.kind];
-  const unnamed = resource.name === undefined && resource.nameUnknown !== true;
-  const name: StructuredToken[] =
-    resource.nameUnknown === true
-      ? [NSTAR]
-      : literalOf(resource.name ?? `_generated_${resource.logicalId}`);
-  const prefix = arnPrefix(resource);
-  if (intersectsStructured(globOf(pattern), [...prefix, ...name])) return true;
+  const unnamed = name.literal === undefined && !name.unknown;
+  const nameTokens: StructuredToken[] = name.unknown
+    ? [NSTAR]
+    : literalOf(name.literal ?? name.opaque);
+  const prefix = arnPrefixOf(shape);
+  if (intersectsStructured(globOf(pattern), [...prefix, ...nameTokens])) return true;
   if (!unnamed) return false;
-  const at = lower(pattern).indexOf(lower(separator));
+  const at = lower(pattern).indexOf(lower(shape.separator));
   if (at < 0) return false;
   return (
-    /[*?]/.test(pattern.slice(at + separator.length)) &&
+    /[*?]/.test(pattern.slice(at + shape.separator.length)) &&
     intersectsStructured(globOf(pattern), [...prefix, NSTAR])
   );
 }
+const resourceDenoted = (pattern: string, resource: ResourceModel): boolean =>
+  denotesArn(pattern, RESOURCE_SHAPES[resource.kind], {
+    literal: resource.name,
+    unknown: resource.nameUnknown === true,
+    opaque: `_generated_${resource.logicalId}`,
+  });
+const roleDenoted = (pattern: string, role: RoleModel): boolean =>
+  denotesArn(pattern, ROLE_SHAPE, {
+    literal: role.roleName,
+    unknown: false,
+    opaque: `_generated_${role.logicalId}`,
+  });
 const implicitActionsOf = (resource: ResourceModel): string[] =>
   IMPLICIT_ACTIONS.filter((entry) => entry.kind === resource.kind).map((entry) => entry.action);
 /** 主体がリソースを変更できる根拠のStatementです。 */
@@ -419,6 +444,142 @@ export function unknownRoleFindings(
       sourcePath: resource.sourcePath,
       reason: `${resource.logicalId} runs as a role that ProofGate cannot identify, and a principal can change it`,
     }));
+}
+// ---------------------------------------------------------------------------------------------------------------
+// ロール自身がIAMを書き換える経路（spec proofgate-self-escalation, 設計4）: PG-IAM-005。
+// - 自分への付与: Pが、自分のロールのARNを表しうるResourceに、iam:PutRolePolicyかiam:AttachRolePolicyを持つ。付与の後は
+//   すべてのバケットに届くので、今バケットに届くかにかかわらず、保護バケットごとに指摘する。
+// - 乗っ取り: Pが、ロールTのARNを表しうるResourceにiam:UpdateAssumeRolePolicyを持ち（TはPではない）、Tがバケットに届く。
+// - 作成して付与: Pが、iam:CreateRoleと書き込みのアクションを持ち、ロールのARNの形をした2つのResourceが交わる。
+// Pが allowedPolicyWriters にあれば3つとも除く。Tが allowedPassRoleTargets にあれば乗っ取りを除く。
+// 除外された組も、Leanには行として渡す（notExemptがfalse）。
+// ---------------------------------------------------------------------------------------------------------------
+type PolicyWriteKind = "self-grant" | "creation-grant" | "take-over";
+interface PolicyWriteCandidate {
+  readonly kind: PolicyWriteKind;
+  readonly principal: RoleModel;
+  readonly target: RoleModel;
+  readonly bucketArn: string;
+  readonly write: readonly StatementModel[];
+  readonly bucketAccess: readonly StatementModel[];
+  readonly canWrite: boolean;
+  readonly reachesAfterWrite: boolean;
+  readonly notExempt: boolean;
+}
+const policyActions = (shape: PolicyWriteShape): string[] =>
+  POLICY_WRITE_ACTIONS.filter((entry) => entry.shape === shape).map((entry) => entry.action);
+const holdingPolicy = (role: RoleModel, shape: PolicyWriteShape): StatementModel[] =>
+  role.statements.filter((statement) => allowsAction(statement, policyActions(shape)));
+const isRoleArnPattern = (pattern: string): boolean =>
+  intersectsStructured(globOf(pattern), [...arnPrefixOf(ROLE_SHAPE), STAR]);
+/** 作成して付与: 作成のStatementと書き込みのStatementで、ロールのARNの形をしたResourceが交わる組を返します。 */
+function creationGrantStatements(role: RoleModel): StatementModel[] {
+  const creating = holdingPolicy(role, "creating");
+  const writing = holdingPolicy(role, "self-grant");
+  const involved = new Set<StatementModel>();
+  for (const c of creating) {
+    for (const w of writing) {
+      const crossing = c.resources
+        .filter(isRoleArnPattern)
+        .some((a) =>
+          w.resources.filter(isRoleArnPattern).some((b) => globsIntersect(globOf(a), globOf(b))),
+        );
+      if (crossing) {
+        involved.add(c);
+        involved.add(w);
+      }
+    }
+  }
+  return [...involved];
+}
+function policyWriteCandidates(model: StackModel, config: ProofGateConfig): PolicyWriteCandidate[] {
+  const candidates: PolicyWriteCandidate[] = [];
+  for (const principal of model.roles) {
+    const writer = config.allowedPolicyWriters?.includes(principal.logicalId) !== true;
+    const selfWrite = holdingPolicy(principal, "self-grant").filter((s) =>
+      s.resources.some((r) => roleDenoted(r, principal)),
+    );
+    const creation = creationGrantStatements(principal);
+    for (const bucketArn of config.protectedBucketArns) {
+      const base = { principal, bucketArn, reachesAfterWrite: true, notExempt: writer };
+      candidates.push({
+        ...base,
+        kind: "self-grant",
+        target: principal,
+        write: selfWrite,
+        bucketAccess: [],
+        canWrite: selfWrite.length > 0,
+      });
+      candidates.push({
+        ...base,
+        kind: "creation-grant",
+        target: principal,
+        write: creation,
+        bucketAccess: [],
+        canWrite: creation.length > 0,
+      });
+      for (const target of model.roles) {
+        if (target.logicalId === principal.logicalId) continue;
+        const takeOver = holdingPolicy(principal, "take-over").filter((s) =>
+          s.resources.some((r) => roleDenoted(r, target)),
+        );
+        const bucketAccess = bucketAccessStatements(target, bucketArn);
+        candidates.push({
+          ...base,
+          kind: "take-over",
+          target,
+          write: takeOver,
+          bucketAccess,
+          canWrite: takeOver.length > 0,
+          reachesAfterWrite: bucketAccess.length > 0,
+          notExempt: writer && config.allowedPassRoleTargets?.includes(target.logicalId) !== true,
+        });
+      }
+    }
+  }
+  return candidates;
+}
+/** 根拠のStatementのアクションのうち、表のアクションに一致するパターンです（説明文用）。 */
+function policyActionPatterns(statements: readonly StatementModel[]): string[] {
+  const all = POLICY_WRITE_ACTIONS.map((entry) => entry.action);
+  return [
+    ...new Set(
+      statements.flatMap((statement) =>
+        statement.actions.filter((pattern) =>
+          all.some((action) => matches(lower(pattern), action)),
+        ),
+      ),
+    ),
+  ];
+}
+function policyWriteViolations(model: StackModel, config: ProofGateConfig): Violation[] {
+  const violations: Violation[] = [];
+  const selfGranted = new Set<string>();
+  for (const c of policyWriteCandidates(model, config)) {
+    if (!(c.canWrite && c.reachesAfterWrite && c.notExempt)) continue;
+    const key = `${c.principal.logicalId}|${c.bucketArn}`;
+    if (c.kind === "creation-grant" && selfGranted.has(key)) continue;
+    if (c.kind === "self-grant") selfGranted.add(key);
+    const actions = policyActionPatterns(c.write).join(", ");
+    const P = c.principal.logicalId;
+    const explanation =
+      c.kind === "self-grant"
+        ? `${P} can write a policy to its own role (${actions}), so it can give itself access to ${c.bucketArn} and every other bucket.`
+        : c.kind === "creation-grant"
+          ? `${P} can create a role and attach a policy to it (${actions}), so it can give a new role access to ${c.bucketArn} and every other bucket.`
+          : `${P} can rewrite the trust policy of ${c.target.logicalId} (${actions}); ${c.target.logicalId} can access protected bucket ${c.bucketArn}.`;
+    violations.push({
+      ruleId: RULE_ID_POLICY_WRITE,
+      principalLogicalId: P,
+      targetRoleLogicalId: c.target.logicalId,
+      protectedBucketArn: c.bucketArn,
+      sourcePaths: [
+        ...new Set([...c.write, ...c.bucketAccess].map((statement) => statement.sourcePath)),
+      ],
+      explanation,
+    });
+  }
+  return violations;
 }
 const isEscalation = (c: CandidatePath) =>
   c.passRole.length > 0 &&
@@ -494,7 +655,7 @@ export function evaluate(model: StackModel, config: ProofGateConfig): Violation[
       explanation: `${c.principal.logicalId} can change ${c.resource.logicalId} (${[...actions].join(", ")}), which runs as ${c.target.logicalId}; ${c.target.logicalId} can access protected bucket ${c.bucketArn}.`,
     });
   }
-  return violations;
+  return [...violations, ...policyWriteViolations(model, config)];
 }
 /**
  * 渡せて保護バケットに届くロールが、起動アクションの表のどの値にもないサービスを信頼しているときの指摘です（design 5.4）。
@@ -552,5 +713,9 @@ export function generateLean(model: StackModel, config: ProofGateConfig): string
     ({ principal, resource, target, bucketArn, change, bucketAccess }) =>
       `{ principal := ${leanString(principal.logicalId)}, resource := ${leanString(resource.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, canChange := ${change.length > 0}, runsAsTarget := true, targetCanAccess := ${bucketAccess.length > 0} }`,
   );
-  return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\ndef generatedImplicit : List ProofGate.ImplicitPath := [${implicit.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths && ProofGate.safeImplicit generatedImplicit then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n\ntheorem generatedImplicitIsSafe : ProofGate.safeImplicit generatedImplicit = true := by\n  native_decide\n`;
+  const policyWrite = policyWriteCandidates(model, config).map(
+    ({ kind, principal, target, bucketArn, canWrite, reachesAfterWrite, notExempt }) =>
+      `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, shape := ${leanString(kind)}, canWrite := ${canWrite}, reachesAfterWrite := ${reachesAfterWrite}, notExempt := ${notExempt} }`,
+  );
+  return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\ndef generatedImplicit : List ProofGate.ImplicitPath := [${implicit.join(",\n  ")}]\n\ndef generatedPolicyWrite : List ProofGate.PolicyWritePath := [${policyWrite.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths && ProofGate.safeImplicit generatedImplicit && ProofGate.safePolicyWrite generatedPolicyWrite then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n\ntheorem generatedImplicitIsSafe : ProofGate.safeImplicit generatedImplicit = true := by\n  native_decide\n\ntheorem generatedPolicyWriteIsSafe : ProofGate.safePolicyWrite generatedPolicyWrite = true := by\n  native_decide\n`;
 }

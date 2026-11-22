@@ -221,9 +221,11 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
           ruleName: finding.ruleId,
           description: finding.explanation,
           fix:
-            finding.resourceLogicalId === undefined
-              ? `Remove iam:PassRole or the launch action from ${finding.principalLogicalId}, remove the service from the trust policy of ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`
-              : `Remove the permission to change ${finding.resourceLogicalId} from ${finding.principalLogicalId}, scope it to resources whose role cannot reach the protected bucket, prevent ${finding.targetRoleLogicalId} from accessing the protected bucket, or list ${finding.targetRoleLogicalId} in allowedPassRoleTargets if the team accepts it.`,
+            finding.ruleId === "PG-IAM-005"
+              ? `Remove the permission to write IAM (iam:PutRolePolicy, iam:AttachRolePolicy, iam:UpdateAssumeRolePolicy, iam:CreateRole) from ${finding.principalLogicalId}, scope its Resource to roles that cannot reach the protected bucket, or list ${finding.principalLogicalId} in allowedPolicyWriters if it writes IAM on purpose.`
+              : finding.resourceLogicalId === undefined
+                ? `Remove iam:PassRole or the launch action from ${finding.principalLogicalId}, remove the service from the trust policy of ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`
+                : `Remove the permission to change ${finding.resourceLogicalId} from ${finding.principalLogicalId}, scope it to resources whose role cannot reach the protected bucket, prevent ${finding.targetRoleLogicalId} from accessing the protected bucket, or list ${finding.targetRoleLogicalId} in allowedPassRoleTargets if the team accepts it.`,
           violatingResources: [
             {
               resourceLogicalId: finding.principalLogicalId,
