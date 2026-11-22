@@ -130,7 +130,10 @@ function modelOf(entry: PathEntry): StackModel {
 }
 const outcome = (entry: PathEntry): string => {
   const model = modelOf(entry);
-  if (tsVerdict(evaluate(model, config)) === "unsafe") return "PG-IAM-004";
+  // The rule IDs of the findings (PG-IAM-005 since spec proofgate-self-escalation), joined like the real-stack runner.
+  // 指摘のルールIDです。実スタックのランナーと同じく`+`でつなぎます。
+  const violations = evaluate(model, config);
+  if (violations.length > 0) return [...new Set(violations.map((v) => v.ruleId))].sort().join("+");
   if (unknownTrustFindings(model, config).length > 0) return "PG-IAM-003";
   return "accepted";
 };
@@ -148,12 +151,16 @@ describe("pathfinding.cloud coverage benchmark (Step 7)", () => {
       observed: string;
       observedAfterFix?: string;
       observedAfterImplicit?: string;
+      observedAfterPolicyWrite?: string;
       note?: string;
     }[];
   }>("results.json").results;
   it("matches the observed results of results.json", () => {
     const want = new Map(
-      observed.map((r) => [r.id, r.observedAfterImplicit ?? r.observedAfterFix ?? r.observed]),
+      observed.map((r) => [
+        r.id,
+        r.observedAfterPolicyWrite ?? r.observedAfterImplicit ?? r.observedAfterFix ?? r.observed,
+      ]),
     );
     const mismatches = paths
       .map((entry) => ({ id: entry.id, got: outcome(entry), want: want.get(entry.id) }))
@@ -171,6 +178,22 @@ describe("pathfinding.cloud coverage benchmark (Step 7)", () => {
         (r) => (r.observedAfterImplicit ?? r.observedAfterFix ?? r.observed) === value,
       ).length;
     expect([count("PG-IAM-004"), count("PG-IAM-003"), count("accepted")]).toEqual([52, 0, 39]);
+  });
+  it("records the coverage after the rule PG-IAM-005: 60 findings, 31 accepted of 91", () => {
+    const count = (value: string) =>
+      observed.filter(
+        (r) =>
+          (r.observedAfterPolicyWrite ??
+            r.observedAfterImplicit ??
+            r.observedAfterFix ??
+            r.observed) === value,
+      ).length;
+    expect([
+      count("PG-IAM-004"),
+      count("PG-IAM-005"),
+      count("PG-IAM-003"),
+      count("accepted"),
+    ]).toEqual([52, 8, 0, 31]);
   });
   it("agrees with Lean on every path, in one launch", () => {
     const batch: BatchCase[] = paths.map((entry, id) => {

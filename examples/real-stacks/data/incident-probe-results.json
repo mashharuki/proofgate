@@ -18,7 +18,9 @@
       "predicted": "accepted",
       "observed": "accepted",
       "class": "false negative",
-      "reasons": []
+      "reasons": [],
+      "observedAfterPolicyWrite": "PG-IAM-005",
+      "note": "After the rule PG-IAM-005 of spec proofgate-self-escalation (2026-11-23) the Unit 42 shape (iam:AttachRolePolicy on *) is reported, as predicted in policy-write-probe-predictions.json (incidentChanges)."
     },
     {
       "id": "RS-50",

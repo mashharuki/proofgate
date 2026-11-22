@@ -1,5 +1,5 @@
 {
-  "description": "Observed results of the pathfinding.cloud coverage benchmark, 2026-11-22 (code of main at be337d3). predictions.json was committed before the run and is not edited. The first run differed from the predictions in 5 paths; two (cloudformation-004, batch-001) were mistakes of the benchmark model (the fallback trust took the service 'iam'; the Batch service role was used instead of the job role) and were corrected in the test; the other three are real differences listed with notes. observed is the first run; observedAfterFix is the result after the launch-supplements fix (apprunner-001, gamelift-001). observedAfterImplicit is the result after the rule of spec proofgate-implicit-role-paths (lambda-003/004/005, codebuild-002/003, stepfunctions-002); it was predicted before the implementation as 52 findings.",
+  "description": "Observed results of the pathfinding.cloud coverage benchmark, 2026-11-22 (code of main at be337d3). predictions.json was committed before the run and is not edited. The first run differed from the predictions in 5 paths; two (cloudformation-004, batch-001) were mistakes of the benchmark model (the fallback trust took the service 'iam'; the Batch service role was used instead of the job role) and were corrected in the test; the other three are real differences listed with notes. observed is the first run; observedAfterFix is the result after the launch-supplements fix (apprunner-001, gamelift-001). observedAfterImplicit is the result after the rule of spec proofgate-implicit-role-paths (lambda-003/004/005, codebuild-002/003, stepfunctions-002); it was predicted before the implementation as 52 findings. observedAfterPolicyWrite is the result after the rule PG-IAM-005 of spec proofgate-self-escalation (iam-005, iam-009, iam-012, iam-014, iam-017, iam-019, iam-020, iam-021, run on 2026-11-23); it was predicted before the implementation as 60 findings (52 PG-IAM-004 and 8 PG-IAM-005), and no other path changed.",
   "summary": {
     "PG-IAM-003": 1,
     "accepted": 46,
@@ -351,7 +351,8 @@
       "id": "iam-005",
       "category": "self-escalation",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-006",
@@ -375,7 +376,8 @@
       "id": "iam-009",
       "category": "self-escalation",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-010",
@@ -393,7 +395,8 @@
       "id": "iam-012",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-013",
@@ -405,7 +408,8 @@
       "id": "iam-014",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-015",
@@ -423,7 +427,8 @@
       "id": "iam-017",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-018",
@@ -435,19 +440,22 @@
       "id": "iam-019",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-020",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "iam-021",
       "category": "principal-access",
       "predicted": "accepted",
-      "observed": "accepted"
+      "observed": "accepted",
+      "observedAfterPolicyWrite": "PG-IAM-005"
     },
     {
       "id": "imagebuilder-001",
@@ -617,6 +625,29 @@
     },
     "self-escalation": {
       "accepted": 8
+    }
+  },
+  "summaryAfterPolicyWrite": {
+    "PG-IAM-004": 52,
+    "accepted": 31,
+    "PG-IAM-005": 8
+  },
+  "byCategoryAfterPolicyWrite": {
+    "new-passrole": {
+      "PG-IAM-004": 46,
+      "accepted": 1
+    },
+    "existing-passrole": {
+      "accepted": 16,
+      "PG-IAM-004": 6
+    },
+    "self-escalation": {
+      "accepted": 6,
+      "PG-IAM-005": 2
+    },
+    "principal-access": {
+      "accepted": 8,
+      "PG-IAM-005": 6
     }
   }
 }

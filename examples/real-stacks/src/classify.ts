@@ -4,7 +4,16 @@
  */
 
 /** ProofGateを有効にして合成したときの結果の取りうる値です。 */
-export const RESULTS = ["accepted", "PG-IAM-003", "PG-IAM-004", "PG-IAM-003+PG-IAM-004"] as const;
+export const RESULTS = [
+  "accepted",
+  "PG-IAM-003",
+  "PG-IAM-004",
+  "PG-IAM-005",
+  "PG-IAM-003+PG-IAM-004",
+  "PG-IAM-003+PG-IAM-005",
+  "PG-IAM-004+PG-IAM-005",
+  "PG-IAM-003+PG-IAM-004+PG-IAM-005",
+] as const;
 
 /** 分類の名前です。 */
 export const CLASSES = [
@@ -33,7 +42,7 @@ export function classify({ groundTruth, inScope, result }: ClassifyInput): Class
   if (!(RESULTS as readonly string[]).includes(result)) {
     throw new ClassificationError(`Unknown result: ${String(result)}`);
   }
-  const detected = result.includes("PG-IAM-004");
+  const detected = result.includes("PG-IAM-004") || result.includes("PG-IAM-005");
   const unsupportedOnly = result === "PG-IAM-003";
   const accepted = result === "accepted";
 

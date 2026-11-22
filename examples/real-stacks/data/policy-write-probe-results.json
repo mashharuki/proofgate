@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "description": "Patterns RS-63 to RS-72 after the rule PG-IAM-005 of spec proofgate-self-escalation (Step 2), run with `node dist/runner.js --policy-write --cli none` on 2026-11-23. observedMain is the baseline on main (policy-write-probe-baseline.json). The predictions were committed before any code and are not edited.",
+  "differencesFromPrediction": [
+    {
+      "id": "RS-70",
+      "predicted": "accepted",
+      "observed": "PG-IAM-005",
+      "explanation": "The prediction was wrong, not the rule. With `*` for the account, the patterns arn:aws:iam::*:role/ci-* and arn:aws:iam::*:role/data-* share real role ARNs: iam:CreateRole accepts a Path of the characters \\u0021 to \\u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23), so the role created with Path /ci-a:role/data-/ has an ARN that matches both (the account `*` takes '<account>:role/ci-a'). The ground truth 'safe' of the catalog shares the mistake; correcting it to 'unsafe' is listed for the user's approval and not done here. The same prefixes with a literal account stay accepted (tests/pbt/policy-write.test.ts)."
+    }
+  ],
+  "results": [
+    {
+      "id": "RS-63",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-64",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-65",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-66",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-67",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-68",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-69",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-70",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "PG-IAM-005",
+      "class": "false positive",
+      "reasons": []
+    },
+    {
+      "id": "RS-71",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "observedAfter": "PG-IAM-005",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-72",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": []
+    }
+  ]
+}

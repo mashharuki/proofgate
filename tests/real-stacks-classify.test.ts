@@ -39,11 +39,17 @@ describe("classification of a measured Result", () => {
   });
 
   it("refuses to file an unsafe Pattern outside the scope that was not accepted", () => {
-    for (const result of ["PG-IAM-003", "PG-IAM-004", "PG-IAM-003+PG-IAM-004"]) {
+    for (const result of ["PG-IAM-003", "PG-IAM-004", "PG-IAM-005", "PG-IAM-003+PG-IAM-004"]) {
       expect(() => c("unsafe", false, result)).toThrow(ClassificationError);
     }
   });
 
+  it("counts PG-IAM-005 as a detection like PG-IAM-004", () => {
+    for (const result of ["PG-IAM-005", "PG-IAM-004+PG-IAM-005", "PG-IAM-003+PG-IAM-005"]) {
+      expect(c("unsafe", true, result)).toBe("correct detection");
+      expect(c("safe", true, result)).toBe("false positive");
+    }
+  });
   it("refuses unknown inputs instead of guessing", () => {
     expect(() => c("maybe", true, "accepted")).toThrow(ClassificationError);
     expect(() => c("safe", true, "rejected")).toThrow(ClassificationError);

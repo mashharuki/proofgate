@@ -227,6 +227,42 @@ const rows: Row[] = [
     ),
     "safe",
   ),
+  // RS-70: with `*` for the account the prefixes are not disjoint. CreateRole accepts a Path of the characters
+  // \u0021 to \u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23). The role created with
+  // Path "/ci-a:role/data-/" has the ARN "arn:aws:iam::<account>:role/ci-a:role/data-/<name>", which matches both
+  // patterns (the account `*` takes "<account>:role/ci-a"). A role of the template with a non-default Path is
+  // already rejected by the extractor, so only the created role can have such an ARN.
+  // アカウントが`*`だと、作成するロールのパスにコロンを入れて、両方のパターンに一致するARNを作れます。
+  row(
+    "CreateRole and AttachRolePolicy on prefixes, account * (a created path may hold a colon)",
+    model(
+      dev([
+        [["iam:CreateRole"], ["arn:aws:iam::*:role/ci-*"]],
+        [ATTACH, ["arn:aws:iam::*:role/data-*"]],
+      ]),
+    ),
+    "unsafe",
+  ),
+  row(
+    "CreateRole and AttachRolePolicy on the same prefix, account *",
+    model(
+      dev([
+        [["iam:CreateRole"], ["arn:aws:iam::*:role/ci-*"]],
+        [ATTACH, ["arn:aws:iam::*:role/ci-*"]],
+      ]),
+    ),
+    "unsafe",
+  ),
+  row(
+    "CreateRole on role/ci-* and AttachRolePolicy on role/*, account *",
+    model(
+      dev([
+        [["iam:CreateRole"], ["arn:aws:iam::*:role/ci-*"]],
+        [ATTACH, ["arn:aws:iam::*:role/*"]],
+      ]),
+    ),
+    "unsafe",
+  ),
   row("CreateRole alone", model(dev([[["iam:CreateRole"], ["*"]]])), "safe"),
   row(
     "AttachRolePolicy on a prefix without CreateRole",
