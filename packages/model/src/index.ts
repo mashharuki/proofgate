@@ -60,6 +60,11 @@ export interface Violation {
   readonly protectedBucketArn: string;
   readonly sourcePaths: readonly string[];
   readonly explanation: string;
+  /**
+   * `iam:PassRole`の要らない経路のとき、変更できるリソースのLogical IDです。PassRoleの経路にはありません。
+   * Set for a path without `iam:PassRole`: the Logical ID of the resource that the principal can change.
+   */
+  readonly resourceLogicalId?: string;
 }
 
 /** 現在の有限モデルへ安全に変換できなかったCloudFormation構文です。 */

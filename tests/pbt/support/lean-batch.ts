@@ -54,8 +54,10 @@ export interface RunOptions {
 }
 
 /** `generateLean`が出力する、期待どおりの形式です。1文字でも違えばHarnessErrorにします。 */
+// Changed for spec proofgate-implicit-role-paths, Step 3 (listed for the user's approval): the output has a second list
+// (`generatedImplicit`), a combined #eval marker, and a second theorem. The first theorem line is unchanged.
 const SHAPE =
-  /^import ProofGate\.Security\n\ndef generatedPaths : List ProofGate\.EscalationPath := \[([\s\S]*)\]\n\n#eval if ProofGate\.safe generatedPaths then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate\.safe generatedPaths = true := by\n {2}native_decide\n$/;
+  /^import ProofGate\.Security\n\ndef generatedPaths : List ProofGate\.EscalationPath := \[([\s\S]*)\]\n\ndef generatedImplicit : List ProofGate\.ImplicitPath := \[([\s\S]*)\]\n\n#eval if ProofGate\.safe generatedPaths && ProofGate\.safeImplicit generatedImplicit then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate\.safe generatedPaths = true := by\n {2}native_decide\n\ntheorem generatedImplicitIsSafe : ProofGate\.safeImplicit generatedImplicit = true := by\n {2}native_decide\n$/;
 
 /** Leanが報告を打ち切る件数の目安です。これ以上は、残りを通過とみなさず失敗にします。 */
 const ERROR_CAP = 100;
@@ -93,10 +95,13 @@ export function buildBatchSource(
       );
     }
     const list = match[1] ?? "";
+    const implicitList = match[2] ?? "";
+    const id = batchCase.id;
     const block = [
-      `def case_${batchCase.id} : List ProofGate.EscalationPath := [${list}]`,
-      `#eval s!"PGCASE ${batchCase.id} {if ProofGate.safe case_${batchCase.id} then "SAFE" else "UNSAFE"}"`,
-      `theorem thm_${batchCase.id} : ProofGate.safe case_${batchCase.id} = ${batchCase.ts === "safe"} := by native_decide`,
+      `def case_${id} : List ProofGate.EscalationPath := [${list}]`,
+      `def case_${id}_implicit : List ProofGate.ImplicitPath := [${implicitList}]`,
+      `#eval s!"PGCASE ${id} {if ProofGate.safe case_${id} && ProofGate.safeImplicit case_${id}_implicit then "SAFE" else "UNSAFE"}"`,
+      `theorem thm_${id} : (ProofGate.safe case_${id} && ProofGate.safeImplicit case_${id}_implicit) = ${batchCase.ts === "safe"} := by native_decide`,
     ].join("\n");
     const height = block.split("\n").length;
     ranges.push({ id: batchCase.id, start: nextLine, end: nextLine + height - 1 });

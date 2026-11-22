@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "description": "Patterns RS-54 to RS-62 after the rule of spec proofgate-implicit-role-paths (Step 3), run with `node dist/runner.js --implicit --cli none` on 2026-11-22. observedMain is the baseline on main (implicit-probe-baseline.json). predictions were committed before any code.",
+  "differencesFromPrediction": [],
+  "results": [
+    {
+      "id": "RS-54",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "observedAfter": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-55",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "observedAfter": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-56",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "observedAfter": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-57",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "observedAfter": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-58",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "observedAfter": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-59",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-60",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-61",
+      "groundTruth": "unsafe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "PG-IAM-003",
+      "observedAfter": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": [
+        "ReaderF7BF189D runs as a role that ProofGate cannot identify, and a principal can change it"
+      ]
+    },
+    {
+      "id": "RS-62",
+      "groundTruth": "safe",
+      "observedMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "observedAfter": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    }
+  ]
+}

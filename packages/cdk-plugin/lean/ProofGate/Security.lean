@@ -57,4 +57,28 @@ theorem completeEscalationIsUnsafe (principal target resource service : String) 
     }] = false := by
   simp [safe, isEscalation]
 
+/--
+PassRoleの要らない候補経路が、危険な経路になる3条件の論理積です。
+The conjunction of the three conditions of a path without `iam:PassRole`.
+-/
+def isImplicitEscalation (path : ImplicitPath) : Bool :=
+  path.canChange && path.runsAsTarget && path.targetCanAccess
+/-- PassRoleの要らない候補経路がすべて安全のときにtrueを返します。 -/
+def safeImplicit (paths : List ImplicitPath) : Bool :=
+  paths.all fun path => !(isImplicitEscalation path)
+/-- 空リストに対するBoolean関数の基本性質です。空のモデルを安全と認めるという意味ではありません。 -/
+theorem emptyImplicitModelIsSafeAtBooleanLevel : safeImplicit [] = true := by
+  native_decide
+/-- 3条件をすべて満たす経路が1つでもあれば、安全とは判定しません。 -/
+theorem completeImplicitEscalationIsUnsafe (principal resource target protectedResource : String) :
+    safeImplicit [{
+      principal := principal
+      resource := resource
+      target := target
+      protectedResource := protectedResource
+      canChange := true
+      runsAsTarget := true
+      targetCanAccess := true
+    }] = false := by
+  simp [safeImplicit, isImplicitEscalation]
 end ProofGate

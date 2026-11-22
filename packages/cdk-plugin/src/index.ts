@@ -3,7 +3,12 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { evaluate, generateLean, unknownTrustFindings } from "@proofgate-cdk/core";
+import {
+  evaluate,
+  generateLean,
+  unknownRoleFindings,
+  unknownTrustFindings,
+} from "@proofgate-cdk/core";
 import { extractStack } from "@proofgate-cdk/extractor";
 import type { ProofGateConfig } from "@proofgate-cdk/model";
 import type {
@@ -167,6 +172,22 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
           ],
         });
       }
+      // ロールを特定できないリソースを、主体が変更できるときは、PG-IAM-003にします（spec proofgate-implicit-role-paths, 設計6）。
+      // A resource whose role cannot be identified, and that a principal can change, is reported as PG-IAM-003.
+      for (const finding of unknownRoleFindings(extraction.model, this.props)) {
+        violations.push({
+          ruleName: "PG-IAM-003",
+          description: `Unsupported IAM syntax: ${finding.reason}`,
+          fix: "Give the resource a role of the same template (Fn::GetAtt of its Arn), or remove the permission to change it from every principal.",
+          violatingResources: [
+            {
+              resourceLogicalId: logicalIdFromPath(finding.sourcePath),
+              templatePath,
+              locations: [finding.sourcePath],
+            },
+          ],
+        });
+      }
       const findings = evaluate(extraction.model, this.props);
       const leanSource = generateLean(extraction.model, this.props);
       const leanResult = this.runLean(leanSource);
@@ -199,7 +220,10 @@ export class ProofGateValidator implements IPolicyValidationPlugin {
         violations.push({
           ruleName: finding.ruleId,
           description: finding.explanation,
-          fix: `Remove iam:PassRole or the launch action from ${finding.principalLogicalId}, remove the service from the trust policy of ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`,
+          fix:
+            finding.resourceLogicalId === undefined
+              ? `Remove iam:PassRole or the launch action from ${finding.principalLogicalId}, remove the service from the trust policy of ${finding.targetRoleLogicalId}, or prevent that role from accessing the protected bucket.`
+              : `Remove the permission to change ${finding.resourceLogicalId} from ${finding.principalLogicalId}, scope it to resources whose role cannot reach the protected bucket, prevent ${finding.targetRoleLogicalId} from accessing the protected bucket, or list ${finding.targetRoleLogicalId} in allowedPassRoleTargets if the team accepts it.`,
           violatingResources: [
             {
               resourceLogicalId: finding.principalLogicalId,

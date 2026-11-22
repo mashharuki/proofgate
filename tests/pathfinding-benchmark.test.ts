@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { evaluate, generateLean, unknownTrustFindings } from "@proofgate-cdk/core";
-import type { ProofGateConfig, StackModel } from "@proofgate-cdk/model";
+import type { ProofGateConfig, ResourceKind, StackModel } from "@proofgate-cdk/model";
 import { describe, expect, it } from "vitest";
 import { tsVerdict } from "./pbt/support/compare.js";
 import { type BatchCase, runBatch } from "./pbt/support/lean-batch.js";
@@ -50,8 +50,34 @@ function serviceOf(entry: PathEntry): string {
   const main = entry.services.find((service) => service !== "iam" && service !== "sts");
   return FALLBACK[prefix] ?? `${main ?? prefix}.amazonaws.com`;
 }
+// Paths without iam:PassRole (spec proofgate-implicit-role-paths): the attacker changes an existing resource that runs as
+// the target role. Only the three kinds of the first set are modeled; the other existing-passrole paths stay without a resource.
+// PassRoleの要らない経路は、攻撃者が、対象ロールで動く既存のリソースを変更する形にします（最初の3種類だけ）。
+const IMPLICIT_KIND: Readonly<Record<string, ResourceKind>> = {
+  "lambda-003": "lambda-function",
+  "lambda-004": "lambda-function",
+  "lambda-005": "lambda-function",
+  "codebuild-002": "codebuild-project",
+  "codebuild-003": "codebuild-project",
+  "stepfunctions-002": "stepfunctions-state-machine",
+};
 /** Build the two-role model of predictions.json for one path. */
 function modelOf(entry: PathEntry): StackModel {
+  const implicitKind = IMPLICIT_KIND[entry.id];
+  const resources =
+    implicitKind === undefined
+      ? {}
+      : {
+          resources: [
+            {
+              logicalId: "ExistingResource",
+              kind: implicitKind,
+              name: "existing-resource",
+              roleLogicalId: "Target",
+              sourcePath: "Resources.ExistingResource.Properties.Role",
+            },
+          ],
+        };
   const attacker = entry.required
     .filter((action) => action !== "iam:PassRole" && action !== "sts:AssumeRole")
     .map((action, i) => ({
@@ -78,6 +104,7 @@ function modelOf(entry: PathEntry): StackModel {
   }
   return {
     version: "1",
+    ...resources,
     roles: [
       {
         logicalId: "Attacker",
@@ -116,10 +143,18 @@ describe("pathfinding.cloud coverage benchmark (Step 7)", () => {
     for (const p of paths) expect(predicted.has(p.id), p.id).toBe(true);
   });
   const observed = read<{
-    results: { id: string; observed: string; observedAfterFix?: string; note?: string }[];
+    results: {
+      id: string;
+      observed: string;
+      observedAfterFix?: string;
+      observedAfterImplicit?: string;
+      note?: string;
+    }[];
   }>("results.json").results;
   it("matches the observed results of results.json", () => {
-    const want = new Map(observed.map((r) => [r.id, r.observedAfterFix ?? r.observed]));
+    const want = new Map(
+      observed.map((r) => [r.id, r.observedAfterImplicit ?? r.observedAfterFix ?? r.observed]),
+    );
     const mismatches = paths
       .map((entry) => ({ id: entry.id, got: outcome(entry), want: want.get(entry.id) }))
       .filter((r) => r.got !== r.want);
@@ -130,10 +165,12 @@ describe("pathfinding.cloud coverage benchmark (Step 7)", () => {
     const explained = observed.filter((r) => r.note !== undefined).map((r) => r.id);
     expect(differs.sort()).toEqual(explained.sort());
   });
-  it("records the coverage after the launch-supplements fix: 46 findings, 45 accepted of 91", () => {
+  it("records the coverage after the implicit-role-paths rule: 52 findings, 39 accepted of 91", () => {
     const count = (value: string) =>
-      observed.filter((r) => (r.observedAfterFix ?? r.observed) === value).length;
-    expect([count("PG-IAM-004"), count("PG-IAM-003"), count("accepted")]).toEqual([46, 0, 45]);
+      observed.filter(
+        (r) => (r.observedAfterImplicit ?? r.observedAfterFix ?? r.observed) === value,
+      ).length;
+    expect([count("PG-IAM-004"), count("PG-IAM-003"), count("accepted")]).toEqual([52, 0, 39]);
   });
   it("agrees with Lean on every path, in one launch", () => {
     const batch: BatchCase[] = paths.map((entry, id) => {

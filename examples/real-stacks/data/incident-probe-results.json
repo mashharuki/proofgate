@@ -8,7 +8,9 @@
       "predicted": "accepted",
       "observed": "accepted",
       "class": "false negative",
-      "reasons": []
+      "reasons": [],
+      "observedAfterImplicit": "PG-IAM-004",
+      "note": "After the rule of spec proofgate-implicit-role-paths (2026-11-22) the path of the Sysdig 2025 shape is reported, as predicted."
     },
     {
       "id": "RS-49",

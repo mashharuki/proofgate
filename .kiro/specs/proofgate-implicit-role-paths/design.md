@@ -63,6 +63,8 @@ For a principal P, a resource R of kind K with `roleLogicalId = T`, a protected 
 
 **Violation.** Rule `PG-IAM-004`. `principalLogicalId` = P, `targetRoleLogicalId` = T, text: "`P` can change `R` (`<action>`), which runs as `T`; `T` can access protected bucket `B`." `sourcePaths` = the statement of P, the resource, the statements of T that reach B. The `fix` text of the validator names the resource.
 
+**Changes made while implementing (2026-11-22).** (1) A bare logical ID or physical name in `Resource` is **not** counted, unlike `iam:PassRole`: IAM rejects a Resource that is not an ARN or `*`, so counting it would only add false alarms. (2) The ARN side of the intersection uses a token for "any run without a colon" for the partition, region, and account, because a `*` of a pattern may stand for a colon and an ordinary `*` on the ARN side made every pattern ending in `*` meet every resource. (3) The model has `nameUnknown` (Step 2). (4) The violation has an optional `resourceLogicalId`.
+
 ## 6. Unknown role (decision 2)
 `unknownRoleFindings(model, config)`: for each resource with `roleUnknown` such that some principal has an Allow statement with a matching action and a Resource that may denote the resource, report `PG-IAM-003` at `Resources.<id>.Properties.<RoleProperty>`: "`<id>` runs as a role that ProofGate cannot identify, and a principal can change it". It does not fire for resources nobody can change, so ordinary stacks are not rejected (a function with a role from a parameter and no statement that touches it is fine). A principal here is any role of the template.
 

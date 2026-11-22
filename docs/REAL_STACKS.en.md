@@ -10,6 +10,7 @@ Subject: `examples/real-stacks` (aws-cdk-lib 2.277.0). Protected bucket: `arn:aw
 pnpm build
 pnpm real-stacks            # compares the 14 Patterns with the expected table (0 match, 1 difference, 2 harness error)
 pnpm real-stacks --cli all   # also runs the real cdk synth CLI (about one minute)
+pnpm real-stacks --implicit --cli none   # the nine Patterns RS-54 to RS-62 (paths without iam:PassRole)
 pnpm real-stacks --incident --cli none   # the six incident-shaped Patterns RS-48 to RS-53 (observed only; --holdout, --probe, --launch work the same way)
 ```
 
@@ -159,6 +160,26 @@ Then the 91 AWS paths of Datadog [pathfinding.cloud](https://pathfinding.cloud/)
 - Both (`apprunner-001`, `gamelift-001`) were fixed the same day (`launch-supplements.ts`). After the fix 46 of the 91 paths are reported and 45 are accepted (classes B and C, not supported yet).
 - Two mistakes in the benchmark model (`cloudformation-004`, `batch-001`) were corrected and are written in `results.json`.
 - The benchmark reproduces only the preconditions (the combination of permissions). It does not check that an attack really works.
+
+## Paths without iam:PassRole (RS-54 to RS-62, spec proofgate-implicit-role-paths, 2026-11-22)
+
+Nine Patterns were run with `pnpm real-stacks --implicit` after their predictions were committed (`implicit-probe-predictions.json`). On `main` before the implementation all nine were accepted (the five unsafe ones and the unknown-role one were missed). After the implementation all nine match the predictions.
+
+| ID    | Pattern                                                                        | `main` (before) | Predicted  | Observed   |
+| ----- | ------------------------------------------------------------------------------ | --------------- | ---------- | ---------- |
+| RS-54 | `lambda:UpdateFunctionCode`, the function role reads the bucket                | accepted        | PG-IAM-004 | PG-IAM-004 |
+| RS-55 | `lambda:UpdateFunctionConfiguration`, same                                     | accepted        | PG-IAM-004 | PG-IAM-004 |
+| RS-56 | `codebuild:StartBuild`, the project role reads the bucket                      | accepted        | PG-IAM-004 | PG-IAM-004 |
+| RS-57 | `codebuild:StartBuildBatch`, same                                              | accepted        | PG-IAM-004 | PG-IAM-004 |
+| RS-58 | `states:UpdateStateMachine`, the state machine role reads the bucket           | accepted        | PG-IAM-004 | PG-IAM-004 |
+| RS-59 | `StartBuild` scoped to the ARN of another project that cannot reach the bucket | accepted        | accepted   | accepted   |
+| RS-60 | the function role reads another bucket only                                    | accepted        | accepted   | accepted   |
+| RS-61 | the function role is a parameter (cannot be identified)                        | accepted        | PG-IAM-003 | PG-IAM-003 |
+| RS-62 | a role that changes the function that runs as itself                           | accepted        | accepted   | accepted   |
+
+- RS-48 (the Sysdig 2025 shape) was a miss before and is `PG-IAM-004` now.
+- RS-59 checks the resolver narrowing (`GetAtt Arn` as an ARN instead of `*`). Read as `*` it would match project A and be a false alarm.
+- The 91 pathfinding.cloud paths: 52 are reported now (46 before). The six new ones are `lambda-003`, `lambda-004`, `lambda-005`, `codebuild-002`, `codebuild-003`, `stepfunctions-002`. 39 are accepted (the other 16 paths without PassRole, 14 `principal-access`, 8 `self-escalation`, 1 `new-passrole`).
 
 ## Trial with the current code (2026-11-22)
 
