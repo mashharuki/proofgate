@@ -442,10 +442,18 @@ function buildFromPlan(rng: Rng, plan: Plan): Built {
 
   return {
     roles,
+    // Changed for spec proofgate-self-escalation, Step 2 (listed for the user's approval at Checkpoint 2): the generated principals
+    // hold `iam:*` and `*` as PassRole actions, which are also self-grants and creation grants of PG-IAM-005. The plan labels
+    // describe the PassRole rule (PG-IAM-004), so every generated role is listed in allowedPolicyWriters. This also makes the
+    // three sides agree on the exemption. The new rule has its own tests (implicit-style fixed rows and a generated stream).
     config:
       allowedPassRoleTargets === undefined
-        ? { protectedBucketArns }
-        : { protectedBucketArns, allowedPassRoleTargets },
+        ? { protectedBucketArns, allowedPolicyWriters: roles.map((role) => role.logicalId) }
+        : {
+            protectedBucketArns,
+            allowedPassRoleTargets,
+            allowedPolicyWriters: roles.map((role) => role.logicalId),
+          },
     forms,
   };
 }
