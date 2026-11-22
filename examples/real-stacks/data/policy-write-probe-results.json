@@ -6,7 +6,7 @@
       "id": "RS-70",
       "predicted": "accepted",
       "observed": "PG-IAM-005",
-      "explanation": "The prediction was wrong, not the rule. With `*` for the account, the patterns arn:aws:iam::*:role/ci-* and arn:aws:iam::*:role/data-* share real role ARNs: iam:CreateRole accepts a Path of the characters \\u0021 to \\u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23), so the role created with Path /ci-a:role/data-/ has an ARN that matches both (the account `*` takes '<account>:role/ci-a'). The ground truth 'safe' of the catalog shares the mistake; correcting it to 'unsafe' is listed for the user's approval and not done here. The same prefixes with a literal account stay accepted (tests/pbt/policy-write.test.ts)."
+      "explanation": "The prediction was wrong, not the rule. With `*` for the account, the patterns arn:aws:iam::*:role/ci-* and arn:aws:iam::*:role/data-* share real role ARNs: iam:CreateRole accepts a Path of the characters \\u0021 to \\u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23), so the role created with Path /ci-a:role/data-/ has an ARN that matches both (the account `*` takes '<account>:role/ci-a'). The ground truth 'safe' of the catalog shared the mistake; the user approved correcting it to 'unsafe' on 2026-11-23 (groundTruthBefore and classBefore keep the old values). The same prefixes with a literal account stay accepted (tests/pbt/policy-write.test.ts)."
     }
   ],
   "results": [
@@ -75,12 +75,14 @@
     },
     {
       "id": "RS-70",
-      "groundTruth": "safe",
+      "groundTruth": "unsafe",
       "observedMain": "accepted",
       "predictedResultAfter": "accepted",
       "observedAfter": "PG-IAM-005",
-      "class": "false positive",
-      "reasons": []
+      "class": "correct detection",
+      "reasons": [],
+      "groundTruthBefore": "safe",
+      "classBefore": "false positive"
     },
     {
       "id": "RS-71",
