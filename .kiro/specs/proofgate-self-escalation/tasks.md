@@ -1,5 +1,5 @@
 # Tasks: proofgate-self-escalation
-Status: DRAFT, awaiting the user's approval of the design (points 10.1 to 10.5 of [design.md](./design.md)). Nothing is implemented.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Nothing is implemented; code starts after Step 7 of the brushup is closed, or when the user says so.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-22). Design: [design.md](./design.md). Evidence: [data-verification.md](./data-verification.md).
 Time box: see design section 11. Code starts after Step 7 of the brushup is closed, or when the user says so.
 Branches: one per step, from `main`: `selfesc/step-1-evidence`, `selfesc/step-2-core-lean`, `selfesc/step-3-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
@@ -12,7 +12,7 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
   - [ ] 1.3 Write `data/policy-write-probe-predictions.json` (ground truth, Result on `main`, Result after the spec) and commit it **alone**. Never edit it afterwards. Record the benchmark prediction: 60 of 91 (+8).
   - [ ] 1.4 Run the Patterns on the unchanged code and record the baseline `data/policy-write-probe-baseline.json`. Record each difference from the prediction. RS-49 is in the incident set; record its prediction for after the spec (`PG-IAM-005`) in the same file.
   - [ ] 1.5 Decide how a Pattern passes `allowedPolicyWriters` (the runner uses one fixed config today). Smallest change: an optional `config` field of a Pattern. Tests first for the runner.
-- [ ] 2. **Checkpoint 1.** Report the evidence, the Patterns, and the baseline. Wait for the user's approval of the design points and of Step 2.
+- [ ] 2. **Checkpoint 1.** Report the evidence, the Patterns, and the baseline. Wait for the user's approval of Step 2.
 
 ## Step 2: Oracle, core, Lean, validator
 - [ ] 3. Create branch `selfesc/step-2-core-lean`.

@@ -1,5 +1,5 @@
 # Design: proofgate-self-escalation
-Status: DRAFT, written 2026-11-22 after the approval of the requirements. The points that need the user's decision are in section 10. No code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-22 with the proposals of all five points of section 10. No code has been changed for this spec.
 Requirements: [requirements.md](./requirements.md). Evidence: [data-verification.md](./data-verification.md).
 
 ## 1. What changes, in one paragraph
@@ -68,7 +68,9 @@ Only adds findings. False alarms are expected for roles that write IAM on purpos
 ## 9. Not modeled (documented)
 Users, groups, access keys, customer managed policies, permissions boundaries, SCPs, role chains (a policy write on another role T that P can only use after `sts:AssumeRole`), and any change after deployment by an actor outside the template.
 
-## 10. Points for the user's decision
+## 10. Points decided by the user (2026-11-22)
+All five proposals were approved as written.
+
 1. **A role with `Action: "*"` on `Resource: "*"` is reported** (it matches the self-grant actions). It is an administrator already, so the finding adds no new access, but today no rule reports it either, and the exception list handles the intended ones. Proposal: yes (fail closed; the alternative is to skip roles whose statements already allow everything, which hides the administrator role from the report).
 2. **Lean structure `PolicyWritePath` with three Booleans, rows for exempt candidates too** (section 6). Proposal: yes.
 3. **Public type changes:** `Violation.ruleId` union and `ProofGateConfig.allowedPolicyWriters`; minor version with the brushup release. Proposal: yes.
