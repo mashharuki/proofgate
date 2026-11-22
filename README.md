@@ -33,8 +33,8 @@ ProofGateは、CDKの合成処理に次の検証パイプラインを追加し�
 
 1. **CloudFormationを取得する**: CDK Validation Pluginとして、`cdk synth`が生成したテンプレートを受け取ります。
 2. **IAM情報を抽出する**: ロール、インラインポリシー、信頼関係、`Action`、`Resource`を、CDKに依存しない中間モデルへ変換します。
-3. **候補経路を評価する**: TypeScript評価器が、PassRole、起動アクション、そのサービスへの信頼、保護対象S3アクセスの組み合わせを、サービスごとに列挙します。起動アクションは、AWS Service Referenceから生成した表（879件）です。
-4. **Leanで安全条件を検査する**: 候補経路からLeanモジュールを生成し、完全な権限昇格経路が存在しないことを固定されたLeanツールチェーンで判定します。
+3. **候補経路を評価する**: TypeScript評価器が、PassRole、起動アクション、そのサービスへの信頼、保護対象S3アクセスの組み合わせを、サービスごとに列挙します。起動アクションは、AWS Service Referenceから生成した表（879件）です。あわせて、ロールで動く既存のリソースを変更できる経路（PassRoleなし）と、ロールがIAMを書き換えられる経路も列挙します。
+4. **Leanで安全条件を検査する**: 3種類の候補経路の一覧（`EscalationPath`、`ImplicitPath`、`PolicyWritePath`）からLeanモジュールを生成し、完全な権限昇格経路が存在しないことを固定されたLeanツールチェーンで判定します（[証明](docs/PROOFS.md)）。
 5. **CDKへ結果を返す**: 危険な経路は`PG-IAM-004`（ロールがIAMを書き換える経路は`PG-IAM-005`）として拒否し、未対応構文やTypeScriptとLeanの判定不一致は`PG-IAM-003`としてFail Closedで拒否します。
 
 Leanが検査する事実は、CloudFormationからTypeScriptで抽出・構成された候補経路です。そのため、ProofGateはLeanがIAMやCloudFormationの意味論全体を独立して証明すると主張しません。抽出器とTypeScript評価器はテストおよび独立Oracleで検証し、Leanは生成された安全条件を機械的に検査する、という責務分担を採用しています。
@@ -75,9 +75,32 @@ pnpm quality
 
 このコマンドはBiomeによるフォーマット・Lint・Assist検査、Knipによる未使用ファイル・依存関係・export検査、jscpdによる重複コード検査を順番に実行します。自動修正可能なBiomeの指摘は`pnpm biome:fix`で修正できます。
 
+## 検証に使う例とデータ
+
+- `examples/safe-app`、`examples/vulnerable-app`: デモの2つのアプリ（上記）。
+- `examples/real-stacks`: 実際のCDKコードに近い84の構成（RS-01〜RS-84）。`pnpm real-stacks`で評価用の14構成を期待表と比べます。ほかの構成の組は`--holdout`、`--probe`、`--launch`、`--incident`、`--implicit`、`--policy-write`、`--trial2`で選びます。結果は[実スタックでの試験結果](docs/REAL_STACKS.md)にあります。
+- `examples/trial-app`: 利用者と同じ形で試す24の変種のアプリ。`pnpm --filter @proofgate-cdk/trial-app variants`で、すべての変種を期待表と比べます。npmの公開版との比較の手順は[`examples/trial-app/README.md`](examples/trial-app/README.md)にあります。
+- `tests/pathfinding-benchmark.test.ts`: Datadogの[pathfinding.cloud](https://pathfinding.cloud/)（Apache-2.0）のAWSの91経路を、2つのロールのモデルにして測ります。今の`main`は91経路中60件を指摘します（`PG-IAM-004`が52件、`PG-IAM-005`が8件）。攻撃の前提だけを再現したもので、実際に攻撃が成立するかは見ていません。
+- `tests/pbt/`: 独立したオラクル、TypeScript評価器、Leanの3者を照合する生成テスト（`pnpm test`に含まれます）。
+
+いずれもAWSの認証情報とデプロイを使いません（合成だけです）。
+
+English: examples and data used for verification. `examples/real-stacks` has 84 realistic CDK Patterns (`pnpm real-stacks`, other sets by flag; results in `docs/REAL_STACKS.md`). `examples/trial-app` has 24 variants that try ProofGate the way a user does (`pnpm --filter @proofgate-cdk/trial-app variants`). The pathfinding.cloud benchmark (91 AWS paths as two-role models) reports 60 paths on `main` (52 `PG-IAM-004`, 8 `PG-IAM-005`); it reproduces only the preconditions of each attack. `tests/pbt/` compares an independent oracle, the evaluator, and Lean. No AWS credentials or deployment are used.
+
+## 公開版と開発版
+
+npmの最新版は1.1.2です（`@proofgate-cdk/cdk-plugin`ほか4パッケージ）。このREADMEは`main`ブランチの内容を説明しており、次の機能はまだnpmに公開していません（[CHANGELOG](CHANGELOG.md)の「Unreleased」）。
+
+- Lambda以外の起動サービス（ECS、EC2、CodeBuild、Step Functionsなど、879の起動アクション）。1.1.2はLambdaだけを検査します
+- `iam:PassRole`の要らない経路（既存のLambda関数、CodeBuildプロジェクト、ステートマシンの変更）
+- ロール自身がIAMを書き換える経路（`PG-IAM-005`）と、設定項目`allowedPolicyWriters`
+- 保護対象バケットへのアクセスとして数えるS3のActionの拡張、IAMリソースのないテンプレートの受理、`Fn::Sub`、追加の管理ポリシー（読むのは7件）、信頼ポリシーのサービスではないプリンシパル
+
+English: npm has 1.1.2. This README describes `main`; launch services other than Lambda, paths without `iam:PassRole`, `PG-IAM-005` with `allowedPolicyWriters`, the wider S3 actions, role-less templates, `Fn::Sub`, the extra managed policies, and non-service trust principals are not published yet (see "Unreleased" in the CHANGELOG).
+
 ## 公開パッケージ
 
-次の4パッケージをnpmへ公開できる構成にしています。
+次の4パッケージをnpmで公開しています。
 
 - `@proofgate-cdk/cdk-plugin`: CDK利用者向けのValidation Plugin。固定済みLeanプロジェクトを同梱
 - `@proofgate-cdk/core`: TypeScript参照評価器とLeanモジュール生成器
@@ -90,9 +113,15 @@ pnpm quality
 pnpm pack:check
 ```
 
-実際にnpmへ公開するには、`@proofgate-cdk`スコープを利用できるnpmアカウントまたはOrganizationの設定が別途必要です。
+公開は、`pnpm publish -r --access public`で4パッケージを同じ版で出します（`workspace:`の依存をsemverへ変換するため、`npm publish`は使いません）。
 
 ## CDKへの導入
+
+```bash
+pnpm add @proofgate-cdk/cdk-plugin
+```
+
+Node.js 26以降と、`elan`で導入したLean 4 / Lakeが必要です。
 
 ```ts
 import { App, Validations } from "aws-cdk-lib";
@@ -110,7 +139,7 @@ Validations.of(app).addPlugins(
 
 ## 導入ガイド
 
-試用アプリ（npmの1.1.2と、このリポジトリの現在のコード）で確かめた手順と注意点です。
+試用アプリ（[`examples/trial-app`](examples/trial-app/README.md)。npmの1.1.2と、このリポジトリの現在のコード）で確かめた手順と注意点です。項目8と9（PassRoleの要らない経路、`PG-IAM-005`）は、まだnpmに公開していない機能です。
 
 1. **すべてのスタックが検査されます。** プラグインは、アプリの中のすべてのスタックのテンプレートを読みます。保護対象バケットの設定は、すべてのスタックで共通です。
 2. **保護対象バケットには、固定の名前とリテラルのARNを使います。** `protectedBucketArns`には`arn:aws:s3:::my-data`のような文字列を書きます。`bucket.bucketArn`はトークンなので使えません。バケットに`bucketName`を付けてください。名前のないバケットは、リテラルの保護対象バケットとは一致しないものとして読みます（`docs/ASSUMPTIONS.md`）。
@@ -150,7 +179,9 @@ English: an adoption guide checked with the trial app. A path without `iam:PassR
 
 ## 現在の対応範囲
 
-これは最初のEnd-to-End実装であり、完全なIAM評価器ではありません。ローカルのIAMロールと、`Effect`、`Action`、`Resource`がリテラル値で記述されたインラインポリシーに対応しています。デプロイ制御として使用する前に、[対応するIAM構文](docs/SUPPORTED_IAM.md)と[前提・信頼境界](docs/ASSUMPTIONS.md)を確認してください。
+ProofGateは完全なIAM評価器ではありません。テンプレート内の`AWS::IAM::Role`、インラインポリシー、ロールに付けた`AWS::IAM::Policy`、表にある7件の管理ポリシー、`AWS::IAM::InstanceProfile`を読みます。`Resource`は、リテラル、`Fn::Join`、`Fn::Sub`、疑似パラメータ、同じテンプレートのバケット、ロール、Lambda関数、CodeBuildプロジェクト、ステートマシンへの`Ref`と`Fn::GetAtt`を読みます。それ以外は`PG-IAM-003`で拒否します。デプロイ制御として使用する前に、[対応するIAM構文](docs/SUPPORTED_IAM.md)と[前提・信頼境界](docs/ASSUMPTIONS.md)を確認してください。
+
+以下は、版ごとの記録です。
 
 1.1.0では、これに加えて、Resourceの`Fn::Join`、疑似パラメータ、同じテンプレート内のバケットとロールへの`Ref`・`Fn::GetAtt`、管理ポリシー`AWSLambdaBasicExecutionRole`、信頼ポリシーの`Allow`に付いた`Condition`を読みます。実際のCDKコードに近い14の構成で試したところ、1.0.1では8件が未対応（`PG-IAM-003`）でした。主な原因は、管理ポリシー、リテラルではない`Resource`、信頼ポリシーの`Condition`です。1.1.0では、未対応は14件中1件（IAMポリシー変数）、実装の後に1回だけ試した別の8構成では1件（表にない管理ポリシー）です。これらは標本であり、ほかのプロジェクトで同じ結果になるとは限りません。結果の表は[実スタックでの試験結果](docs/REAL_STACKS.md)にあります。
 
