@@ -64,6 +64,8 @@ They were not used to design the rules. Ground truth and predictions were commit
 
 ## Trial with 1.1.1 from npm (2026-11-20)
 
+The trial app was moved into the repository as `examples/trial-app` on 2026-11-22, with its variants, predictions, and run records (`pnpm --filter @proofgate-cdk/trial-app variants`).
+
 `@proofgate-cdk/cdk-plugin@1.1.1` was installed from npm in a small CDK app outside the repository (aws-cdk-lib 2.277.0; protected bucket with a fixed name, `arn:aws:s3:::proofgate-trial-customer-data`). The expected result of each variant was written before it was run. All 18 variants gave the expected result. Every `cdk synth` without ProofGate passed. The trial app is not part of the repository.
 
 | Variant              | Content                                                                                           | With ProofGate                   |
@@ -183,7 +185,7 @@ Nine Patterns were run with `pnpm real-stacks --implicit` after their prediction
 - RS-59 checks the resolver narrowing (`GetAtt Arn` as an ARN instead of `*`). Read as `*` it would match project A and be a false alarm.
 - The 91 pathfinding.cloud paths: 52 are reported now (46 before). The six new ones are `lambda-003`, `lambda-004`, `lambda-005`, `codebuild-002`, `codebuild-003`, `stepfunctions-002`. 39 are accepted (the other 16 paths without PassRole, 14 `principal-access`, 8 `self-escalation`, 1 `new-passrole`).
 
-## Roles that change IAM themselves (RS-63 to RS-72, spec proofgate-self-escalation, 2026-11-23)
+## Roles that change IAM themselves (RS-63 to RS-72, spec proofgate-self-escalation, 2026-11-22)
 
 Ten Patterns were run with `pnpm real-stacks --policy-write` after their predictions were committed, before any code of the rule (`policy-write-probe-predictions.json`). On `main` before the implementation all ten were accepted (`policy-write-probe-baseline.json`). The results after the implementation are in `policy-write-probe-results.json`.
 
@@ -247,7 +249,7 @@ The same app as the 1.1.1 trial (18 variants) was run with 1.1.2 from npm and wi
 - Four variants were added (paths without PassRole; the expected results were written before the run). On 1.1.2 all four are accepted; on the current code `implicit-code` (`lambda:UpdateFunctionCode` on `*`), `implicit-function-arn` (the Resource is `reader.functionArn`), and `implicit-codebuild` (a CodeBuild project that reads the bucket and `codebuild:StartBuild`) give `PG-IAM-004`, and `implicit-other-function` (the ARN of another function that cannot reach the bucket) is accepted. Of the 22 variants, `apigw` and three of these four differ between 1.1.2 and the current code.
 - Of the original 18, the other 17 variants give the same result (`update-config-only` is `PG-IAM-004` since 1.1.2). The `ecs` task role reads the protected bucket but nobody can pass it, so it is accepted.
 - The violation text now names the service and the launch action (for example `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`).
-- Two variants were added on 2026-11-23 (roles that change IAM themselves; the expected results were written before the run). `policy-attach-star` (the deploy role holds `iam:AttachRolePolicy` on `*`) is accepted on 1.1.2 and `PG-IAM-005` on the current code (text: `Deployer92EF8763 can write a policy to its own role (iam:AttachRolePolicy), so it can give itself access to arn:aws:s3:::proofgate-trial-customer-data and every other bucket.`). `policy-writer-allowed` (the same role in `allowedPolicyWriters`) is accepted on both. All 24 variants match the predictions, and the 22 earlier variants are unchanged.
+- Two variants were added on 2026-11-22 (roles that change IAM themselves; the expected results were written before the run). `policy-attach-star` (the deploy role holds `iam:AttachRolePolicy` on `*`) is accepted on 1.1.2 and `PG-IAM-005` on the current code (text: `Deployer92EF8763 can write a policy to its own role (iam:AttachRolePolicy), so it can give itself access to arn:aws:s3:::proofgate-trial-customer-data and every other bucket.`). `policy-writer-allowed` (the same role in `allowedPolicyWriters`) is accepted on both. All 24 variants match the predictions, and the 22 earlier variants are unchanged.
 
 ## What the Lean check shows
 

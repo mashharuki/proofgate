@@ -113,7 +113,7 @@ const patterns: readonly PolicyWrite[] = [
     id: "RS-70",
     title: "Creation grant with two prefixes and account *",
     description:
-      "iam:CreateRole on arn:aws:iam::*:role/ci-* and iam:AttachRolePolicy on arn:aws:iam::*:role/data-*. A named role, so no self-grant. The prefixes look disjoint, but they share role ARNs: iam:CreateRole accepts a Path with a colon (IAM API Reference, CreateRole, read 2026-11-23), so the role created with Path /ci-a:role/data-/ has an ARN that matches both patterns (the account * takes '<account>:role/ci-a'). The ground truth was 'safe' until 2026-11-23 and was corrected to 'unsafe' with the user's approval; the predictions and the baseline keep the old value.",
+      "iam:CreateRole on arn:aws:iam::*:role/ci-* and iam:AttachRolePolicy on arn:aws:iam::*:role/data-*. A named role, so no self-grant. The prefixes look disjoint, but they share role ARNs: iam:CreateRole accepts a Path with a colon (IAM API Reference, CreateRole, read 2026-11-22), so the role created with Path /ci-a:role/data-/ has an ARN that matches both patterns (the account * takes '<account>:role/ci-a'). The ground truth was 'safe' until 2026-11-22 and was corrected to 'unsafe' with the user's approval; the predictions and the baseline keep the old value.",
     groundTruth: "unsafe",
     build: (stack) => {
       const role = writer(stack, "Pipeline", "pipeline-role");

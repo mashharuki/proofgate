@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "description": "Patterns RS-63 to RS-72 after the rule PG-IAM-005 of spec proofgate-self-escalation (Step 2), run with `node dist/runner.js --policy-write --cli none` on 2026-11-23. observedMain is the baseline on main (policy-write-probe-baseline.json). The predictions were committed before any code and are not edited.",
+  "description": "Patterns RS-63 to RS-72 after the rule PG-IAM-005 of spec proofgate-self-escalation (Step 2), run with `node dist/runner.js --policy-write --cli none` on 2026-11-22. observedMain is the baseline on main (policy-write-probe-baseline.json). The predictions were committed before any code and are not edited.",
   "differencesFromPrediction": [
     {
       "id": "RS-70",
       "predicted": "accepted",
       "observed": "PG-IAM-005",
-      "explanation": "The prediction was wrong, not the rule. With `*` for the account, the patterns arn:aws:iam::*:role/ci-* and arn:aws:iam::*:role/data-* share real role ARNs: iam:CreateRole accepts a Path of the characters \\u0021 to \\u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23), so the role created with Path /ci-a:role/data-/ has an ARN that matches both (the account `*` takes '<account>:role/ci-a'). The ground truth 'safe' of the catalog shared the mistake; the user approved correcting it to 'unsafe' on 2026-11-23 (groundTruthBefore and classBefore keep the old values). The same prefixes with a literal account stay accepted (tests/pbt/policy-write.test.ts)."
+      "explanation": "The prediction was wrong, not the rule. With `*` for the account, the patterns arn:aws:iam::*:role/ci-* and arn:aws:iam::*:role/data-* share real role ARNs: iam:CreateRole accepts a Path of the characters \\u0021 to \\u007E, colon included (IAM API Reference, CreateRole, read 2026-11-22), so the role created with Path /ci-a:role/data-/ has an ARN that matches both (the account `*` takes '<account>:role/ci-a'). The ground truth 'safe' of the catalog shared the mistake; the user approved correcting it to 'unsafe' on 2026-11-22 (groundTruthBefore and classBefore keep the old values). The same prefixes with a literal account stay accepted (tests/pbt/policy-write.test.ts)."
     }
   ],
   "results": [

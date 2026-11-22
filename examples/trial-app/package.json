@@ -1,0 +1,21 @@
+{
+  "name": "@proofgate-cdk/trial-app",
+  "version": "1.1.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "synth": "cdk synth --quiet",
+    "synth:proofgate": "PROOFGATE=1 cdk synth --quiet",
+    "variants": "tsc -p tsconfig.json && node dist/run-variants.js"
+  },
+  "dependencies": {
+    "@proofgate-cdk/cdk-plugin": "workspace:*",
+    "aws-cdk-lib": "2.277.0",
+    "constructs": "^10.4.2"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.1148.1"
+  }
+}

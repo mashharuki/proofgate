@@ -1,0 +1,28 @@
+// 試用アプリの変種の一覧です。app.tsとrun-variants.tsが同じ一覧を使います。
+// The variants of the trial app. app.ts and run-variants.ts share this list.
+export const VARIANTS = [
+  "safe",
+  "risky",
+  "apigw",
+  "apigw-no-log-role",
+  "parameter",
+  "sqs",
+  "dynamodb",
+  "stepfunctions",
+  "ecs",
+  "all-risky",
+  "pass-wildcard",
+  "pass-prefix",
+  "grant-pass",
+  "update-pair",
+  "update-config-only",
+  "admin-managed",
+  "cross-stack",
+  "acknowledged",
+  "implicit-code",
+  "implicit-function-arn",
+  "implicit-other-function",
+  "implicit-codebuild",
+  "policy-attach-star",
+  "policy-writer-allowed",
+] as const;

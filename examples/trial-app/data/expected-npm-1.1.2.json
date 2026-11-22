@@ -1,0 +1,29 @@
+{
+  "description": "Expected result of every trial variant with @proofgate-cdk/cdk-plugin 1.1.2 from npm, from the run of 2026-11-22 (results-2026-11-22-24-variants-npm-1.1.2.txt). The predictions of the added variants were written before their first run (predictions-*.txt).",
+  "results": {
+    "safe": "accepted",
+    "risky": "PG-IAM-004",
+    "apigw": "PG-IAM-003",
+    "apigw-no-log-role": "accepted",
+    "parameter": "PG-IAM-003",
+    "sqs": "accepted",
+    "dynamodb": "accepted",
+    "stepfunctions": "accepted",
+    "ecs": "accepted",
+    "all-risky": "PG-IAM-004",
+    "pass-wildcard": "PG-IAM-004",
+    "pass-prefix": "PG-IAM-004",
+    "grant-pass": "PG-IAM-004",
+    "update-pair": "PG-IAM-004",
+    "update-config-only": "PG-IAM-004",
+    "admin-managed": "PG-IAM-003",
+    "cross-stack": "PG-IAM-003",
+    "acknowledged": "accepted",
+    "implicit-code": "accepted",
+    "implicit-function-arn": "accepted",
+    "implicit-other-function": "accepted",
+    "implicit-codebuild": "accepted",
+    "policy-attach-star": "accepted",
+    "policy-writer-allowed": "accepted"
+  }
+}
