@@ -62,4 +62,26 @@ structure ImplicitPath where
   /-- 対象ロールが保護対象リソースへアクセスできる場合にtrue。 -/
   targetCanAccess : Bool
   deriving Repr, DecidableEq
+/--
+ロール自身がIAMを書き換える経路の候補です（spec proofgate-self-escalation）。自分への付与、乗っ取り、作成して付与のいずれかで、
+`shape`に名前を持ちます（説明用で、判定には使いません）。除外された組（`allowedPolicyWriters`など）も、`notExempt := false`の行として含みます。
+A candidate path in which a role changes IAM itself (a self-grant, a take-over, or a creation grant). `shape` names it, for
+explanation only. Exempt candidates are rows with `notExempt := false`, so that Lean checks the exemption too.
+-/
+structure PolicyWritePath where
+  /-- 書き換えるIAMプリンシパルのLogical ID。 -/
+  principal : String
+  /-- 書き換えられるロールのLogical ID（自分への付与と作成して付与では、プリンシパル自身）。 -/
+  target : String
+  /-- アプリケーション設定で指定された保護対象リソース。 -/
+  protectedResource : String
+  /-- 経路の形（`self-grant`、`creation-grant`、`take-over`）。説明用です。 -/
+  shape : String
+  /-- 起点プリンシパルが、この形の書き込みのアクションを、このロールに対して持つ場合にtrue。 -/
+  canWrite : Bool
+  /-- 書き込みの後に保護対象リソースへ届く場合にtrue（自分への付与と作成して付与では常にtrue。乗っ取りでは、対象ロールが今届く場合）。 -/
+  reachesAfterWrite : Bool
+  /-- 起点プリンシパルが`allowedPolicyWriters`になく、乗っ取りでは対象ロールが`allowedPassRoleTargets`にもない場合にtrue。 -/
+  notExempt : Bool
+  deriving Repr, DecidableEq
 end ProofGate

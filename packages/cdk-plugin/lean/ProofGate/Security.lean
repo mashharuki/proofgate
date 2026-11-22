@@ -81,4 +81,40 @@ theorem completeImplicitEscalationIsUnsafe (principal resource target protectedR
       targetCanAccess := true
     }] = false := by
   simp [safeImplicit, isImplicitEscalation]
+/--
+IAMを書き換える候補経路が、危険な経路になる3条件の論理積です（書き込める、書き込みの後に届く、除外されていない）。
+The conjunction of the three conditions of a policy-write path.
+-/
+def isPolicyWriteEscalation (path : PolicyWritePath) : Bool :=
+  path.canWrite && path.reachesAfterWrite && path.notExempt
+/-- IAMを書き換える候補経路がすべて安全のときにtrueを返します。 -/
+def safePolicyWrite (paths : List PolicyWritePath) : Bool :=
+  paths.all fun path => !(isPolicyWriteEscalation path)
+/-- 空リストに対するBoolean関数の基本性質です。空のモデルを安全と認めるという意味ではありません。 -/
+theorem emptyPolicyWriteModelIsSafeAtBooleanLevel : safePolicyWrite [] = true := by
+  native_decide
+/-- 3条件をすべて満たす経路が1つでもあれば、安全とは判定しません。 -/
+theorem completePolicyWriteEscalationIsUnsafe (principal target protectedResource shape : String) :
+    safePolicyWrite [{
+      principal := principal
+      target := target
+      protectedResource := protectedResource
+      shape := shape
+      canWrite := true
+      reachesAfterWrite := true
+      notExempt := true
+    }] = false := by
+  simp [safePolicyWrite, isPolicyWriteEscalation]
+/-- 除外された経路は、ほかの2条件が成り立っていても、危険とは判定しません。 -/
+theorem exemptPolicyWriteIsSafe (principal target protectedResource shape : String) :
+    safePolicyWrite [{
+      principal := principal
+      target := target
+      protectedResource := protectedResource
+      shape := shape
+      canWrite := true
+      reachesAfterWrite := true
+      notExempt := false
+    }] = true := by
+  simp [safePolicyWrite, isPolicyWriteEscalation]
 end ProofGate

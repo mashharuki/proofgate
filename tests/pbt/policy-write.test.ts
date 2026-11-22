@@ -180,6 +180,17 @@ const rows: Row[] = [
     }),
     "safe",
   ),
+  row(
+    "UpdateAssumeRolePolicy on the own role that reaches the bucket (nothing new)",
+    model({
+      ...dev([[["iam:UpdateAssumeRolePolicy"], [arn("dev-role")]]]),
+      statements: [
+        statement(["iam:UpdateAssumeRolePolicy"], [arn("dev-role")], "Dev", 0),
+        statement(["s3:GetObject"], [`${BUCKET}/*`], "Dev", 1),
+      ],
+    }),
+    "safe",
+  ),
   // Creation grant.
   row(
     "CreateRole and AttachRolePolicy on the same prefix",
