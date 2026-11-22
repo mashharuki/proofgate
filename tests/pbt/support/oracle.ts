@@ -21,8 +21,15 @@
  * the protected bucket, and the bucket actions that can give others access, or copy or expire every
  * object (permission management, replication, lifecycle), count on the bucket ARN itself.
  */
-import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
+import type {
+  ProofGateConfig,
+  ResourceModel,
+  RoleModel,
+  StackModel,
+  StatementModel,
+} from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
+import { IMPLICIT_ACTIONS } from "./aws-implicit.js";
 import { LAUNCH_SUPPLEMENTS } from "./aws-supplements.js";
 import { ANY_SUFFIX, compileGlob, intersects, literalTokens, matchTokens } from "./glob.js";
 
@@ -226,7 +233,89 @@ export function oracleUnknownTrusts(
   }
   return [...out.values()];
 }
+// ---------------------------------------------------------------------------------------------------------------
+// Paths without iam:PassRole (spec proofgate-implicit-role-paths, design 5 and 6).
+// A principal P can change a resource R that already runs as role T (an action of IMPLICIT_ACTIONS of R's kind, on a
+// Resource that may denote R), and T reaches a protected bucket. Excluded: P = T, and T in allowedPassRoleTargets.
+// The oracle matches resource ARNs with its own glob code, case-sensitively (ARNs are case-sensitive in IAM), and does not
+// count a bare logical ID or physical name as a Resource (IAM rejects a Resource that is not an ARN or "*").
+// PassRoleの要らない経路です。主体Pが、すでにロールTで動くリソースRを変更でき、Tが保護バケットに届くとき、経路があります。
+// ---------------------------------------------------------------------------------------------------------------
+const RESOURCE_SHAPES: Readonly<Record<ResourceModel["kind"], { prefix: string; marker: string }>> =
+  {
+    "lambda-function": { prefix: "arn:*:lambda:*:*:function:", marker: ":function:" },
+    "codebuild-project": { prefix: "arn:*:codebuild:*:*:project/", marker: ":project/" },
+    "stepfunctions-state-machine": {
+      prefix: "arn:*:states:*:*:stateMachine:",
+      marker: ":stateMachine:",
+    },
+  };
+/** Does the Resource pattern denote the ARN of the resource? An unnamed resource is read as its opaque name. */
+function resourceDenotes(pattern: string, resource: ResourceModel): boolean {
+  if (/^\*+$/.test(pattern)) return true;
+  const { prefix, marker } = RESOURCE_SHAPES[resource.kind];
+  const unnamed = resource.name === undefined && resource.nameUnknown !== true;
+  const name =
+    resource.nameUnknown === true
+      ? [ANY_SUFFIX]
+      : literalTokens(resource.name ?? `_generated_${resource.logicalId}`);
+  const mine = [...compileGlob(prefix), ...name];
+  if (intersects(compileGlob(pattern), mine)) return true;
+  // An unnamed resource gets a name from CloudFormation that is unknown at synthesis: a wildcard in the name part of the
+  // pattern may match it, a literal name cannot.
+  if (!unnamed) return false;
+  const at = pattern.indexOf(marker);
+  if (at < 0) return false;
+  return (
+    /[*?]/.test(pattern.slice(at + marker.length)) &&
+    intersects(compileGlob(pattern), [...compileGlob(prefix), ANY_SUFFIX])
+  );
+}
+function canChangeResource(
+  principal: RoleModel,
+  resource: ResourceModel,
+): readonly StatementModel[] {
+  const actions = IMPLICIT_ACTIONS.filter((entry) => entry.kind === resource.kind);
+  return principal.statements.filter(
+    (s) =>
+      s.effect === "Allow" &&
+      actions.some((entry) => allows(s, entry.action)) &&
+      s.resources.some((r) => resourceDenotes(r, resource)),
+  );
+}
+function implicitPaths(model: StackModel, config: ProofGateConfig): OraclePath[] {
+  const found: OraclePath[] = [];
+  const roles = new Map(model.roles.map((role) => [role.logicalId, role]));
+  for (const resource of model.resources ?? []) {
+    const target =
+      resource.roleLogicalId === undefined ? undefined : roles.get(resource.roleLogicalId);
+    if (target === undefined) continue;
+    if (config.allowedPassRoleTargets?.includes(target.logicalId)) continue;
+    for (const principal of model.roles) {
+      if (principal.logicalId === target.logicalId) continue;
+      if (canChangeResource(principal, resource).length === 0) continue;
+      for (const bucketArn of config.protectedBucketArns) {
+        if (canReachBucket(target, bucketArn)) {
+          found.push({ principal: principal.logicalId, target: target.logicalId, bucketArn });
+        }
+      }
+    }
+  }
+  return found;
+}
+/** Design 6: a resource whose role cannot be identified, that some principal can change, is rejected (PG-IAM-003). */
+export function oracleUnknownRoles(model: StackModel): { readonly resource: string }[] {
+  return (model.resources ?? [])
+    .filter(
+      (resource) =>
+        resource.roleUnknown === true &&
+        model.roles.some((principal) => canChangeResource(principal, resource).length > 0),
+    )
+    .map((resource) => ({ resource: resource.logicalId }));
+}
 /** モデルが危険か安全かを返します。 */
 export function oracleVerdict(model: StackModel, config: ProofGateConfig): OracleVerdict {
-  return oraclePaths(model, config).length > 0 ? "unsafe" : "safe";
+  return oraclePaths(model, config).length > 0 || implicitPaths(model, config).length > 0
+    ? "unsafe"
+    : "safe";
 }
