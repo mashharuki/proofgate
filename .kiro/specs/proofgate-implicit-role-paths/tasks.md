@@ -1,5 +1,5 @@
 # Tasks: proofgate-implicit-role-paths
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 to 3 are done (Step 3 waits for Checkpoint 3); Step 4 (docs and release preparation) is open.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). All four steps are done; Checkpoint 4 (version, publish, tag, release) waits for the user's instruction.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-21). Design: [design.md](./design.md).
 Time box: see design section 11 (freeze 2026-11-29 for the brushup, deadline 2026-12-04 14:00 PT).
 Branches: one per step, from `main`: `implicit/step-1-evidence`, `implicit/step-2-extractor`, `implicit/step-3-core-lean`, `implicit/step-4-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
@@ -32,7 +32,7 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 - [ ] 6. **Checkpoint 3.** If the Lean change is not finished by 2026-12-01, report it and merge only Steps 1 and 2 (design section 11).
 
 ## Step 4: Docs and release preparation
-- [ ] 7. Create branch `implicit/step-4-release-prep`.
-  - [ ] 7.1 `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md` (the two over-approximations of design section 4, the not-modeled list), the adoption guide in `README.md` and `packages/cdk-plugin/README.md`, `docs/REAL_STACKS.md` and the English file, `CHANGELOG.md`, steering and `AGENTS.md`.
-  - [ ] 7.2 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app (add the Sysdig 2025 shape as a variant), differential, Lean audit, `git diff --check`, scan of added lines for credentials.
+- [x] 7. Create branch `implicit/step-4-release-prep`.
+  - [x] 7.1 `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md` (the two over-approximations of design section 4, the not-modeled list), the adoption guide in `README.md` and `packages/cdk-plugin/README.md`, `docs/REAL_STACKS.md` and the English file, `CHANGELOG.md`, steering and `AGENTS.md`.
+  - [x] 7.2 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app (add the Sysdig 2025 shape as a variant), differential, Lean audit, `git diff --check`, scan of added lines for credentials.
 - [ ] 8. **Checkpoint 4.** Version, publish, tags, and releases only on the user's instruction (proposal: 1.2.0 together with the brushup).

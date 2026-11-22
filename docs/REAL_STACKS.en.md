@@ -186,7 +186,8 @@ Nine Patterns were run with `pnpm real-stacks --implicit` after their prediction
 The same app as the 1.1.1 trial (18 variants) was run with 1.1.2 from npm and with the current code of this repository (packed tarballs). One result differs:
 
 - `apigw` (the REST API logging role gets the managed policy `AmazonAPIGatewayPushToCloudWatchLogs`): `PG-IAM-003` on 1.1.2, accepted now. `cloudWatchRole: false` is no longer needed.
-- The other 17 variants give the same result (`update-config-only` is `PG-IAM-004` since 1.1.2). The `ecs` task role reads the protected bucket but nobody can pass it, so it is accepted.
+- Four variants were added (paths without PassRole; the expected results were written before the run). On 1.1.2 all four are accepted; on the current code `implicit-code` (`lambda:UpdateFunctionCode` on `*`), `implicit-function-arn` (the Resource is `reader.functionArn`), and `implicit-codebuild` (a CodeBuild project that reads the bucket and `codebuild:StartBuild`) give `PG-IAM-004`, and `implicit-other-function` (the ARN of another function that cannot reach the bucket) is accepted. Of the 22 variants, `apigw` and three of these four differ between 1.1.2 and the current code.
+- Of the original 18, the other 17 variants give the same result (`update-config-only` is `PG-IAM-004` since 1.1.2). The `ecs` task role reads the protected bucket but nobody can pass it, so it is accepted.
 - The violation text now names the service and the launch action (for example `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`).
 
 ## What the Lean check shows

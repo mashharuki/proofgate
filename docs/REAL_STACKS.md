@@ -184,7 +184,8 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 1.1.1の試用と同じアプリ（18の変種）で、npmの1.1.2と、このリポジトリの今のコード（パッケージにしたtarball）を比べました。違いは1つだけです。
 
 - `apigw`（REST APIのCloudWatchロールに管理ポリシー`AmazonAPIGatewayPushToCloudWatchLogs`が付く）: 1.1.2では`PG-IAM-003`、今のコードでは受理です。`cloudWatchRole: false`は不要になりました。
-- そのほかの17の変種は同じ結果です（`update-config-only`は1.1.2から`PG-IAM-004`）。`ecs`のタスクロールは保護対象バケットを読みますが、ロールを渡せる主体がないため受理します。
+- 4つの変種を足しました（PassRoleの要らない経路、予想を実行の前に書きました）。1.1.2では4件とも受理、今のコードでは次のとおりです。`implicit-code`（`lambda:UpdateFunctionCode`を`*`に）は`PG-IAM-004`、`implicit-function-arn`（Resourceが`reader.functionArn`）は`PG-IAM-004`、`implicit-codebuild`（バケットを読むCodeBuildプロジェクトと`codebuild:StartBuild`）は`PG-IAM-004`、`implicit-other-function`（バケットに届かない別の関数のARN）は受理です。22の変種のうち、結果が変わったのは`apigw`と、この4つのうちの3つです。
+- 元の18のうち、そのほかの17の変種は同じ結果です（`update-config-only`は1.1.2から`PG-IAM-004`）。`ecs`のタスクロールは保護対象バケットを読みますが、ロールを渡せる主体がないため受理します。
 - 違反の文面は、サービスと起動アクションを書くようになりました（例: `... can pass role ReaderServiceRole... to lambda.amazonaws.com and launch it (lambda:CreateFunction) ...`）。
 
 ## Leanの検査が示すこと
