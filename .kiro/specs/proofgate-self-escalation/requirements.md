@@ -1,5 +1,5 @@
 # Requirements: proofgate-self-escalation
-Status: DRAFT, written 2026-11-22, awaiting the user's approval. `design.md` and `tasks.md` are not written. No code has been changed for this spec.
+Status: APPROVED by the user on 2026-11-22 with the proposals of all five open questions (answers recorded at the end). `design.md` and `tasks.md` are not written. No code has been changed for this spec.
 
 ## Introduction
 `PG-IAM-004` finds paths in which a principal reaches a protected S3 bucket by **running code** as another role (with `iam:PassRole` and a launch action, or by changing a resource that already runs as a role). AWS has a third class that needs no code at all: the principal **changes IAM itself**. It writes a policy to its own role, attaches a managed policy to it, or rewrites the trust policy of a more powerful role so that it can assume that role. After that it can reach everything the new permissions allow, including the protected bucket.
@@ -88,3 +88,11 @@ Of the 22 `self-escalation` and `principal-access` paths of the benchmark (8 and
 3. **Include the creation grant (Requirement 4)?** Proposal: yes, it is the Unit 42 shape and cheap (two actions and an intersection). It over-reports a pipeline that creates roles with a fixed name prefix and attaches only to roles of that prefix; the intersection of the two Resources handles a prefix, `*` does not.
 4. **Which of `PutRolePolicy` and `AttachRolePolicy` on a Resource of `*` is a finding?** Proposal: both, since `*` denotes the role itself.
 5. **Order.** Proposal: write the design after the user approves these requirements; start the code only after Step 7 of the brushup is closed or the user says otherwise.
+
+## Decisions (2026-11-22, user)
+The proposals of the five open questions were approved as written:
+1. A self-grant is reported even if the role reaches no protected bucket today.
+2. The exception list is a new optional field `allowedPolicyWriters` (Logical IDs of roles), separate from `allowedPassRoleTargets`.
+3. The creation grant (Requirement 4) is included.
+4. `iam:PutRolePolicy` and `iam:AttachRolePolicy` on a Resource of `*` are both findings.
+5. Order: the design is written after this approval; code starts only after Step 7 of the brushup is closed or the user says otherwise.
