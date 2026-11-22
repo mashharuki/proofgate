@@ -115,24 +115,25 @@ describe("pathfinding.cloud coverage benchmark (Step 7)", () => {
     expect(predictions).toHaveLength(91);
     for (const p of paths) expect(predicted.has(p.id), p.id).toBe(true);
   });
-  const observed = read<{ results: { id: string; observed: string; note?: string }[] }>(
-    "results.json",
-  ).results;
+  const observed = read<{
+    results: { id: string; observed: string; observedAfterFix?: string; note?: string }[];
+  }>("results.json").results;
   it("matches the observed results of results.json", () => {
-    const want = new Map(observed.map((r) => [r.id, r.observed]));
+    const want = new Map(observed.map((r) => [r.id, r.observedAfterFix ?? r.observed]));
     const mismatches = paths
       .map((entry) => ({ id: entry.id, got: outcome(entry), want: want.get(entry.id) }))
       .filter((r) => r.got !== r.want);
     expect(mismatches, JSON.stringify(mismatches)).toEqual([]);
   });
-  it("differs from the committed predictions only where results.json explains it", () => {
+  it("differs from the committed predictions (first run) only where results.json explains it", () => {
     const differs = observed.filter((r) => r.observed !== predicted.get(r.id)).map((r) => r.id);
     const explained = observed.filter((r) => r.note !== undefined).map((r) => r.id);
     expect(differs.sort()).toEqual(explained.sort());
   });
-  it("records the coverage: 44 findings, 1 rejection, 46 accepted of 91", () => {
-    const count = (value: string) => observed.filter((r) => r.observed === value).length;
-    expect([count("PG-IAM-004"), count("PG-IAM-003"), count("accepted")]).toEqual([44, 1, 46]);
+  it("records the coverage after the launch-supplements fix: 46 findings, 45 accepted of 91", () => {
+    const count = (value: string) =>
+      observed.filter((r) => (r.observedAfterFix ?? r.observed) === value).length;
+    expect([count("PG-IAM-004"), count("PG-IAM-003"), count("accepted")]).toEqual([46, 0, 45]);
   });
   it("agrees with Lean on every path, in one launch", () => {
     const batch: BatchCase[] = paths.map((entry, id) => {

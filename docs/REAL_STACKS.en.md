@@ -156,6 +156,7 @@ Then the 91 AWS paths of Datadog [pathfinding.cloud](https://pathfinding.cloud/)
 
 - 44 paths are reported: 44 of the 47 `new-passrole` paths (`cloudformation-005` has no PassRole and is accepted). `existing-passrole` (22, paths without PassRole), `principal-access` (14), and `self-escalation` (8) are not supported yet, so all are accepted.
 - Three results differ from the predictions. `cognitoidentity-001` is detected, better than predicted. `apprunner-001` is rejected with `PG-IAM-003` instead of reported, because the target role trusts `tasks.apprunner.amazonaws.com` while the launch table says `bullet.amazonaws.com`. `gamelift-001` is a **miss**: the fleet instance role trusts `ec2.amazonaws.com` but the table maps `gamelift:CreateFleet` to `gamelift.amazonaws.com`, so the trust does not match. Services that pass an EC2 instance role (EMR, Image Builder) can have the same kind of gap. A candidate fix is to count trust of `ec2.amazonaws.com` too when the launch service passes an instance profile. It only adds findings and belongs to a separate spec.
+- Both (`apprunner-001`, `gamelift-001`) were fixed the same day (`launch-supplements.ts`). After the fix 46 of the 91 paths are reported and 45 are accepted (classes B and C, not supported yet).
 - Two mistakes in the benchmark model (`cloudformation-004`, `batch-001`) were corrected and are written in `results.json`.
 - The benchmark reproduces only the preconditions (the combination of permissions). It does not check that an attack really works.
 
