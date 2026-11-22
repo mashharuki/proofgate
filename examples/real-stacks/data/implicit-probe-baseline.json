@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "description": "Baseline: Patterns RS-54 to RS-62 run on main (265b6c9) with `node dist/runner.js --implicit --cli none` on 2026-11-22, before any code of the spec. Never edit.",
+  "differencesFromPrediction": [],
+  "results": [
+    {
+      "id": "RS-54",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-55",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-56",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-57",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-58",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-59",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-60",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-61",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-62",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { catalog, selectPattern } from "./catalog.js";
 import { PROTECTED_BUCKET_ARN } from "./config.js";
 import { constructProbeCatalog } from "./construct-probe/catalog.js";
 import { holdoutCatalog } from "./holdout/catalog.js";
+import { implicitProbeCatalog } from "./implicit-probe/catalog.js";
 import { incidentProbeCatalog } from "./incident-probe/catalog.js";
 import { launchProbeCatalog } from "./launch-probe/catalog.js";
 
@@ -24,6 +25,7 @@ export function createApp(options: CreateAppOptions): App {
     ...constructProbeCatalog,
     ...launchProbeCatalog,
     ...incidentProbeCatalog,
+    ...implicitProbeCatalog,
   ]);
   pattern.build(app);
   if (options.gated) {

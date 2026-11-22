@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "description": "Predictions for the Patterns RS-54 to RS-62 of the spec proofgate-implicit-role-paths (paths without iam:PassRole), written on 2026-11-22 BEFORE these Patterns were run with ProofGate and before any code of the spec exists. predictedResultMain is for main at 265b6c9; predictedResultAfter is for the implementation of the design. Never edit this file.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
+  "patterns": [
+    {
+      "id": "RS-54",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A developer role may change the code of any Lambda function (lambda:UpdateFunctionCode on *), no iam:PassRole. The function runs as a role that reads the protected bucket. Missed on main because the rule needs PassRole."
+    },
+    {
+      "id": "RS-55",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "The same, with lambda:UpdateFunctionConfiguration (layers and ImageConfig run code in the function). No PassRole."
+    },
+    {
+      "id": "RS-56",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A developer role may start builds of any CodeBuild project (codebuild:StartBuild on *) and override the buildspec. The project service role reads the protected bucket."
+    },
+    {
+      "id": "RS-57",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "The same with codebuild:StartBuildBatch."
+    },
+    {
+      "id": "RS-58",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A developer role may update any state machine (states:UpdateStateMachine on *). The state machine role reads the protected bucket."
+    },
+    {
+      "id": "RS-59",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Two projects. Project A runs as a role that reads the protected bucket, project B as a role that does not. The developer may start builds of project B only (the Resource is project B's ARN). Tests the narrowing of GetAtt Arn: read as * it would match project A and be a false alarm."
+    },
+    {
+      "id": "RS-60",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A Lambda function runs as a role that reads another bucket only. The developer may change any function. Nothing reaches the protected bucket."
+    },
+    {
+      "id": "RS-61",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-003",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A Lambda function whose role comes from a CloudFormation parameter, and a developer role that may change any function. Ground truth unknown (worst case recorded as unsafe). The role cannot be identified, and a statement touches the function, so the template is rejected."
+    },
+    {
+      "id": "RS-62",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "The function runs as the developer role itself (the role has lambda trust, reads the bucket, and may change the function). Changing its own function gives it nothing new (decision 4)."
+    }
+  ]
+}

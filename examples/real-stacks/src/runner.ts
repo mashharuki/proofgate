@@ -8,6 +8,7 @@ import { ClassificationError, classify, RESULTS } from "./classify.js";
 import { constructProbeCatalog } from "./construct-probe/catalog.js";
 import { createApp } from "./create-app.js";
 import { holdoutCatalog } from "./holdout/catalog.js";
+import { implicitProbeCatalog } from "./implicit-probe/catalog.js";
 import { incidentProbeCatalog } from "./incident-probe/catalog.js";
 import { launchProbeCatalog } from "./launch-probe/catalog.js";
 import type { Pattern } from "./pattern.js";
@@ -221,7 +222,7 @@ interface Options {
   readonly only: string | undefined;
   readonly cli: "none" | "sample" | "all";
   /** holdoutとprobeは、ホールドアウトと構成の試しのPatternを観測だけします（期待表はなく、--printと同じ出力です）。 */
-  readonly set: "main" | "holdout" | "probe" | "launch" | "incident";
+  readonly set: "main" | "holdout" | "probe" | "launch" | "incident" | "implicit";
 }
 
 function parseArguments(argv: string[]): Options {
@@ -237,6 +238,7 @@ function parseArguments(argv: string[]): Options {
     else if (argument === "--probe") set = "probe";
     else if (argument === "--launch") set = "launch";
     else if (argument === "--incident") set = "incident";
+    else if (argument === "--implicit") set = "implicit";
     else if (argument === "--cli") {
       const mode = argv[++i];
       if (mode !== "none" && mode !== "sample" && mode !== "all") {
@@ -257,6 +259,7 @@ function main(): number {
     probe: constructProbeCatalog,
     launch: launchProbeCatalog,
     incident: incidentProbeCatalog,
+    implicit: implicitProbeCatalog,
   };
   const patterns = sets[options.set].filter(
     (pattern) => options.only === undefined || pattern.id === options.only,
