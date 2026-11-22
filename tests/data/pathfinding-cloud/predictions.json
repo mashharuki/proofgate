@@ -1,0 +1,647 @@
+{
+ "description": "Predictions for the pathfinding.cloud coverage benchmark (spec proofgate-brushup, Step 7), written on 2026-11-22 BEFORE the benchmark was run with ProofGate (main at be337d3). Ground truth: every path is an escalation path once the target role reaches the protected bucket. Never edit this file.",
+ "model": "Attacker role: every permission of permissions.required on Resource *, except iam:PassRole and sts:AssumeRole on the target role ARN. Target role: s3:GetObject on every object of the protected bucket; trust = trustFromPrerequisites, or, if empty, the main service of the path (apprunner -> tasks.apprunner, batch and ecs -> ecs-tasks, bedrock -> bedrock-agentcore, stepfunctions -> states, codedeploy, ec2-instance-connect, ssm -> ec2, iam and sts -> lambda, others -> <service>.amazonaws.com).",
+ "summary": {
+  "PG-IAM-004": 45,
+  "accepted": 46
+ },
+ "predictions": [
+  {
+   "id": "apprunner-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "apprunner-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "batch-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "batch-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "batch-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "bedrock-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "bedrock-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "bedrock-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "bedrock-004",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "bedrock-005",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "bedrock-006",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "bedrock-007",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "braket-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "cloudformation-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "cloudformation-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "cloudformation-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "cloudformation-004",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "cloudformation-005",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "no iam:PassRole in the path (the stack service role is used); class B"
+  },
+  {
+   "id": "codebuild-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "codebuild-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "codebuild-003",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "codebuild-004",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "codedeploy-001",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "cognitoidentity-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "the role is assumed through a Cognito identity pool (web identity), and I expect SetIdentityPoolRoles not to be read as a launch action for that trust"
+  },
+  {
+   "id": "datapipeline-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ec2instanceconnect-003",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ec2-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ec2-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ec2-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ec2-005",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ecs-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-002",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-004",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-005",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-006",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ecs-007",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-008",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ecs-009",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "emr-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "emrserverless-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "gamelift-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "glue-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-004",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-005",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-006",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "glue-007",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "iam-001",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-002",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-003",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-004",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-005",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-006",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-007",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-008",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-009",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-010",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-011",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-012",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-013",
+   "category": "self-escalation",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-014",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-015",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-016",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-017",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-018",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-019",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-020",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "iam-021",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  },
+  {
+   "id": "imagebuilder-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "kinesisanalytics-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "lambda-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "lambda-002",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "lambda-003",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "lambda-004",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "lambda-005",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "lambda-006",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "omics-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "sagemaker-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "sagemaker-002",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "sagemaker-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "sagemaker-004",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "sagemaker-005",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "scheduler-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "ssm-001",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ssm-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "ssm-003",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "stepfunctions-001",
+   "category": "new-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "PG-IAM-004",
+   "reason": "class A: iam:PassRole plus a launch action, and the target trusts the service"
+  },
+  {
+   "id": "stepfunctions-002",
+   "category": "existing-passrole",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class B: no iam:PassRole; ProofGate needs spec proofgate-implicit-role-paths"
+  },
+  {
+   "id": "sts-001",
+   "category": "principal-access",
+   "groundTruth": "unsafe",
+   "predicted": "accepted",
+   "reason": "class C: self-escalation or principal access; not modeled (planned PG-IAM-005)"
+  }
+ ]
+}
