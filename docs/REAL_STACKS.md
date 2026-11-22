@@ -155,6 +155,7 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 
 - 指摘したのは44件です。`new-passrole`の47件のうち44件（`cloudformation-005`はPassRoleのない経路で、受理）です。`existing-passrole`（22件、PassRoleのない経路）、`principal-access`（14件）、`self-escalation`（8件）は、まだ対応していないため、すべて受理です。
 - 予想と違ったのは3件です。`cognitoidentity-001`は、予想より良く検出しました。`apprunner-001`は、信頼先のサービス（`tasks.apprunner.amazonaws.com`）が起動アクションの表の値（`bullet.amazonaws.com`）と違うため、検出ではなく`PG-IAM-003`で拒否しました。`gamelift-001`は**見逃し**です。フリートのインスタンスロールは`ec2.amazonaws.com`を信頼しますが、表は`gamelift:CreateFleet`を`gamelift.amazonaws.com`に結びつけているため、信頼先が一致しません。EMRやImage Builderのように、EC2のインスタンスロールを渡すサービスでも同じ種類のずれが起こりえます。直す案は「起動サービスがインスタンスプロファイルを渡すときは、`ec2.amazonaws.com`への信頼も数える」です。指摘を増やす方向だけの変更で、別のspecで扱います。
+- 上の2件（`apprunner-001`、`gamelift-001`）は、同じ日に直しました（`launch-supplements.ts`）。直した後は、91件中46件を指摘し、45件が受理（まだ対応していない分類B、C）です。
 - ベンチマークのモデルの誤りが2件ありました（`cloudformation-004`、`batch-001`）。モデルを直して、`results.json`に書きました。
 - このベンチマークは、攻撃の前提（権限の組み合わせ）だけを再現します。実際に攻撃が成立するかは見ていません。
 

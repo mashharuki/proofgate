@@ -23,6 +23,7 @@
  */
 import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
+import { LAUNCH_SUPPLEMENTS } from "./aws-supplements.js";
 import { ANY_SUFFIX, compileGlob, intersects, literalTokens, matchTokens } from "./glob.js";
 
 export type OracleVerdict = "unsafe" | "safe";
@@ -99,7 +100,10 @@ function canPassRole(principal: RoleModel, target: RoleModel): boolean {
 // service: any service. Lambda is no longer special: lambda:CreateFunction and lambda:UpdateFunctionConfiguration
 // are entries of the table (UpdateFunctionConfiguration can change Role and Layers, read 2026-11-20).
 // 起動サービスの集合です。表の各アクションが、ロールを渡せるサービスを返します。Lambdaも表の1項目です。
-const LAUNCH_ENTRIES = Object.entries(LAUNCH_ACTIONS);
+// The generated table plus the hand-written supplements (more trusted services of actions that already are in the table).
+const LAUNCH_ENTRIES: [string, readonly string[]][] = Object.entries(LAUNCH_ACTIONS).map(
+  ([action, values]) => [action, [...values, ...(LAUNCH_SUPPLEMENTS[action] ?? [])]],
+);
 const servicesOfPattern = new Map<string, readonly string[]>();
 /** The services that one action pattern can launch (cached per pattern; speed only). */
 function launchServicesOfPattern(pattern: string): readonly string[] {
@@ -149,7 +153,7 @@ function launchMatches(principal: RoleModel, target: RoleModel): boolean {
 }
 /** Every service principal that appears in a value of the table. */
 const KNOWN_LAUNCH_SERVICES: ReadonlySet<string> = new Set(
-  Object.values(LAUNCH_ACTIONS).flatMap((values) => values.map((v) => v.toLowerCase())),
+  LAUNCH_ENTRIES.flatMap(([, values]) => values.map((v) => v.toLowerCase())),
 );
 // A bucket action is applied to the bucket ARN itself (no key part).
 function resourceReachesBucketArn(resource: string, bucketArn: string): boolean {

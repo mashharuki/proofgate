@@ -1,5 +1,5 @@
 {
-  "description": "Observed results of the pathfinding.cloud coverage benchmark, 2026-11-22 (code of main at be337d3). predictions.json was committed before the run and is not edited. The first run differed from the predictions in 5 paths; two (cloudformation-004, batch-001) were mistakes of the benchmark model (the fallback trust took the service 'iam'; the Batch service role was used instead of the job role) and were corrected in the test; the other three are real differences listed with notes.",
+  "description": "Observed results of the pathfinding.cloud coverage benchmark, 2026-11-22 (code of main at be337d3). predictions.json was committed before the run and is not edited. The first run differed from the predictions in 5 paths; two (cloudformation-004, batch-001) were mistakes of the benchmark model (the fallback trust took the service 'iam'; the Batch service role was used instead of the job role) and were corrected in the test; the other three are real differences listed with notes. observed is the first run; observedAfterFix is the result after the launch-supplements fix (apprunner-001, gamelift-001).",
   "summary": {
     "PG-IAM-003": 1,
     "accepted": 46,
@@ -27,7 +27,8 @@
       "category": "new-passrole",
       "predicted": "PG-IAM-004",
       "observed": "PG-IAM-003",
-      "note": "The target role trusts tasks.apprunner.amazonaws.com, but the table maps apprunner:CreateService to bullet.amazonaws.com (the iam:PassedToService value of the Service Reference). The trust service is in no value of the table, so the role is rejected under design 5.4 instead of reported. Not a defect of the rule: it fails closed. It shows that the table and real trust principals can differ."
+      "note": "The target role trusts tasks.apprunner.amazonaws.com, but the table maps apprunner:CreateService to bullet.amazonaws.com (the iam:PassedToService value of the Service Reference). The trust service is in no value of the table, so the role is rejected under design 5.4 instead of reported. Not a defect of the rule: it fails closed. It shows that the table and real trust principals can differ. Fixed on 2026-11-22 by launch-supplements.ts (a reviewed addition of the trusted services of gamelift:CreateFleet and of apprunner:CreateService and UpdateService); the result after the fix is observedAfterFix.",
+      "observedAfterFix": "PG-IAM-004"
     },
     {
       "id": "apprunner-002",
@@ -275,7 +276,8 @@
       "category": "new-passrole",
       "predicted": "PG-IAM-004",
       "observed": "accepted",
-      "note": "A MISS. The instance role of a GameLift fleet trusts ec2.amazonaws.com, but the table maps gamelift:CreateFleet to gamelift.amazonaws.com. ProofGate requires the trusted service to equal the PassedToService value, so the path is not seen. The same gap exists for any service that passes an EC2 instance role (EMR, Image Builder, GameLift). Candidate fix for a later spec: when the launch service passes an instance profile, also count trust of ec2.amazonaws.com."
+      "note": "A MISS. The instance role of a GameLift fleet trusts ec2.amazonaws.com, but the table maps gamelift:CreateFleet to gamelift.amazonaws.com. ProofGate requires the trusted service to equal the PassedToService value, so the path is not seen. The same gap exists for any service that passes an EC2 instance role (EMR, Image Builder, GameLift). Candidate fix for a later spec: when the launch service passes an instance profile, also count trust of ec2.amazonaws.com. Fixed on 2026-11-22 by launch-supplements.ts (a reviewed addition of the trusted services of gamelift:CreateFleet and of apprunner:CreateService and UpdateService); the result after the fix is observedAfterFix.",
+      "observedAfterFix": "PG-IAM-004"
     },
     {
       "id": "glue-001",
@@ -571,5 +573,24 @@
       "predicted": "accepted",
       "observed": "accepted"
     }
-  ]
+  ],
+  "summaryAfterFix": {
+    "PG-IAM-004": 46,
+    "accepted": 45
+  },
+  "byCategoryAfterFix": {
+    "existing-passrole": {
+      "accepted": 22
+    },
+    "new-passrole": {
+      "PG-IAM-004": 46,
+      "accepted": 1
+    },
+    "principal-access": {
+      "accepted": 14
+    },
+    "self-escalation": {
+      "accepted": 8
+    }
+  }
 }

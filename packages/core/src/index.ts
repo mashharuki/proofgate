@@ -8,6 +8,7 @@ import type {
 } from "@proofgate-cdk/model";
 import { RULE_ID } from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
+import { LAUNCH_SUPPLEMENTS } from "./launch-supplements.js";
 
 /**
  * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、
@@ -154,8 +155,9 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
 const OBJECT_ACTIONS_AND_STAR: readonly string[] = [...OBJECT_ACTIONS, "s3:*"];
 
 /** 起動アクションの表の項目です（小文字のアクション名と、渡し先のサービス）。 */
-const LAUNCH_ENTRIES: readonly (readonly [string, readonly string[]])[] =
-  Object.entries(LAUNCH_ACTIONS);
+const LAUNCH_ENTRIES: readonly (readonly [string, readonly string[]])[] = Object.entries(
+  LAUNCH_ACTIONS,
+).map(([action, services]) => [action, [...services, ...(LAUNCH_SUPPLEMENTS[action] ?? [])]]);
 /** 表の値に現れるサービスプリンシパルです。`*`は含みません。 */
 const KNOWN_SERVICES: ReadonlySet<string> = new Set(
   LAUNCH_ENTRIES.flatMap(([, services]) => services).filter((service) => service !== "*"),

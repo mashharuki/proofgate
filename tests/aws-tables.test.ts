@@ -173,3 +173,18 @@ describe("generated AWS tables", () => {
     }
   });
 });
+
+// Launch supplements (packages/core/src/launch-supplements.ts): hand-written, so the test guards their shape.
+// 手書きの補足は、生成した表にあるアクションにだけ、小文字のアクション名で足せます。
+describe("launch supplements", () => {
+  it("only extend actions that are in the generated table, with lower-case names", async () => {
+    const { LAUNCH_SUPPLEMENTS } = await import("../packages/core/src/launch-supplements.js");
+    for (const [action, services] of Object.entries(LAUNCH_SUPPLEMENTS)) {
+      expect(action, action).toBe(action.toLowerCase());
+      expect(Object.hasOwn(LAUNCH_ACTIONS, action), action).toBe(true);
+      expect(services.length, action).toBeGreaterThan(0);
+      for (const service of services)
+        expect(service, action).toMatch(/^[a-z0-9.-]+\.amazonaws\.com$/);
+    }
+  });
+});

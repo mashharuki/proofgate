@@ -70,10 +70,13 @@ English: `Resource` also reads `Fn::Join`, the pseudo-parameters `AWS::Partition
 
 1.2.0（予定）から、経路はLambdaに限りません。起動アクションは、AWS Service Referenceから生成した表（`packages/core/src/aws-tables.generated.ts`、879件、2026-11-21）です。`iam:PassRole`を認可に含む操作の、書き込みまたは権限管理のアクションで、値はロールを渡せるサービスプリンシパル（`iam:PassedToService`）です。起点ロールが起動アクションを持ち、対象ロールがそのサービスを信頼していれば、条件2と3が成り立ちます。例: `ecs:RunTask`と`ecs-tasks.amazonaws.com`、`ec2:RunInstances`と`ec2.amazonaws.com`、`codebuild:CreateProject`、`cloudformation:CreateStack`、`states:CreateStateMachine`、`glue:CreateJob`。
 
+- 表のサービスと、渡されるロールが信頼するサービスが違う場合の補足を、手書きの表（`packages/core/src/launch-supplements.ts`）で足します。現在の項目は、`gamelift:CreateFleet`（インスタンスロールは`ec2.amazonaws.com`）と、`apprunner:CreateService`、`apprunner:UpdateService`（`tasks.apprunner.amazonaws.com`と`build.apprunner.amazonaws.com`）です。
 - 表にサービスの値がない23件（`cognito-idp:CreateUserPool`など）は、どのサービスにも渡せるものとして読みます（過剰検出の側）。
 - リージョン付きのサービスプリンシパル（`states.us-east-1.amazonaws.com`）は、リージョンなしの形として読みます。
 - Trust Policyの`*`は、起点ロールが起動できるどのサービスにも引き受けられるものとして読みます（過剰検出の側）。
 - 渡せて保護バケットに届くロールが、表のどの値にもないサービスを信頼していると、そのサービスが渡されたロールでコードを動かすかどうかを判断できないため、`PG-IAM-003`で拒否します。
+
+English: a hand-written table (`packages/core/src/launch-supplements.ts`) adds trusted services where the passed role trusts another principal than the table value: `gamelift:CreateFleet` (instance role, `ec2.amazonaws.com`) and `apprunner:CreateService` and `UpdateService` (`tasks.apprunner.amazonaws.com`, `build.apprunner.amazonaws.com`); each entry needs a source.
 
 English: from 1.2.0 (planned) the path is not limited to Lambda. Launch actions come from a table generated from the AWS Service Reference (879 entries, 2026-11-21): write or permission-management actions of operations that authorize `iam:PassRole`, each mapped to the service principals that can receive the role. A principal with a launch action and a target that trusts that service meet conditions 2 and 3. The 23 entries with no service value count for any service; a regional principal is read as the global one; a trust `*` counts for every service the principal can launch (both over-approximations). A passable, bucket-reaching role that trusts a service that is in no value of the table is rejected with `PG-IAM-003`.
 
