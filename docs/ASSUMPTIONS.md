@@ -5,8 +5,8 @@
 ProofGateは抽出した有限モデルについて、次の4条件を同時に満たすプリンシパルからの経路が存在しないことを検査します。
 
 - 対象ロールへの、対応範囲内の`iam:PassRole`権限がある
-- 対応範囲内のLambda制御権限がある
-- 対象ロールがLambdaサービスを信頼している
+- 対応範囲内の起動アクション（ロールを渡せる操作。Lambda、ECS、EC2など、生成した表に載っているもの）の権限がある
+- 対象ロールが、その起動サービスを信頼している
 - 対象ロールが設定された保護対象S3バケットへ、対応範囲内のアクセス権限を持っている
   - 保護対象バケット内の一部のプレフィックスや単一オブジェクトへのアクセスも、アクセスを持つものとして扱います
 
@@ -16,13 +16,15 @@ ProofGateは抽出した有限モデルについて、次の4条件を同時に�
 - TypeScriptからLeanへのGenerator
 - バージョン固定済みLeanコンパイラ、`native_decide`が使用するランタイム、Leanカーネル
 - 合成されたCloudFormationテンプレートが予定されるデプロイ内容を表していること
-- AWS IAMとLambdaが公開仕様どおりに動作すること
+- AWS IAMと各起動サービスが公開仕様どおりに動作すること
+- AWS Service Referenceの`iam:PassedToService`の値が正しいこと（起動アクションの表はこの値から生成します）
 
 ## 現在の検査対象外
 
 - SCP、Permissions Boundary、Session Policy、Resource Policy、Explicit Denyの評価
 - 推移的なロール引き受け、スタック間参照、クロスアカウント参照
-- サービス信頼以外のLambda固有制約と`iam:PassedToService` Condition
+- サービス信頼以外の各サービス固有の制約（たとえば、ECSのインフラストラクチャロールのように、渡せてもS3に触れないロール。表は経路を多めに数えます）と`iam:PassedToService` Condition
+- `iam:PassRole`を必要としない経路（既存の関数のコード更新、CodeBuildのbuildspecの上書きなど）。spec `proofgate-implicit-role-paths`で扱います
 - 表にないManaged Policy（`AWSLambdaBasicExecutionRole`、`AWSLambdaVPCAccessExecutionRole`、`AmazonAPIGatewayPushToCloudWatchLogs`の3件だけを読みます）、ポリシー変数、大部分のCloudFormation intrinsic function、権限StatementのIAM Condition
 - 検査済みのCDK synthを経由しない変更やデプロイ後のドリフト
 
@@ -57,3 +59,9 @@ English: of the bucket actions, replication (`PutReplicationConfiguration`) and 
 IAMリソースのないテンプレートの受理（要件3）は、テンプレートに現れるものだけを根拠にします。CDKがProofGateへ渡すテンプレートの外にあるロール（ネストされたスタックの子テンプレート、`Transform`が作るロール）は検査できないため、それらを含むテンプレートは受理せずに拒否します。ProofGateは、CDKが渡したテンプレートが、デプロイされるものと一致すると仮定します（従来と同じ前提です）。
 
 English: accepting a template without IAM resources rests only on what the template shows. Roles outside the templates that CDK passes (the child template of a nested stack, roles created by a `Transform`) cannot be checked, so a template that contains them is rejected, not accepted. As before, ProofGate assumes that the templates that CDK passes are what is deployed.
+
+## 起動アクションの表（spec proofgate-brushup, Step 5）
+
+起動アクションの表は、AWS Service Referenceの`iam:PassedToService`の値をそのまま信頼します。`iam:PassRole`を認可に含む操作の書き込みと権限管理のアクションを、すべて起動アクションとみなします。中には、ロールを渡してもコードを動かせない操作もあり、指摘が多めになります。値のない23件は、どのサービスにも渡せるものとして読みます（2026-11-21にユーザーが承認）。`iam:*`は、表の`iam:AddRoleToInstanceProfile`（EC2）に一致するため、EC2の起動アクションとして数えます。
+
+English: the launch table trusts the `iam:PassedToService` values of the AWS Service Reference and counts every write or permission-management action of an operation that authorizes `iam:PassRole`. Some of them cannot run code with the role, so findings can be too many. The 23 entries without a value count for any service (approved by the user on 2026-11-21). `iam:*` matches `iam:AddRoleToInstanceProfile` (EC2) and so counts as an EC2 launch action.

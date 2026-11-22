@@ -51,14 +51,14 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 
 ## Step 5: B2 launch services
 
-- [ ] 10. Create branch `brushup/phase-5-launch`.
-  - [ ] 10.1 Change the oracle to the generalized path (service, launch action, trust of the same service, `*` trust for every service) and to the `PG-IAM-003` rule of design 5.4. Commit it alone.
-  - [ ] 10.2 Tests first for every service of RS-39 to RS-47, Lambda regression cases, the tagging-only exclusion, the unknown-service rejection, and `*` trust. Show them red.
-  - [ ] 10.3 Change `core` (candidate paths per service, violation text with the service) and the Lean sources (`canLaunch`, `targetTrustsService`, `service`), `generateLean`, the batch runner's shape check, and `docs/PROOFS.md`. Lean audit (no `sorry`, no `axiom`). Evaluator and Lean must agree on every Case.
-  - [ ] 10.4 Extractor: read `AWS::IAM::InstanceProfile` (design 5.3).
-  - [ ] 10.4b From the data verification of 2026-11-21 (`data-verification.md`): normalize a trust principal of the form `<service>.<region>.amazonaws.com` to `<service>.amazonaws.com` before comparing with the launch table (Step Functions documents both forms); decide how to read the 23 any-service entries; tests first for both.
-  - [ ] 10.5 Differential against 1.1.2: no finding lost; list the new findings by service. Run all Pattern sets; update each expected table row by row with a reason.
-  - [ ] 10.6 Docs (ja + en), CHANGELOG. Gate; usage-log row.
+- [x] 10. Create branch `brushup/phase-5-launch`.
+  - [x] 10.1 Change the oracle to the generalized path (service, launch action, trust of the same service, `*` trust for every service) and to the `PG-IAM-003` rule of design 5.4. Commit it alone.
+  - [x] 10.2 Tests first for every service of RS-39 to RS-47, Lambda regression cases, the tagging-only exclusion, the unknown-service rejection, and `*` trust. Show them red.
+  - [x] 10.3 Change `core` (candidate paths per service, violation text with the service) and the Lean sources (`canLaunch`, `targetTrustsService`, `service`), `generateLean`, the batch runner's shape check, and `docs/PROOFS.md`. Lean audit (no `sorry`, no `axiom`). Evaluator and Lean must agree on every Case.
+  - [x] 10.4 Extractor: read `AWS::IAM::InstanceProfile` (design 5.3).
+  - [x] 10.4b From the data verification of 2026-11-21 (`data-verification.md`): normalize a trust principal of the form `<service>.<region>.amazonaws.com` to `<service>.amazonaws.com` before comparing with the launch table (Step Functions documents both forms); decide how to read the 23 any-service entries; tests first for both.
+  - [x] 10.5 Differential against 1.1.2: no finding lost; list the new findings by service. Run all Pattern sets; update each expected table row by row with a reason.
+  - [x] 10.6 Docs (ja + en), CHANGELOG. Gate; usage-log row.
 - [ ] 11. **Checkpoint 5.**
 
 ## Step 6: Adoption guide and final verification

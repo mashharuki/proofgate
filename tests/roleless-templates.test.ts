@@ -132,9 +132,11 @@ describe("extractor: a template without IAM resources", () => {
       "AWS::IAM::User is not supported in the first vertical slice",
     ],
     [
-      "an instance profile (still unsupported until the launch-service step)",
+      // Step 5 reads instance profiles (design 5.3); a profile with no readable role is still rejected.
+      // The expected reason changed with Step 5 (listed for the user's approval).
+      "an instance profile without a readable role",
       { Resources: { P: { Type: "AWS::IAM::InstanceProfile", Properties: { Roles: [] } } } },
-      "AWS::IAM::InstanceProfile is not supported in the first vertical slice",
+      "Instance profile Roles must be local role Refs or literal role names",
     ],
     [
       "a role with no readable statement (answer 1 of the requirements)",

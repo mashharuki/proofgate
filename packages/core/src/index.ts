@@ -3,10 +3,11 @@ import type {
   RoleModel,
   StackModel,
   StatementModel,
+  UnsupportedFinding,
   Violation,
 } from "@proofgate-cdk/model";
 import { RULE_ID } from "@proofgate-cdk/model";
-import { BUCKET_GRANT_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
+import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
 
 /**
  * 正規化済みIAMモデルから権限昇格の候補経路を組み立て、
@@ -15,12 +16,18 @@ import { BUCKET_GRANT_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js"
 const lower = (value: string) => value.toLowerCase();
 
 // IAMのAction・Resourceで使用される`*`（任意長）と`?`（任意の1文字）を、文字列全体に対するglobとして扱います。
+const compiled = new Map<string, RegExp>();
 const matches = (pattern: string, value: string): boolean => {
-  const escaped = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-    .replaceAll("*", ".*")
-    .replaceAll("?", ".");
-  return new RegExp(`^${escaped}$`, "i").test(value);
+  let regex = compiled.get(pattern);
+  if (regex === undefined) {
+    const escaped = pattern
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replaceAll("*", ".*")
+      .replaceAll("?", ".");
+    regex = new RegExp(`^${escaped}$`, "i");
+    compiled.set(pattern, regex);
+  }
+  return regex.test(value);
 };
 
 const allowsAction = (statement: StatementModel, actions: readonly string[]) =>
@@ -146,38 +153,89 @@ function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boo
  */
 const OBJECT_ACTIONS_AND_STAR: readonly string[] = [...OBJECT_ACTIONS, "s3:*"];
 
+/** 起動アクションの表の項目です（小文字のアクション名と、渡し先のサービス）。 */
+const LAUNCH_ENTRIES: readonly (readonly [string, readonly string[]])[] =
+  Object.entries(LAUNCH_ACTIONS);
+/** 表の値に現れるサービスプリンシパルです。`*`は含みません。 */
+const KNOWN_SERVICES: ReadonlySet<string> = new Set(
+  LAUNCH_ENTRIES.flatMap(([, services]) => services).filter((service) => service !== "*"),
+);
+/** 表の`*`（Service Referenceが渡し先のサービスを書いていない項目）です。どのサービスにも渡せるものとして読みます。 */
+const ANY_SERVICE = "*";
+const LAMBDA_SERVICE = "lambda.amazonaws.com";
 /**
- * 任意コードを対象ロールで実行できるLambda操作の根拠を返します。
- * 新規作成、または既存関数の設定の更新です。設定の更新では実行ロール（Role）とレイヤー（Layers）を変えられるため、
- * コードを更新する権限がなくても、レイヤーのコードを対象ロールで実行できます（AWS Lambda APIリファレンス、
- * UpdateFunctionConfiguration、2026-11-20に確認）。コードの更新だけでは実行ロールを変えられないため、数えません。
- * Creating a function, or updating the configuration of an existing one: UpdateFunctionConfiguration can change
- * Role and Layers, so a layer can run code as the passed role without UpdateFunctionCode.
+ * リージョン付きのサービスプリンシパル（`states.us-east-1.amazonaws.com`）を、リージョンなしの形にします。
+ * Step Functionsは両方の形を文書に書いています（data verification 2026-11-21, follow-up a）。
+ * A regional service principal is read as the global one (Step Functions documents both forms).
  */
-function lambdaControlStatements(role: RoleModel): StatementModel[] {
-  const create = role.statements.filter((statement) =>
-    allowsAction(statement, ["lambda:CreateFunction"]),
-  );
-  if (create.length > 0) return create;
-  return role.statements.filter((statement) =>
-    allowsAction(statement, ["lambda:UpdateFunctionConfiguration"]),
-  );
+const REGIONAL_PRINCIPAL = /^([a-z0-9-]+)\.[a-z]{2}(?:-[a-z]+)+-\d+\.amazonaws\.com$/;
+function normalizeService(service: string): string {
+  const value = lower(service);
+  const match = REGIONAL_PRINCIPAL.exec(value);
+  return match === null ? value : `${match[1]}.amazonaws.com`;
 }
-
+/**
+ * ロールが起動できるサービスと、その根拠のStatementです（spec proofgate-brushup, Step 5, design 5.1）。
+ * 起動アクションは、AWS Service Referenceから生成した表（`iam:PassRole`を認可に含む操作の、書き込みまたは権限管理の
+ * アクション）です。Lambdaも表の1項目です（`lambda:CreateFunction`、`lambda:UpdateFunctionConfiguration`）。
+ * The services a role can launch with a passed role, from the generated table, with the statements that allow it.
+ * Lambda is one entry of the table, like every other service.
+ */
+function launchStatementsByService(role: RoleModel): Map<string, StatementModel[]> {
+  const byService = new Map<string, StatementModel[]>();
+  for (const statement of role.statements) {
+    if (statement.effect !== "Allow") continue;
+    const services = new Set(statement.actions.flatMap(launchServicesOfPattern));
+    for (const service of services) {
+      byService.set(service, [...(byService.get(service) ?? []), statement]);
+    }
+  }
+  return byService;
+}
+const servicesByPattern = new Map<string, readonly string[]>();
+/** 1つのActionパターンが起動できるサービスです。パターンごとに覚えておきます（速さのためだけで、結果は変わりません）。 */
+function launchServicesOfPattern(pattern: string): readonly string[] {
+  const key = lower(pattern);
+  let services = servicesByPattern.get(key);
+  if (services === undefined) {
+    const found = new Set<string>();
+    for (const [action, values] of LAUNCH_ENTRIES) {
+      if (matches(key, action)) for (const value of values) found.add(value);
+    }
+    services = [...found];
+    servicesByPattern.set(key, services);
+  }
+  return services;
+}
+/** ロールが信頼するサービスです（正規化済み）。`*`は別に扱います。 */
+const trustedServices = (role: RoleModel): Set<string> =>
+  new Set(role.trustServices.filter((service) => service !== "*").map(normalizeService));
 interface CandidatePath {
   readonly principal: RoleModel;
   readonly target: RoleModel;
   readonly bucketArn: string;
+  readonly service: string;
   readonly passRole: readonly StatementModel[];
-  readonly lambdaControl: readonly StatementModel[];
-  readonly targetIsLambdaAssumable: boolean;
+  readonly launch: readonly StatementModel[];
+  readonly targetTrustsService: boolean;
   readonly bucketAccess: readonly StatementModel[];
 }
-
-/** すべての「起点ロール × 対象ロール × 保護バケット」の有限な組み合わせを列挙します。 */
+/**
+ * 「起点ロール × 対象ロール × サービス × 保護バケット」の有限な組み合わせを列挙します。
+ * サービスは、Lambda（どの組にも1つは候補があるように）、対象ロールが信頼するサービス、
+ * 対象ロールが`*`を信頼するときは起点ロールが起動できるサービスのうち最初の1つです。
+ * `*`の信頼は、どのサービスにも引き受けられるものとして読みます（過剰検出の側、1.1.2までのLambdaと同じ扱い）。
+ * Candidates per principal, target, service, and bucket. The services are Lambda (so every pair has a candidate),
+ * the services the target trusts, and, if the target trusts "*", the first service the principal can launch.
+ */
 function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePath[] {
   const candidates: CandidatePath[] = [];
+  const launchOf = new Map(
+    model.roles.map((role) => [role.logicalId, launchStatementsByService(role)]),
+  );
   for (const principal of model.roles) {
+    const launchBy = launchOf.get(principal.logicalId) ?? new Map<string, StatementModel[]>();
+    const anyService = launchBy.get(ANY_SERVICE) ?? [];
     for (const target of model.roles) {
       if (
         principal.logicalId === target.logicalId ||
@@ -187,45 +245,69 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
       const passRole = principal.statements.filter((statement) =>
         allowsPassRoleTarget(statement, target),
       );
-      const lambdaControl = lambdaControlStatements(principal);
-      const targetIsLambdaAssumable = target.trustServices.some(
-        (service) => service === "*" || service === "lambda.amazonaws.com",
-      );
-      for (const bucketArn of config.protectedBucketArns) {
-        candidates.push({
-          principal,
-          target,
-          bucketArn,
-          passRole,
-          lambdaControl,
-          targetIsLambdaAssumable,
-          bucketAccess: bucketAccessStatements(target, bucketArn),
-        });
+      const trusted = trustedServices(target);
+      const trustsStar = target.trustServices.includes("*");
+      const services = new Set([LAMBDA_SERVICE, ...trusted]);
+      if (trustsStar) {
+        const first = [...launchBy.keys()].filter((service) => service !== ANY_SERVICE).sort()[0];
+        if (first !== undefined) services.add(first);
+      }
+      for (const service of [...services].sort()) {
+        const launch = [...(launchBy.get(service) ?? []), ...anyService];
+        const targetTrustsService = trustsStar || trusted.has(service);
+        for (const bucketArn of config.protectedBucketArns) {
+          candidates.push({
+            principal,
+            target,
+            bucketArn,
+            service,
+            passRole,
+            launch: [...new Set(launch)],
+            targetTrustsService,
+            bucketAccess: bucketAccessStatements(target, bucketArn),
+          });
+        }
       }
     }
   }
   return candidates;
 }
-
-/** 4条件をすべて満たす経路を、説明可能なViolationへ変換するTypeScript参照実装です。 */
+const isEscalation = (c: CandidatePath) =>
+  c.passRole.length > 0 &&
+  c.launch.length > 0 &&
+  c.targetTrustsService &&
+  c.bucketAccess.length > 0;
+/** 起動の根拠になったアクションのパターンです（説明文用）。 */
+function launchActionsOf(statements: readonly StatementModel[], service: string): string[] {
+  const out = new Set<string>();
+  for (const statement of statements) {
+    for (const pattern of statement.actions) {
+      if (
+        LAUNCH_ENTRIES.some(
+          ([action, values]) =>
+            (values.includes(service) || values.includes(ANY_SERVICE)) &&
+            matches(lower(pattern), action),
+        )
+      )
+        out.add(pattern);
+    }
+  }
+  return [...out];
+}
+/**
+ * 4条件をすべて満たす経路を、説明可能なViolationへ変換するTypeScript参照実装です。
+ * 起点・対象・バケットの組ごとに1件です（最初に見つかったサービスで説明します）。
+ * One violation per principal, target, and bucket, explained with the first service that gives a path.
+ */
 export function evaluate(model: StackModel, config: ProofGateConfig): Violation[] {
   const violations: Violation[] = [];
-  for (const {
-    principal,
-    target,
-    bucketArn,
-    passRole,
-    lambdaControl,
-    targetIsLambdaAssumable,
-    bucketAccess,
-  } of candidatePaths(model, config)) {
-    if (
-      passRole.length === 0 ||
-      lambdaControl.length === 0 ||
-      !targetIsLambdaAssumable ||
-      bucketAccess.length === 0
-    )
-      continue;
+  const seen = new Set<string>();
+  for (const candidate of candidatePaths(model, config)) {
+    if (!isEscalation(candidate)) continue;
+    const { principal, target, bucketArn, service, passRole, launch, bucketAccess } = candidate;
+    const key = JSON.stringify([principal.logicalId, target.logicalId, bucketArn]);
+    if (seen.has(key)) continue;
+    seen.add(key);
     violations.push({
       ruleId: RULE_ID,
       principalLogicalId: principal.logicalId,
@@ -233,15 +315,47 @@ export function evaluate(model: StackModel, config: ProofGateConfig): Violation[
       protectedBucketArn: bucketArn,
       sourcePaths: [
         ...new Set(
-          [...passRole, ...lambdaControl, ...bucketAccess].map((statement) => statement.sourcePath),
+          [...passRole, ...launch, ...bucketAccess].map((statement) => statement.sourcePath),
         ),
       ],
-      explanation: `${principal.logicalId} can pass Lambda-assumable role ${target.logicalId} and control Lambda code or configuration; ${target.logicalId} can access protected bucket ${bucketArn}.`,
+      explanation: `${principal.logicalId} can pass role ${target.logicalId} to ${service} and launch it (${launchActionsOf(launch, service).join(", ")}); ${target.logicalId} trusts ${service} and can access protected bucket ${bucketArn}.`,
     });
   }
   return violations;
 }
-
+/**
+ * 渡せて保護バケットに届くロールが、起動アクションの表のどの値にもないサービスを信頼しているときの指摘です（design 5.4）。
+ * そのサービスが渡されたロールでコードを動かすかどうかをProofGateは判断できないため、PG-IAM-003にします。
+ * A role that can be passed and reaches a protected bucket, and that trusts a service that appears in no value of the
+ * launch table: ProofGate cannot tell whether that service runs code with a passed role (PG-IAM-003).
+ */
+export function unknownTrustFindings(
+  model: StackModel,
+  config: ProofGateConfig,
+): UnsupportedFinding[] {
+  const found = new Map<string, UnsupportedFinding>();
+  for (const target of model.roles) {
+    if (config.allowedPassRoleTargets?.includes(target.logicalId)) continue;
+    const unknown = [...trustedServices(target)].filter((service) => !KNOWN_SERVICES.has(service));
+    if (unknown.length === 0) continue;
+    const passable = model.roles.some(
+      (principal) =>
+        principal.logicalId !== target.logicalId &&
+        principal.statements.some((statement) => allowsPassRoleTarget(statement, target)),
+    );
+    const reaches = config.protectedBucketArns.some(
+      (bucketArn) => bucketAccessStatements(target, bucketArn).length > 0,
+    );
+    if (!passable || !reaches) continue;
+    for (const service of unknown) {
+      found.set(`${target.logicalId}|${service}`, {
+        sourcePath: `Resources.${target.logicalId}.Properties.AssumeRolePolicyDocument`,
+        reason: `Role trusts ${service}, which ProofGate cannot tell runs code with a passed role`,
+      });
+    }
+  }
+  return [...found.values()];
+}
 const leanString = (value: string) => JSON.stringify(value);
 /**
  * 候補経路を具体的なLean値として直列化し、安全性定理を決定的に生成します。
@@ -253,12 +367,13 @@ export function generateLean(model: StackModel, config: ProofGateConfig): string
       principal,
       target,
       bucketArn,
+      service,
       passRole,
-      lambdaControl,
-      targetIsLambdaAssumable,
+      launch,
+      targetTrustsService,
       bucketAccess,
     }) =>
-      `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, canPassRole := ${passRole.length > 0}, canControlLambda := ${lambdaControl.length > 0}, targetIsLambdaAssumable := ${targetIsLambdaAssumable}, targetCanAccess := ${bucketAccess.length > 0} }`,
+      `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, service := ${leanString(service)}, canPassRole := ${passRole.length > 0}, canLaunch := ${launch.length > 0}, targetTrustsService := ${targetTrustsService}, targetCanAccess := ${bucketAccess.length > 0} }`,
   );
   return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n`;
 }

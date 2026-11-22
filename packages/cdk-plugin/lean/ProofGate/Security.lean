@@ -12,15 +12,17 @@ namespace ProofGate
 /--
 候補経路が実際の権限昇格経路になるための4条件を検査します。
 
-1. 対象ロールをLambdaへ渡せる
-2. Lambdaのコードまたはロール設定を制御できる
-3. 対象ロールをLambdaサービスが引き受けられる
+1. 対象ロールを渡せる
+2. 起動サービスへロールを渡す起動アクションを持つ（Lambdaでは、関数の作成または設定の更新）
+3. 対象ロールをその起動サービスが引き受けられる
 4. 対象ロールが保護対象リソースへアクセスできる
+The four conditions: the role can be passed, the principal can launch the service with it,
+the target trusts that service, and the target can access the protected resource.
 
 4条件がすべてtrueの場合だけ、危険な経路と判定します。
 -/
 def isEscalation (path : EscalationPath) : Bool :=
-  path.canPassRole && path.canControlLambda && path.targetIsLambdaAssumable && path.targetCanAccess
+  path.canPassRole && path.canLaunch && path.targetTrustsService && path.targetCanAccess
 
 /--
 候補経路をすべて調べ、危険な経路が1つも存在しない場合にtrueを返します。
@@ -42,14 +44,15 @@ theorem emptyModelIsSafeAtBooleanLevel : safe [] = true := by
 4条件をすべて満たす経路が1つでも存在すれば、スタック全体を安全とは判定しないことを示します。
 文字列の内容には依存せず、経路を構成する権限の組み合わせだけで結果が決まります。
 -/
-theorem completeEscalationIsUnsafe (principal target resource : String) :
+theorem completeEscalationIsUnsafe (principal target resource service : String) :
     safe [{
       principal := principal
       target := target
       protectedResource := resource
+      service := service
       canPassRole := true
-      canControlLambda := true
-      targetIsLambdaAssumable := true
+      canLaunch := true
+      targetTrustsService := true
       targetCanAccess := true
     }] = false := by
   simp [safe, isEscalation]

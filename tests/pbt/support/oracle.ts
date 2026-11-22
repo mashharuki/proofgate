@@ -22,7 +22,7 @@
  * object (permission management, replication, lifecycle), count on the bucket ARN itself.
  */
 import type { ProofGateConfig, RoleModel, StackModel, StatementModel } from "@proofgate-cdk/model";
-import { BUCKET_GRANT_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
+import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
 import { ANY_SUFFIX, compileGlob, intersects, literalTokens, matchTokens } from "./glob.js";
 
 export type OracleVerdict = "unsafe" | "safe";
@@ -34,11 +34,18 @@ interface OraclePath {
   readonly bucketArn: string;
 }
 
-const LAMBDA_SERVICE = "lambda.amazonaws.com";
-
 // Decision 8.2: Action name case. Prefix and action name are case-insensitive.
+// Compiled action patterns are cached: the launch table has 879 actions, so each pattern is matched many times.
+// The cache changes only speed, not the result.
+const compiledActions = new Map<string, ReturnType<typeof compileGlob>>();
 function actionMatches(pattern: string, action: string): boolean {
-  return matchTokens(compileGlob(pattern.toLowerCase()), action);
+  const key = pattern.toLowerCase();
+  let tokens = compiledActions.get(key);
+  if (tokens === undefined) {
+    tokens = compileGlob(key);
+    compiledActions.set(key, tokens);
+  }
+  return matchTokens(tokens, action);
 }
 
 const allows = (statement: StatementModel, action: string) =>
@@ -86,23 +93,64 @@ function canPassRole(principal: RoleModel, target: RoleModel): boolean {
   );
 }
 
-// Lambda control: creating a function, or updating the configuration of an existing one.
-// UpdateFunctionConfiguration can change Role and Layers (AWS Lambda API reference, read 2026-11-20),
-// so with iam:PassRole a layer can run arbitrary code as the passed role without a code update.
-// A code update alone cannot change the role, so it is not Lambda control here.
-// 関数の作成、または既存の関数の設定の更新です。コードの更新だけでは実行ロールを変えられません。
-function canControlLambda(principal: RoleModel): boolean {
-  return principal.statements.some(
-    (s) => allows(s, "lambda:createfunction") || allows(s, "lambda:updatefunctionconfiguration"),
-  );
+// Launch services (spec proofgate-brushup, Step 5, design 5.1 and 5.2). An action of the generated table
+// (LAUNCH_ACTIONS: write or permission-management actions of operations that authorize iam:PassRole) gives the
+// service principals that the passed role can be handed to. "*" in a value means the Service Reference names no
+// service: any service. Lambda is no longer special: lambda:CreateFunction and lambda:UpdateFunctionConfiguration
+// are entries of the table (UpdateFunctionConfiguration can change Role and Layers, read 2026-11-20).
+// 起動サービスの集合です。表の各アクションが、ロールを渡せるサービスを返します。Lambdaも表の1項目です。
+const LAUNCH_ENTRIES = Object.entries(LAUNCH_ACTIONS);
+const servicesOfPattern = new Map<string, readonly string[]>();
+/** The services that one action pattern can launch (cached per pattern; speed only). */
+function launchServicesOfPattern(pattern: string): readonly string[] {
+  const key = pattern.toLowerCase();
+  let services = servicesOfPattern.get(key);
+  if (services === undefined) {
+    const found = new Set<string>();
+    for (const [action, values] of LAUNCH_ENTRIES) {
+      if (actionMatches(key, action)) for (const value of values) found.add(value.toLowerCase());
+    }
+    services = [...found];
+    servicesOfPattern.set(key, services);
+  }
+  return services;
 }
-
-// Decision 8.2: Lambda trust principal. Only lambda.amazonaws.com (case-insensitive) is Lambda trust.
-// The principal "*" is NOT Lambda trust here; ProofGate treats it as Lambda-assumable on purpose (TRUST_STAR).
-function trustsLambda(target: RoleModel): boolean {
-  return target.trustServices.some((s) => s.toLowerCase() === LAMBDA_SERVICE);
+function launchServices(principal: RoleModel): Set<string> {
+  const services = new Set<string>();
+  for (const statement of principal.statements) {
+    if (statement.effect !== "Allow") continue;
+    for (const pattern of statement.actions) {
+      for (const service of launchServicesOfPattern(pattern)) services.add(service);
+    }
+  }
+  return services;
 }
-
+// Follow-up a (data verification 2026-11-21): Step Functions documents the principal both as
+// states.amazonaws.com and states.<region>.amazonaws.com. A regional form is read as the global one.
+// リージョン付きのサービスプリンシパルは、リージョンなしの形として読みます。
+const REGIONAL_PRINCIPAL = /^([a-z0-9-]+)\.[a-z]{2}(?:-[a-z]+)+-\d+\.amazonaws\.com$/;
+function normalizeService(service: string): string {
+  const lower = service.toLowerCase();
+  const match = REGIONAL_PRINCIPAL.exec(lower);
+  return match === null ? lower : `${match[1]}.amazonaws.com`;
+}
+// The oracle reads the trust principal "*" strictly: it is not a service. ProofGate treats it as assumable by
+// every launchable service on purpose (TRUST_STAR, a conservative over-approximation, tagged in the Cases).
+function trustedServices(target: RoleModel): Set<string> {
+  return new Set(target.trustServices.filter((s) => s !== "*").map(normalizeService));
+}
+/** The principal can hand the target role to a service that the target trusts. */
+function launchMatches(principal: RoleModel, target: RoleModel): boolean {
+  const launch = launchServices(principal);
+  const trusted = trustedServices(target);
+  if (launch.size === 0 || trusted.size === 0) return false;
+  if (launch.has("*")) return true;
+  return [...trusted].some((service) => launch.has(service));
+}
+/** Every service principal that appears in a value of the table. */
+const KNOWN_LAUNCH_SERVICES: ReadonlySet<string> = new Set(
+  Object.values(LAUNCH_ACTIONS).flatMap((values) => values.map((v) => v.toLowerCase())),
+);
 // A bucket action is applied to the bucket ARN itself (no key part).
 function resourceReachesBucketArn(resource: string, bucketArn: string): boolean {
   return intersects(compileGlob(resource), literalTokens(bucketArn.replace(/\/$/, "")));
@@ -117,30 +165,63 @@ function canReachBucket(target: RoleModel, bucketArn: string): boolean {
   );
 }
 
-/** 4条件をすべて満たす経路を列挙します。 */
-function oraclePaths(model: StackModel, config: ProofGateConfig): OraclePath[] {
-  const paths: OraclePath[] = [];
+function reaches(
+  model: StackModel,
+  config: ProofGateConfig,
+  check: (p: RoleModel, t: RoleModel, b: string) => boolean,
+) {
+  const found: OraclePath[] = [];
   for (const principal of model.roles) {
-    if (!canControlLambda(principal)) continue;
     for (const target of model.roles) {
       // allowedPassRoleTargets is defined by ProofGate, not by AWS: a listed Logical ID is never a target.
       if (principal.logicalId === target.logicalId) continue;
       if (config.allowedPassRoleTargets?.includes(target.logicalId)) continue;
-      if (!trustsLambda(target) || !canPassRole(principal, target)) continue;
       for (const bucketArn of config.protectedBucketArns) {
-        if (canReachBucket(target, bucketArn)) {
-          paths.push({
-            principal: principal.logicalId,
-            target: target.logicalId,
-            bucketArn,
-          });
+        if (check(principal, target, bucketArn)) {
+          found.push({ principal: principal.logicalId, target: target.logicalId, bucketArn });
         }
       }
     }
   }
-  return paths;
+  return found;
 }
-
+/** 4条件をすべて満たす経路を列挙します。 */
+function oraclePaths(model: StackModel, config: ProofGateConfig): OraclePath[] {
+  return reaches(
+    model,
+    config,
+    (principal, target, bucketArn) =>
+      canPassRole(principal, target) &&
+      launchMatches(principal, target) &&
+      canReachBucket(target, bucketArn),
+  );
+}
+/**
+ * Design 5.4. A role that can be passed and reaches a protected bucket, and that trusts a service principal
+ * that appears in no value of the launch table (and is not "*"): ProofGate cannot tell whether that service
+ * runs code with a passed role, so the stack is not accepted (PG-IAM-003).
+ * 渡せて保護バケットに届くロールが、表にないサービスを信頼しているとき、PG-IAM-003にする対象です。
+ */
+export function oracleUnknownTrusts(
+  model: StackModel,
+  config: ProofGateConfig,
+): { readonly target: string; readonly service: string }[] {
+  const out = new Map<string, { target: string; service: string }>();
+  const byId = new Map(model.roles.map((role) => [role.logicalId, role]));
+  for (const path of reaches(
+    model,
+    config,
+    (principal, target, bucketArn) =>
+      canPassRole(principal, target) && canReachBucket(target, bucketArn),
+  )) {
+    for (const service of trustedServices(byId.get(path.target) as RoleModel)) {
+      if (!KNOWN_LAUNCH_SERVICES.has(service)) {
+        out.set(`${path.target}|${service}`, { target: path.target, service });
+      }
+    }
+  }
+  return [...out.values()];
+}
 /** モデルが危険か安全かを返します。 */
 export function oracleVerdict(model: StackModel, config: ProofGateConfig): OracleVerdict {
   return oraclePaths(model, config).length > 0 ? "unsafe" : "safe";
