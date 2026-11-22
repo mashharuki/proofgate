@@ -159,6 +159,26 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 - ベンチマークのモデルの誤りが2件ありました（`cloudformation-004`、`batch-001`）。モデルを直して、`results.json`に書きました。
 - このベンチマークは、攻撃の前提（権限の組み合わせ）だけを再現します。実際に攻撃が成立するかは見ていません。
 
+## PassRoleの要らない経路（RS-54〜RS-62、spec proofgate-implicit-role-paths、2026-11-22）
+
+9つのPatternを、実装の前に予想をコミットしてから（`implicit-probe-predictions.json`）、`pnpm real-stacks --implicit`で試しました。実装前の`main`では、9件すべてが受理でした（危険な5件と、特定できないロールの1件は見逃し）。実装後は、予想とすべて一致しました。
+
+| ID    | 構成                                                                | `main`（実装前） | 予想       | 結果       |
+| ----- | ------------------------------------------------------------------- | ---------------- | ---------- | ---------- |
+| RS-54 | `lambda:UpdateFunctionCode`、関数のロールがバケットを読む           | accepted         | PG-IAM-004 | PG-IAM-004 |
+| RS-55 | `lambda:UpdateFunctionConfiguration`、同上                          | accepted         | PG-IAM-004 | PG-IAM-004 |
+| RS-56 | `codebuild:StartBuild`、プロジェクトのロールがバケットを読む        | accepted         | PG-IAM-004 | PG-IAM-004 |
+| RS-57 | `codebuild:StartBuildBatch`、同上                                   | accepted         | PG-IAM-004 | PG-IAM-004 |
+| RS-58 | `states:UpdateStateMachine`、ステートマシンのロールがバケットを読む | accepted         | PG-IAM-004 | PG-IAM-004 |
+| RS-59 | `StartBuild`を、バケットに届かない別のプロジェクトのARNに絞る       | accepted         | accepted   | accepted   |
+| RS-60 | 関数のロールが別のバケットだけを読む                                | accepted         | accepted   | accepted   |
+| RS-61 | 関数のロールがパラメータ（特定できない）                            | accepted         | PG-IAM-003 | PG-IAM-003 |
+| RS-62 | 自分自身が動いている関数を変更するロール                            | accepted         | accepted   | accepted   |
+
+- RS-48（Sysdig 2025型）は、実装前は見逃しでしたが、実装後は`PG-IAM-004`です。
+- RS-59は、リゾルバの絞り込み（`GetAtt Arn`を`*`ではなくARNにする）の確認です。`*`と読んでいたら、プロジェクトAに一致して誤検出になります。
+- pathfinding.cloudの91経路は、52件を指摘するようになりました（修正前46件）。増えたのは、`lambda-003`、`lambda-004`、`lambda-005`、`codebuild-002`、`codebuild-003`、`stepfunctions-002`の6件です。指摘は52件、受理は39件（PassRoleの要らない残り16件、`principal-access`の14件、`self-escalation`の8件、`new-passrole`の1件）です。
+
 ## 今のコードを使った試用（2026-11-22）
 
 1.1.1の試用と同じアプリ（18の変種）で、npmの1.1.2と、このリポジトリの今のコード（パッケージにしたtarball）を比べました。違いは1つだけです。

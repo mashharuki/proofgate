@@ -8,11 +8,11 @@
  * the caller runs as that role without `iam:PassRole`. Only actions whose documentation was read are listed; the evidence
  * is in `data-verification.md` of the spec. The second operation that runs the new code is not required (over-approximation).
  */
-export type ImplicitKind = "lambda-function" | "codebuild-project" | "stepfunctions-state-machine";
+import type { ResourceKind } from "@proofgate-cdk/model";
 export interface ImplicitAction {
   /** 小文字のアクション名です。 */
   readonly action: string;
-  readonly kind: ImplicitKind;
+  readonly kind: ResourceKind;
   /** 呼び出し側が選ぶものです。 */
   readonly behavior: string;
   readonly source: string;

@@ -60,6 +60,12 @@ IAMリソースのないテンプレートの受理（要件3）は、テンプ�
 
 English: accepting a template without IAM resources rests only on what the template shows. Roles outside the templates that CDK passes (the child template of a nested stack, roles created by a `Transform`) cannot be checked, so a template that contains them is rejected, not accepted. As before, ProofGate assumes that the templates that CDK passes are what is deployed.
 
+## PassRoleの要らない経路の表（spec proofgate-implicit-role-paths）
+
+表のアクションは、リソースを変更できるだけで、新しいコードが動くことを要求しません。動かすのは、呼び出し、トリガー、`StartExecution`、スケジュールなど、別の操作です。その操作は要求しないため、指摘は多めになります（過大判定）。Lambdaのコード署名は、見えません。アクションに付いたCondition（たとえば`buildspecOverride`を禁じる条件）は、今までどおり`PG-IAM-003`で拒否します。名前のないリソースの`Resource`は、名前の部分にワイルドカードがあれば、実際の生成名に一致しうるものとして数えます（過大判定）。`allowedPassRoleTargets`に挙げたロールは、PassRoleの要らない経路も許可したものとして扱います（利用者の決定、2026-11-22）。CloudFormationのスタックロールは、テンプレートから見えないため、対象外です。ECS、SSM、Glue、SageMakerなど、ほかのサービスは、ドキュメントで確認できたものから表に足します。
+
+English: an action of the table only has to be able to change the resource; running the new code (an invoke, a trigger, `StartExecution`, a schedule) is not required, so findings are too many. Lambda code signing is not visible. A `Condition` on the statement stays rejected with `PG-IAM-003`. For an unnamed resource a wildcard in the name part of the Resource counts. A role in `allowedPassRoleTargets` also allows the paths without `iam:PassRole` (the user's decision of 2026-11-22). CloudFormation stack roles are not visible in a template and are out of scope. More services are added to the table after their documentation is read.
+
 ## 起動アクションの表（spec proofgate-brushup, Step 5）
 
 起動アクションの表は、AWS Service Referenceの`iam:PassedToService`の値をそのまま信頼します。`iam:PassRole`を認可に含む操作の書き込みと権限管理のアクションを、すべて起動アクションとみなします。中には、ロールを渡してもコードを動かせない操作もあり、指摘が多めになります。値のない23件は、どのサービスにも渡せるものとして読みます（2026-11-21にユーザーが承認）。`iam:*`は、表の`iam:AddRoleToInstanceProfile`（EC2）に一致するため、EC2の起動アクションとして数えます。

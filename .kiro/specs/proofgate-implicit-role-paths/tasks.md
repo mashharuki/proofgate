@@ -1,5 +1,5 @@
 # Tasks: proofgate-implicit-role-paths
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 and 2 are done (Step 2 waits for Checkpoint 2); the rule itself is not implemented.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 to 3 are done (Step 3 waits for Checkpoint 3); Step 4 (docs and release preparation) is open.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-21). Design: [design.md](./design.md).
 Time box: see design section 11 (freeze 2026-11-29 for the brushup, deadline 2026-12-04 14:00 PT).
 Branches: one per step, from `main`: `implicit/step-1-evidence`, `implicit/step-2-extractor`, `implicit/step-3-core-lean`, `implicit/step-4-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
@@ -22,13 +22,13 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 - [ ] 4. **Checkpoint 2.**
 
 ## Step 3: Oracle, core, Lean
-- [ ] 5. Create branch `implicit/step-3-core-lean`.
-  - [ ] 5.1 Write the table `packages/core/src/implicit-actions.ts` with one source per entry; a test guards its shape (like `launch-supplements`). The oracle reads it through a data-only re-export.
-  - [ ] 5.2 Change the independent oracle (implicit paths, own ARN matcher, `allowedPassRoleTargets`, unknown role). Commit it alone.
-  - [ ] 5.3 Tests first: fixed rows for each action and kind (oracle, evaluator, one Lean launch), P = T, an allowed target, a scoped Resource, a bare logical ID, a glob, an unknown role (both the finding and the silence). Model-level generator stream. Show them red.
-  - [ ] 5.4 Implement `evaluate` and `unknownRoleFindings` in `core`; the Lean structures and the new `generateLean`; the batch runner's shape check; `docs/PROOFS.md`. Lean audit (no `sorry`, no `axiom`). Evaluator and Lean agree on every Case.
-  - [ ] 5.5 Validator: map `unknownRoleFindings` to `PG-IAM-003`, the violation text and fix for the implicit shape. Tests on the validator.
-  - [ ] 5.6 Differential against `main` (no finding lost, new findings by kind); run all Pattern sets and update each expected table row by row with a reason (RS-48 changes to `PG-IAM-004`); rerun the pathfinding.cloud benchmark and record `observedAfterImplicit`. Gate; usage-log row.
+- [x] 5. Create branch `implicit/step-3-core-lean`.
+  - [x] 5.1 Write the table `packages/core/src/implicit-actions.ts` with one source per entry; a test guards its shape (like `launch-supplements`). The oracle reads it through a data-only re-export.
+  - [x] 5.2 Change the independent oracle (implicit paths, own ARN matcher, `allowedPassRoleTargets`, unknown role). Commit it alone.
+  - [x] 5.3 Tests first: fixed rows for each action and kind (oracle, evaluator, one Lean launch), P = T, an allowed target, a scoped Resource, a bare logical ID, a glob, an unknown role (both the finding and the silence). Model-level generator stream. Show them red.
+  - [x] 5.4 Implement `evaluate` and `unknownRoleFindings` in `core`; the Lean structures and the new `generateLean`; the batch runner's shape check; `docs/PROOFS.md`. Lean audit (no `sorry`, no `axiom`). Evaluator and Lean agree on every Case.
+  - [x] 5.5 Validator: map `unknownRoleFindings` to `PG-IAM-003`, the violation text and fix for the implicit shape. Tests on the validator.
+  - [x] 5.6 Differential against `main` (no finding lost, new findings by kind); run all Pattern sets and update each expected table row by row with a reason (RS-48 changes to `PG-IAM-004`); rerun the pathfinding.cloud benchmark and record `observedAfterImplicit`. Gate; usage-log row.
 - [ ] 6. **Checkpoint 3.** If the Lean change is not finished by 2026-12-01, report it and merge only Steps 1 and 2 (design section 11).
 
 ## Step 4: Docs and release preparation

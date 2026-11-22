@@ -39,4 +39,27 @@ structure EscalationPath where
   targetCanAccess : Bool
   deriving Repr, DecidableEq
 
+/--
+`iam:PassRole`を使わない経路の候補です。主体Pが、すでにロールTで動いているリソースRを変更でき、Tが保護対象リソースへ
+アクセスできる場合に、危険な経路になります（spec proofgate-implicit-role-paths）。
+`canPassRole`は持ちません。PassRoleのない経路に`canPassRole := true`と書くと、事実と違うためです。
+A candidate path without `iam:PassRole`: principal P can change resource R, which already runs as role T, and T can access
+the protected resource. There is no `canPassRole` field: it would be false to write `true` for a path with no PassRole.
+-/
+structure ImplicitPath where
+  /-- 起点となるIAMプリンシパルのLogical ID。 -/
+  principal : String
+  /-- 変更されるリソース（Lambda関数など）のLogical ID。 -/
+  resource : String
+  /-- そのリソースが引き受けているロールのLogical ID。 -/
+  target : String
+  /-- アプリケーション設定で指定された保護対象リソース。 -/
+  protectedResource : String
+  /-- 起点プリンシパルが、このリソースを変更する表のアクションを、このリソースに対して持つ場合にtrue。 -/
+  canChange : Bool
+  /-- このリソースが対象ロールで動く場合にtrue（候補はロールを特定できたリソースだけなので、常にtrueです）。 -/
+  runsAsTarget : Bool
+  /-- 対象ロールが保護対象リソースへアクセスできる場合にtrue。 -/
+  targetCanAccess : Bool
+  deriving Repr, DecidableEq
 end ProofGate

@@ -1,5 +1,6 @@
 import type {
   ProofGateConfig,
+  ResourceModel,
   RoleModel,
   StackModel,
   StatementModel,
@@ -8,6 +9,7 @@ import type {
 } from "@proofgate-cdk/model";
 import { RULE_ID } from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-tables.generated.js";
+import { IMPLICIT_ACTIONS } from "./implicit-actions.js";
 import { LAUNCH_SUPPLEMENTS } from "./launch-supplements.js";
 
 /**
@@ -274,6 +276,150 @@ function candidatePaths(model: StackModel, config: ProofGateConfig): CandidatePa
   }
   return candidates;
 }
+// ---------------------------------------------------------------------------------------------------------------
+// iam:PassRoleの要らない経路（spec proofgate-implicit-role-paths, 設計5と6）。
+// 主体Pが、すでにロールTで動くリソースRを変更でき、Tが保護バケットに届くとき、経路があります。
+// P = Tと、allowedPassRoleTargetsのTは除きます。Resourceが「Rを表しうるか」は、ARNのglobの交差で調べます。
+// 名前のないリソースは、不透明な名前`_generated_<LogicalId>`として読みます。名前の部分にワイルドカードのあるパターンは、
+// 実際の生成名に一致しうるので数え、リテラルは不透明な名前そのものでなければ数えません。
+// ARNでもない裸の名前は数えません（IAMはそのResourceを受け付けません）。
+// ---------------------------------------------------------------------------------------------------------------
+// ARNのパーティション、リージョン、アカウントは、コロンを含まない任意の文字列です（NSTAR）。
+// 一方、IAMのResourceパターンの`*`はコロンも表します。ARN側の`*`を普通の`*`にすると、`function:other-*`のようなパターンが、
+// 「関数名が`...:function:...`を含む」ような実在しない文字列を介して、どの関数にも交わってしまいます。
+// Partition, region, and account of an ARN are any run of characters without a colon (NSTAR). With an ordinary `*` on the ARN
+// side, a pattern such as `function:other-*` would meet every function through strings that are no ARN.
+type StructuredToken = GlobToken | { readonly kind: "nstar" };
+const NSTAR: StructuredToken = { kind: "nstar" };
+const RESOURCE_SHAPES: Readonly<
+  Record<ResourceModel["kind"], { service: string; separator: string }>
+> = {
+  "lambda-function": { service: "lambda", separator: ":function:" },
+  "codebuild-project": { service: "codebuild", separator: ":project/" },
+  "stepfunctions-state-machine": { service: "states", separator: ":stateMachine:" },
+};
+/** `arn:<NSTAR>:<service>:<NSTAR>:<NSTAR><separator>`の部分です。 */
+const arnPrefix = (resource: ResourceModel): StructuredToken[] => {
+  const { service, separator } = RESOURCE_SHAPES[resource.kind];
+  return [
+    ...literalOf("arn:"),
+    NSTAR,
+    ...literalOf(`:${service}:`),
+    NSTAR,
+    ...literalOf(":"),
+    NSTAR,
+    ...literalOf(separator),
+  ];
+};
+/** `*`はどの文字列、NSTARはコロンを含まない文字列を表すglobの交差判定です。 */
+function intersectsStructured(
+  a: readonly StructuredToken[],
+  b: readonly StructuredToken[],
+): boolean {
+  const memo = new Map<number, boolean>();
+  const width = b.length + 1;
+  const sequence = (t: StructuredToken | undefined) => t?.kind === "star" || t?.kind === "nstar";
+  const compat = (x: StructuredToken, y: StructuredToken): boolean => {
+    if (x.kind === "lit" && y.kind === "lit") return x.char === y.char;
+    if (x.kind === "lit" && y.kind === "nstar") return x.char !== ":";
+    if (x.kind === "nstar" && y.kind === "lit") return y.char !== ":";
+    return true;
+  };
+  const go = (i: number, j: number): boolean => {
+    const key = i * width + j;
+    const cached = memo.get(key);
+    if (cached !== undefined) return cached;
+    memo.set(key, false); // 再入した状態は新しい情報を持ちません。
+    const left = a[i];
+    const right = b[j];
+    let result = left === undefined && right === undefined;
+    if (!result && sequence(left)) result = go(i + 1, j);
+    if (!result && sequence(right)) result = go(i, j + 1);
+    if (!result && left !== undefined && right !== undefined && compat(left, right)) {
+      result = go(sequence(left) ? i : i + 1, sequence(right) ? j : j + 1);
+    }
+    memo.set(key, result);
+    return result;
+  };
+  return go(0, 0);
+}
+function resourceDenoted(pattern: string, resource: ResourceModel): boolean {
+  if (/^\*+$/.test(pattern)) return true;
+  const { separator } = RESOURCE_SHAPES[resource.kind];
+  const unnamed = resource.name === undefined && resource.nameUnknown !== true;
+  const name: StructuredToken[] =
+    resource.nameUnknown === true
+      ? [NSTAR]
+      : literalOf(resource.name ?? `_generated_${resource.logicalId}`);
+  const prefix = arnPrefix(resource);
+  if (intersectsStructured(globOf(pattern), [...prefix, ...name])) return true;
+  if (!unnamed) return false;
+  const at = lower(pattern).indexOf(lower(separator));
+  if (at < 0) return false;
+  return (
+    /[*?]/.test(pattern.slice(at + separator.length)) &&
+    intersectsStructured(globOf(pattern), [...prefix, NSTAR])
+  );
+}
+const implicitActionsOf = (resource: ResourceModel): string[] =>
+  IMPLICIT_ACTIONS.filter((entry) => entry.kind === resource.kind).map((entry) => entry.action);
+/** 主体がリソースを変更できる根拠のStatementです。 */
+function changeStatements(principal: RoleModel, resource: ResourceModel): StatementModel[] {
+  const actions = implicitActionsOf(resource);
+  return principal.statements.filter(
+    (statement) =>
+      allowsAction(statement, actions) &&
+      statement.resources.some((pattern) => resourceDenoted(pattern, resource)),
+  );
+}
+interface ImplicitCandidate {
+  readonly principal: RoleModel;
+  readonly resource: ResourceModel;
+  readonly target: RoleModel;
+  readonly bucketArn: string;
+  readonly change: readonly StatementModel[];
+  readonly bucketAccess: readonly StatementModel[];
+}
+function implicitCandidates(model: StackModel, config: ProofGateConfig): ImplicitCandidate[] {
+  const candidates: ImplicitCandidate[] = [];
+  const roles = new Map(model.roles.map((role) => [role.logicalId, role]));
+  for (const resource of model.resources ?? []) {
+    const target =
+      resource.roleLogicalId === undefined ? undefined : roles.get(resource.roleLogicalId);
+    if (target === undefined || config.allowedPassRoleTargets?.includes(target.logicalId)) continue;
+    for (const principal of model.roles) {
+      if (principal.logicalId === target.logicalId) continue;
+      const change = changeStatements(principal, resource);
+      for (const bucketArn of config.protectedBucketArns) {
+        candidates.push({
+          principal,
+          resource,
+          target,
+          bucketArn,
+          change,
+          bucketAccess: bucketAccessStatements(target, bucketArn),
+        });
+      }
+    }
+  }
+  return candidates;
+}
+/** ロールを特定できないリソースを、どの主体が変更できるかを調べ、PG-IAM-003の対象を返します（設計6）。 */
+export function unknownRoleFindings(
+  model: StackModel,
+  _config: ProofGateConfig,
+): UnsupportedFinding[] {
+  return (model.resources ?? [])
+    .filter(
+      (resource) =>
+        resource.roleUnknown === true &&
+        model.roles.some((principal) => changeStatements(principal, resource).length > 0),
+    )
+    .map((resource) => ({
+      sourcePath: resource.sourcePath,
+      reason: `${resource.logicalId} runs as a role that ProofGate cannot identify, and a principal can change it`,
+    }));
+}
 const isEscalation = (c: CandidatePath) =>
   c.passRole.length > 0 &&
   c.launch.length > 0 &&
@@ -321,6 +467,31 @@ export function evaluate(model: StackModel, config: ProofGateConfig): Violation[
         ),
       ],
       explanation: `${principal.logicalId} can pass role ${target.logicalId} to ${service} and launch it (${launchActionsOf(launch, service).join(", ")}); ${target.logicalId} trusts ${service} and can access protected bucket ${bucketArn}.`,
+    });
+  }
+  for (const c of implicitCandidates(model, config)) {
+    if (c.change.length === 0 || c.bucketAccess.length === 0) continue;
+    const actions = new Set(
+      c.change.flatMap((statement) =>
+        statement.actions.filter((pattern) =>
+          allowsAction({ ...statement, actions: [pattern] }, implicitActionsOf(c.resource)),
+        ),
+      ),
+    );
+    violations.push({
+      ruleId: RULE_ID,
+      principalLogicalId: c.principal.logicalId,
+      targetRoleLogicalId: c.target.logicalId,
+      protectedBucketArn: c.bucketArn,
+      resourceLogicalId: c.resource.logicalId,
+      sourcePaths: [
+        ...new Set(
+          [...c.change, ...c.bucketAccess]
+            .map((statement) => statement.sourcePath)
+            .concat(c.resource.sourcePath),
+        ),
+      ],
+      explanation: `${c.principal.logicalId} can change ${c.resource.logicalId} (${[...actions].join(", ")}), which runs as ${c.target.logicalId}; ${c.target.logicalId} can access protected bucket ${c.bucketArn}.`,
     });
   }
   return violations;
@@ -377,5 +548,9 @@ export function generateLean(model: StackModel, config: ProofGateConfig): string
     }) =>
       `{ principal := ${leanString(principal.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, service := ${leanString(service)}, canPassRole := ${passRole.length > 0}, canLaunch := ${launch.length > 0}, targetTrustsService := ${targetTrustsService}, targetCanAccess := ${bucketAccess.length > 0} }`,
   );
-  return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n`;
+  const implicit = implicitCandidates(model, config).map(
+    ({ principal, resource, target, bucketArn, change, bucketAccess }) =>
+      `{ principal := ${leanString(principal.logicalId)}, resource := ${leanString(resource.logicalId)}, target := ${leanString(target.logicalId)}, protectedResource := ${leanString(bucketArn)}, canChange := ${change.length > 0}, runsAsTarget := true, targetCanAccess := ${bucketAccess.length > 0} }`,
+  );
+  return `import ProofGate.Security\n\ndef generatedPaths : List ProofGate.EscalationPath := [${paths.join(",\n  ")}]\n\ndef generatedImplicit : List ProofGate.ImplicitPath := [${implicit.join(",\n  ")}]\n\n#eval if ProofGate.safe generatedPaths && ProofGate.safeImplicit generatedImplicit then "PROOFGATE_SAFE" else "PROOFGATE_UNSAFE"\n\ntheorem generatedStackIsSafe : ProofGate.safe generatedPaths = true := by\n  native_decide\n\ntheorem generatedImplicitIsSafe : ProofGate.safeImplicit generatedImplicit = true := by\n  native_decide\n`;
 }
