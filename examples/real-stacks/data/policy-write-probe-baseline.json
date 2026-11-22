@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "description": "Baseline: Patterns RS-63 to RS-72 run on main (3a85ec1) with `node dist/runner.js --policy-write --cli none` on 2026-11-22, before any code of the spec; RS-49 from `--incident`. Never edit.",
+  "differencesFromPrediction": [],
+  "results": [
+    {
+      "id": "RS-63",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-64",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-65",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-66",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-67",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-68",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-69",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-70",
+      "groundTruth": "safe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "correct acceptance",
+      "reasons": []
+    },
+    {
+      "id": "RS-71",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-72",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "outside the documented boundary",
+      "reasons": []
+    },
+    {
+      "id": "RS-49",
+      "groundTruth": "unsafe",
+      "predictedResultMain": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": [],
+      "note": "Pattern of the incident set (--incident); predicted to change to PG-IAM-005 after the spec."
+    }
+  ]
+}

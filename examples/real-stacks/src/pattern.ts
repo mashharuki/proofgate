@@ -16,6 +16,11 @@ export interface Pattern {
   /** falseなら、権限昇格経路がモデルの範囲の外にあります（スタックをまたぐ、または作者が抑止している）。 */
   readonly inScope: boolean;
   readonly boundary?: Boundary;
+  /**
+   * ProofGateの設定へ足す項目です（スタックを作った後に計算します）。保護対象バケットは変えられません。
+   * Extra fields of the ProofGate configuration, computed after the stacks are built. The protected bucket cannot be replaced.
+   */
+  readonly configFor?: (app: App) => { readonly allowedPolicyWriters?: readonly string[] };
   /** appへ1つ以上のスタックを追加します。RS-13のように複数のスタックを作る場合があります。 */
   readonly build: (app: App) => void;
 }

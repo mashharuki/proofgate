@@ -7,6 +7,8 @@ import { holdoutCatalog } from "./holdout/catalog.js";
 import { implicitProbeCatalog } from "./implicit-probe/catalog.js";
 import { incidentProbeCatalog } from "./incident-probe/catalog.js";
 import { launchProbeCatalog } from "./launch-probe/catalog.js";
+import type { Pattern } from "./pattern.js";
+import { policyWriteProbeCatalog } from "./policy-write-probe/catalog.js";
 
 export interface CreateAppOptions {
   /** trueなら、実際のProofGateValidatorを登録します。 */
@@ -26,12 +28,21 @@ export function createApp(options: CreateAppOptions): App {
     ...launchProbeCatalog,
     ...incidentProbeCatalog,
     ...implicitProbeCatalog,
+    ...policyWriteProbeCatalog,
   ]);
   pattern.build(app);
   if (options.gated) {
-    Validations.of(app).addPlugins(
-      new ProofGateValidator({ protectedBucketArns: [PROTECTED_BUCKET_ARN] }),
-    );
+    Validations.of(app).addPlugins(new ProofGateValidator(validatorConfigFor(pattern, app)));
   }
   return app;
+}
+/**
+ * ProofGateValidatorへ渡す設定です。保護対象バケットは固定で、Patternは`configFor`で項目を足せます。
+ * The configuration for the validator: the protected bucket is fixed; a Pattern may add fields with `configFor`.
+ */
+export function validatorConfigFor(pattern: Pattern, app: App) {
+  return {
+    ...(pattern.configFor?.(app) ?? {}),
+    protectedBucketArns: [PROTECTED_BUCKET_ARN],
+  };
 }
