@@ -213,3 +213,25 @@ describe("implicit-use actions", () => {
     ]);
   });
 });
+
+// Policy-write actions (packages/core/src/policy-write-actions.ts): hand-written, so the test guards the shape of each entry.
+describe("policy-write actions", () => {
+  it("has lower-case actions, a documentation URL, a date, and the four expected entries", async () => {
+    const { POLICY_WRITE_ACTIONS } = await import("../packages/core/src/policy-write-actions.js");
+    const seen = new Set<string>();
+    for (const entry of POLICY_WRITE_ACTIONS) {
+      expect(entry.action, entry.action).toBe(entry.action.toLowerCase());
+      expect(entry.action, entry.action).toMatch(/^iam:[a-z]+$/);
+      expect(entry.source, entry.action).toMatch(/^https:\/\/docs\.aws\.amazon\.com\//);
+      expect(entry.checked, entry.action).toMatch(/^2026-\d\d-\d\d$/);
+      expect(seen.has(entry.action), entry.action).toBe(false);
+      seen.add(entry.action);
+    }
+    expect(POLICY_WRITE_ACTIONS.map((e) => [e.action, e.shape])).toEqual([
+      ["iam:putrolepolicy", "self-grant"],
+      ["iam:attachrolepolicy", "self-grant"],
+      ["iam:updateassumerolepolicy", "take-over"],
+      ["iam:createrole", "creating"],
+    ]);
+  });
+});
