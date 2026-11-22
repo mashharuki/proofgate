@@ -173,6 +173,56 @@ const rows: readonly Row[] = [
     "unsafe",
     "unsafe",
   ],
+  // Launch supplements (fix after the pathfinding.cloud benchmark): a role that is passed to a service but trusts
+  // another service principal than the table's PassedToService value. Sources are in launch-supplements.ts.
+  [
+    "GameLift CreateFleet, instance role trusts EC2",
+    model(["ec2.amazonaws.com"], ["gamelift:CreateFleet"]),
+    "unsafe",
+    "unsafe",
+  ],
+  [
+    "GameLift CreateFleet, role trusts GameLift (table value, as before)",
+    model(["gamelift.amazonaws.com"], ["gamelift:CreateFleet"]),
+    "unsafe",
+    "unsafe",
+  ],
+  [
+    "GameLift CreateBuild is not supplemented: an EC2 trust does not count",
+    model(["ec2.amazonaws.com"], ["gamelift:CreateBuild"]),
+    "safe",
+    "safe",
+  ],
+  [
+    "App Runner CreateService, instance role trusts tasks.apprunner",
+    model(["tasks.apprunner.amazonaws.com"], ["apprunner:CreateService"]),
+    "unsafe",
+    "unsafe",
+  ],
+  [
+    "App Runner CreateService, access role trusts build.apprunner",
+    model(["build.apprunner.amazonaws.com"], ["apprunner:CreateService"]),
+    "unsafe",
+    "unsafe",
+  ],
+  [
+    "App Runner CreateService, role trusts bullet (table value, as before)",
+    model(["bullet.amazonaws.com"], ["apprunner:CreateService"]),
+    "unsafe",
+    "unsafe",
+  ],
+  [
+    "tasks.apprunner trust without a launch action",
+    model(["tasks.apprunner.amazonaws.com"], ["ecs:RunTask"]),
+    "safe",
+    "safe",
+  ],
+  [
+    "GameLift CreateFleet by glob, role trusts EC2",
+    model(["ec2.amazonaws.com"], ["gamelift:Create*"]),
+    "unsafe",
+    "unsafe",
+  ],
   // Lambda regression (unchanged from 1.1.2).
   [
     "Lambda CreateFunction",
@@ -258,6 +308,10 @@ describe("a passable, bucket-reaching role that trusts an unknown service (desig
     ["a known service", model(["ecs-tasks.amazonaws.com"], ["lambda:CreateFunction"])],
     ["a regional form of a known service", model(["states.us-west-2.amazonaws.com"], [])],
     ["trust *", model(["*"], [])],
+    [
+      "tasks.apprunner.amazonaws.com (a supplement value)",
+      model(["tasks.apprunner.amazonaws.com"], []),
+    ],
     [
       "an unknown service, but the role reaches no protected bucket",
       model(["made-up-service.amazonaws.com"], [], {
