@@ -1,5 +1,5 @@
 # Evidence for the action table (task 1.1, first part)
-Read on 2026-11-22 with `web_fetch` (the AWS MCP Server was not connected). Only what the page says is recorded. An action is added to `packages/core/src/policy-write-actions.ts` only with a row here. The rest of task 1.1 (the resource type of each action in the Service Authorization Reference) is still to do in Step 1 of the tasks.
+Read on 2026-11-22 with `web_fetch` (the AWS MCP Server was not connected). Only what the page says is recorded. An action is added to `packages/core/src/policy-write-actions.ts` only with a row here. The second part (the resource type of each action) is the section "Resource types" below.
 
 | Action | Page | What it says (paraphrased) | Decision |
 | --- | --- | --- | --- |
@@ -19,5 +19,20 @@ Read on 2026-11-22 with `web_fetch` (the AWS MCP Server was not connected). Only
 
 ## What the pages do not settle
 - That a self-grant takes effect at once (IAM changes are eventually consistent). Irrelevant for a synth-time gate.
-- The resource type of each action (a role ARN) in the Service Authorization Reference. To confirm in task 1.1 before the oracle is written; if `iam:CreateRole` is authorized on the ARN of the new role, the creation grant matches on that ARN.
 - Conditions on the statement (for example `iam:PermissionsBoundary`, which CI roles use to limit these actions). A `Condition` is rejected with `PG-IAM-003` today, so it is never ignored silently.
+
+## Resource types (task 1.1, second part)
+Read on 2026-11-22 from the AWS Service Reference, `https://servicereference.us-east-1.amazonaws.com/v1/iam/iam.json` (downloaded with curl; not committed).
+
+| Action | Resource type | ARN format | Condition keys of the action | Annotations |
+| --- | --- | --- | --- | --- |
+| `iam:PutRolePolicy` | `role` | `arn:${Partition}:iam::${Account}:role/${RoleNameWithPath}` | `iam:PermissionsBoundary`, `iam:RoleTemplateARN` | write, permissions management |
+| `iam:AttachRolePolicy` | `role` | same | `iam:PermissionsBoundary`, `iam:PolicyARN`, `iam:RoleTemplateARN` | write, permissions management |
+| `iam:UpdateAssumeRolePolicy` | `role` | same | `iam:PermissionsBoundary` | write, permissions management |
+| `iam:CreateRole` | `role` | same | `aws:RequestTag/${TagKey}`, `aws:TagKeys`, `iam:PermissionsBoundary`, `iam:RoleTemplateARN` | write (not marked permissions management) |
+
+Consequences for the design:
+- All four are authorized on the role ARN, so the role ARN matcher of design section 5 is the right one. `iam:CreateRole` is authorized on the ARN of the role to be created, so the creation grant matches the Resource of `iam:CreateRole` against the same role ARN shape as the writing action (design section 4).
+- The ARN contains a path (`${RoleNameWithPath}`). The extractor rejects roles with a non-default path, so a role of the template has no path, and a pattern such as `role/*` or `role/ci-*` still matches it.
+- `iam:PermissionsBoundary` is a condition key of all four actions. A statement that limits these actions with it has a `Condition`, which is rejected with `PG-IAM-003` today (requirements 5.2). The guide must say so.
+- `iam:CreateRole` is not marked as permissions management in the Service Reference; the creation grant is the combination with a writing action, not the creation alone.

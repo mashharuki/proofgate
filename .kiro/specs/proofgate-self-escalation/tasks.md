@@ -1,17 +1,17 @@
 # Tasks: proofgate-self-escalation
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Nothing is implemented; code starts after Step 7 of the brushup is closed, or when the user says so.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Step 1 is done (it waits for Checkpoint 1); no rule code exists. Code (Step 2) starts after Step 7 of the brushup is closed, or when the user says so.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-22). Design: [design.md](./design.md). Evidence: [data-verification.md](./data-verification.md).
 Time box: see design section 11. Code starts after Step 7 of the brushup is closed, or when the user says so.
 Branches: one per step, from `main`: `selfesc/step-1-evidence`, `selfesc/step-2-core-lean`, `selfesc/step-3-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: Fail Closed stays; changes only add findings or rejections; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at a checkpoint and needs the user's approval); the oracle is changed first and committed alone; every rule is test-first and the failing run is recorded; no dependency or toolchain change; no publish, tag, or release. After each task run the quality gate, and after each change of the oracle or the support files run the temporary typecheck of `tests/`.
 
 ## Step 1: Evidence and Patterns, no rule code
-- [ ] 1. Create branch `selfesc/step-1-evidence`.
-  - [ ] 1.1 Finish `data-verification.md`: confirm in the Service Authorization Reference (or the Service Reference JSON) the resource type of `iam:PutRolePolicy`, `iam:AttachRolePolicy`, `iam:UpdateAssumeRolePolicy`, and `iam:CreateRole`. Record what was read.
-  - [ ] 1.2 Write the Patterns RS-63 and later under `examples/real-stacks/src/policy-write-probe/` (own catalogue, runner option `--policy-write`): per shape one unsafe and one safe layout (self-grant by `PutRolePolicy` and by `AttachRolePolicy`; take-over with a target that reaches the bucket and one that does not; creation grant), a scoped layout (the role may write only to another role that cannot reach the bucket), an administrator role (`Action: "*"`), and a pipeline role listed in `allowedPolicyWriters` (this one needs the runner to pass a config; see 1.5).
-  - [ ] 1.3 Write `data/policy-write-probe-predictions.json` (ground truth, Result on `main`, Result after the spec) and commit it **alone**. Never edit it afterwards. Record the benchmark prediction: 60 of 91 (+8).
-  - [ ] 1.4 Run the Patterns on the unchanged code and record the baseline `data/policy-write-probe-baseline.json`. Record each difference from the prediction. RS-49 is in the incident set; record its prediction for after the spec (`PG-IAM-005`) in the same file.
-  - [ ] 1.5 Decide how a Pattern passes `allowedPolicyWriters` (the runner uses one fixed config today). Smallest change: an optional `config` field of a Pattern. Tests first for the runner.
+- [x] 1. Create branch `selfesc/step-1-evidence`.
+  - [x] 1.1 Finish `data-verification.md`: confirm in the Service Authorization Reference (or the Service Reference JSON) the resource type of `iam:PutRolePolicy`, `iam:AttachRolePolicy`, `iam:UpdateAssumeRolePolicy`, and `iam:CreateRole`. Record what was read.
+  - [x] 1.2 Write the Patterns RS-63 and later under `examples/real-stacks/src/policy-write-probe/` (own catalogue, runner option `--policy-write`): per shape one unsafe and one safe layout (self-grant by `PutRolePolicy` and by `AttachRolePolicy`; take-over with a target that reaches the bucket and one that does not; creation grant), a scoped layout (the role may write only to another role that cannot reach the bucket), an administrator role (`Action: "*"`), and a pipeline role listed in `allowedPolicyWriters` (this one needs the runner to pass a config; see 1.5).
+  - [x] 1.3 Write `data/policy-write-probe-predictions.json` (ground truth, Result on `main`, Result after the spec) and commit it **alone**. Never edit it afterwards. Record the benchmark prediction: 60 of 91 (+8).
+  - [x] 1.4 Run the Patterns on the unchanged code and record the baseline `data/policy-write-probe-baseline.json`. Record each difference from the prediction. RS-49 is in the incident set; record its prediction for after the spec (`PG-IAM-005`) in the same file.
+  - [x] 1.5 Decide how a Pattern passes `allowedPolicyWriters` (the runner uses one fixed config today). Smallest change: an optional `config` field of a Pattern. Tests first for the runner.
 - [ ] 2. **Checkpoint 1.** Report the evidence, the Patterns, and the baseline. Wait for the user's approval of Step 2.
 
 ## Step 2: Oracle, core, Lean, validator

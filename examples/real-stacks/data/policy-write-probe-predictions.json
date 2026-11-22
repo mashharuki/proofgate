@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "description": "Predictions for the Patterns RS-63 to RS-72 of the spec proofgate-self-escalation, written on 2026-11-22 BEFORE these Patterns were run with ProofGate and before any code of the spec exists. predictedResultMain is for main at 3a85ec1; predictedResultAfter is for the implementation of the design. RS-49 (the Unit 42 shape of the incident set, iam:AttachRolePolicy on *) is predicted to change from accepted to PG-IAM-005 and is listed under incidentChanges. Never edit this file.",
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-005"],
+  "incidentChanges": [
+    {
+      "id": "RS-49",
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005"
+    }
+  ],
+  "benchmark": {
+    "description": "Prediction for the pathfinding.cloud benchmark after the spec: 8 more paths are reported (52 to 60 of 91).",
+    "newlyReported": [
+      "iam-005",
+      "iam-009",
+      "iam-012",
+      "iam-014",
+      "iam-017",
+      "iam-019",
+      "iam-020",
+      "iam-021"
+    ],
+    "expectedFindings": 60
+  },
+  "patterns": [
+    {
+      "id": "RS-63",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A role may write an inline policy to its own role (iam:PutRolePolicy on its own ARN). It can give itself access to the protected bucket."
+    },
+    {
+      "id": "RS-64",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A role may attach a managed policy to its own role (iam:AttachRolePolicy on its own ARN, for example AdministratorAccess)."
+    },
+    {
+      "id": "RS-65",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "iam:PutRolePolicy on arn:aws:iam::*:role/*: the Resource may denote the role itself."
+    },
+    {
+      "id": "RS-66",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A role may write a policy to another role only (iam:PutRolePolicy on the ARN of OtherRole). OtherRole is assumed by a service, trusts nobody the first role can be, and cannot reach the bucket. Role chains are not modeled; the ground truth is safe because the first role cannot use OtherRole."
+    },
+    {
+      "id": "RS-67",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Take-over: a role may rewrite the trust policy of the data role (iam:UpdateAssumeRolePolicy on its ARN), and the data role reads the protected bucket."
+    },
+    {
+      "id": "RS-68",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "iam:UpdateAssumeRolePolicy on a role that cannot reach the protected bucket."
+    },
+    {
+      "id": "RS-69",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Creation grant: a named role may create roles and attach policies to roles whose names start with ci- (iam:CreateRole and iam:AttachRolePolicy on arn:aws:iam::*:role/ci-*). Its own name does not match, so only the creation grant applies. The Unit 42 2024 shape."
+    },
+    {
+      "id": "RS-70",
+      "groundTruth": "safe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "The creation grant with disjoint prefixes: iam:CreateRole on role/ci-* and iam:AttachRolePolicy on role/data-*. A named role, so no self-grant."
+    },
+    {
+      "id": "RS-71",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "PG-IAM-005",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "An administrator role (Action * on Resource *). It can write IAM and reach every bucket. The only role of the stack, so the PassRole rule has no other role to pass."
+    },
+    {
+      "id": "RS-72",
+      "groundTruth": "unsafe",
+      "inScope": false,
+      "predictedResultMain": "accepted",
+      "predictedResultAfter": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "A pipeline role that writes IAM on purpose and is listed in allowedPolicyWriters. Ground truth recorded as unsafe (the path exists); not in scope because the author has acknowledged it. The field does not exist on main (it is ignored)."
+    }
+  ]
+}
