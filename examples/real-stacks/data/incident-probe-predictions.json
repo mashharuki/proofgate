@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "description": "Predictions for the incident-shaped Patterns RS-48 to RS-53 of the spec proofgate-brushup, Step 7, written on 2026-11-22 BEFORE these Patterns were run with ProofGate (main at be337d3). The Patterns follow the shapes of public incidents and techniques (see .kiro/steering/direction-research.md). Never edit this file.",
+  "predictedResultValues": [
+    "accepted",
+    "PG-IAM-003",
+    "PG-IAM-004"
+  ],
+  "patterns": [
+    {
+      "id": "RS-48",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Shape of the Sysdig 2025-11-28 intrusion (class B): a role may change the code of an existing Lambda function whose role reads the protected bucket (lambda:UpdateFunctionCode, no iam:PassRole). Expected miss until spec proofgate-implicit-role-paths is implemented."
+    },
+    {
+      "id": "RS-49",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Shape of the Unit 42 2024 self-escalation (class C): a CI role may attach any managed policy to any role (iam:AttachRolePolicy on *), so it can give itself access to the bucket. Expected miss until rule PG-IAM-005 exists. Source: Unit 42 report on the 2024 .env extortion campaign (see .kiro/specs/proofgate-direction-research/sources/research-incidents.md)."
+    },
+    {
+      "id": "RS-50",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Capital One-like (class A): a deploy role with iam:PassRole on * and ec2:* can start an instance with an instance profile whose role reads the protected bucket. (The SSRF and IMDSv1 steps of the real incident are not visible in a template.)"
+    },
+    {
+      "id": "RS-51",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "PG-IAM-004",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Cryptomining-shaped (class A): a role with iam:PassRole on * and ecs:RunTask, and an ECS task role that reads the protected bucket."
+    },
+    {
+      "id": "RS-52",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Role chain (class C'): a pipeline role may sts:AssumeRole a data role that trusts the account and reads the protected bucket. The extractor ignores trust principals that are not services, so no path is seen. Expected miss."
+    },
+    {
+      "id": "RS-53",
+      "groundTruth": "unsafe",
+      "inScope": true,
+      "predictedResult": "accepted",
+      "basis": "reasoning from the template and the rules (written before any run with ProofGate)",
+      "note": "Public Lambda function URL (class D, ground truth recorded as the worst case): a function with AuthType NONE runs as a role that reads the protected bucket. No principal can pass or change anything, so ProofGate sees no path. Expected miss."
+    }
+  ]
+}
