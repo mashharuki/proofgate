@@ -188,3 +188,28 @@ describe("launch supplements", () => {
     }
   });
 });
+
+// Implicit-use actions (packages/core/src/implicit-actions.ts): hand-written, so the test guards the shape of each entry.
+// 手書きの表は、小文字のアクション名、出典のURL、確認した日付を持つ項目だけです。
+describe("implicit-use actions", () => {
+  it("has lower-case actions, a documentation URL, a date, and no duplicate", async () => {
+    const { IMPLICIT_ACTIONS } = await import("../packages/core/src/implicit-actions.js");
+    const seen = new Set<string>();
+    for (const entry of IMPLICIT_ACTIONS) {
+      expect(entry.action, entry.action).toBe(entry.action.toLowerCase());
+      expect(entry.action, entry.action).toMatch(/^[a-z0-9-]+:[a-z0-9]+$/);
+      expect(entry.source, entry.action).toMatch(/^https:\/\/docs\.aws\.amazon\.com\//);
+      expect(entry.checked, entry.action).toMatch(/^2026-\d\d-\d\d$/);
+      expect(entry.behavior.length, entry.action).toBeGreaterThan(0);
+      expect(seen.has(entry.action), entry.action).toBe(false);
+      seen.add(entry.action);
+    }
+    expect([...seen].sort()).toEqual([
+      "codebuild:startbuild",
+      "codebuild:startbuildbatch",
+      "lambda:updatefunctioncode",
+      "lambda:updatefunctionconfiguration",
+      "states:updatestatemachine",
+    ]);
+  });
+});
