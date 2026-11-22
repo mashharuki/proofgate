@@ -1,5 +1,5 @@
 # Tasks: proofgate-self-escalation
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 and 2 are done; Step 2 waits for Checkpoint 2. Code (Step 2) starts after Step 7 of the brushup is closed, or when the user says so.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Steps 1 to 3 are done; Step 3 waits for Checkpoint 3. Code (Step 2) starts after Step 7 of the brushup is closed, or when the user says so.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-22). Design: [design.md](./design.md). Evidence: [data-verification.md](./data-verification.md).
 Time box: see design section 11. Code starts after Step 7 of the brushup is closed, or when the user says so.
 Branches: one per step, from `main`: `selfesc/step-1-evidence`, `selfesc/step-2-core-lean`, `selfesc/step-3-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
@@ -26,7 +26,8 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 - [ ] 4. **Checkpoint 2.** If the Lean change is not finished by 2026-12-01, report it and merge only Step 1 and the table, the oracle, and the Patterns (design section 11).
 
 ## Step 3: Docs and release preparation
-- [ ] 5. Create branch `selfesc/step-3-release-prep`.
-  - [ ] 5.1 `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md` (the over-approximations and the not-modeled list of design sections 8 and 9), the adoption guide in `README.md` and `packages/cdk-plugin/README.md` (the administrator-role and pipeline-role advice, `allowedPolicyWriters`), `docs/REAL_STACKS.md` and the English file, `CHANGELOG.md`, steering and `AGENTS.md`.
-  - [ ] 5.2 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app (add a variant with `iam:AttachRolePolicy` on `*`), differential, Lean audit, `git diff --check`, scan of added lines for credentials.
+- [x] 5. Create branch `selfesc/step-3-release-prep`.
+  - [x] 5.1 `docs/SUPPORTED_IAM.md`, `docs/ASSUMPTIONS.md` (the over-approximations and the not-modeled list of design sections 8 and 9), the adoption guide in `README.md` and `packages/cdk-plugin/README.md` (the administrator-role and pipeline-role advice, `allowedPolicyWriters`), `docs/REAL_STACKS.md` and the English file, `CHANGELOG.md`, steering and `AGENTS.md`.
+  - [x] 5.2 Final verification on a clean build: quality, typecheck, test, pack:check, synth, verify:demo, all Pattern sets, the trial app (add a variant with `iam:AttachRolePolicy` on `*`), differential, Lean audit, `git diff --check`, scan of added lines for credentials.
+  - Done 2026-11-23 (waits for Checkpoint 3). Clean build; quality, typecheck, test, pack:check pass; `pnpm synth` 0; `pnpm verify:demo` 1 with `PG-IAM-004`; the acceptance set with `--cli all` matches; probe, launch, incident, implicit, policy-write, and trial2 sets exit 0 (the hold-out set was not run again: it was already run once in this spec); the trial app has 24 variants, all as predicted (`policy-attach-star` gives `PG-IAM-005`, `policy-writer-allowed` is accepted, the 22 earlier variants are unchanged); the differential against `ab2d3e4` (main before the spec) lost no finding; Lean audit clean; `git diff --check` clean; no credentials in the added lines. Stale statements fixed on the way: the README and the plugin README said that three managed policies are read (seven are) and that paths without `iam:PassRole` are outside the model; `docs/ASSUMPTIONS.md` said the same.
 - [ ] 6. **Checkpoint 3.** Version, publish, tags, and releases only on the user's instruction (proposal: 1.2.0 together with the brushup).
