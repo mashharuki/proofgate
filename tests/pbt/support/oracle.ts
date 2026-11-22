@@ -35,8 +35,17 @@ interface OraclePath {
 }
 
 // Decision 8.2: Action name case. Prefix and action name are case-insensitive.
+// Compiled action patterns are cached: the launch table has 879 actions, so each pattern is matched many times.
+// The cache changes only speed, not the result.
+const compiledActions = new Map<string, ReturnType<typeof compileGlob>>();
 function actionMatches(pattern: string, action: string): boolean {
-  return matchTokens(compileGlob(pattern.toLowerCase()), action);
+  const key = pattern.toLowerCase();
+  let tokens = compiledActions.get(key);
+  if (tokens === undefined) {
+    tokens = compileGlob(key);
+    compiledActions.set(key, tokens);
+  }
+  return matchTokens(tokens, action);
 }
 
 const allows = (statement: StatementModel, action: string) =>
@@ -90,14 +99,28 @@ function canPassRole(principal: RoleModel, target: RoleModel): boolean {
 // service: any service. Lambda is no longer special: lambda:CreateFunction and lambda:UpdateFunctionConfiguration
 // are entries of the table (UpdateFunctionConfiguration can change Role and Layers, read 2026-11-20).
 // 起動サービスの集合です。表の各アクションが、ロールを渡せるサービスを返します。Lambdaも表の1項目です。
+const LAUNCH_ENTRIES = Object.entries(LAUNCH_ACTIONS);
+const servicesOfPattern = new Map<string, readonly string[]>();
+/** The services that one action pattern can launch (cached per pattern; speed only). */
+function launchServicesOfPattern(pattern: string): readonly string[] {
+  const key = pattern.toLowerCase();
+  let services = servicesOfPattern.get(key);
+  if (services === undefined) {
+    const found = new Set<string>();
+    for (const [action, values] of LAUNCH_ENTRIES) {
+      if (actionMatches(key, action)) for (const value of values) found.add(value.toLowerCase());
+    }
+    services = [...found];
+    servicesOfPattern.set(key, services);
+  }
+  return services;
+}
 function launchServices(principal: RoleModel): Set<string> {
   const services = new Set<string>();
   for (const statement of principal.statements) {
     if (statement.effect !== "Allow") continue;
-    for (const [action, values] of Object.entries(LAUNCH_ACTIONS)) {
-      if (statement.actions.some((pattern) => actionMatches(pattern, action))) {
-        for (const value of values) services.add(value.toLowerCase());
-      }
+    for (const pattern of statement.actions) {
+      for (const service of launchServicesOfPattern(pattern)) services.add(service);
     }
   }
   return services;

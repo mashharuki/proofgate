@@ -185,17 +185,27 @@ function launchStatementsByService(role: RoleModel): Map<string, StatementModel[
   const byService = new Map<string, StatementModel[]>();
   for (const statement of role.statements) {
     if (statement.effect !== "Allow") continue;
-    const services = new Set<string>();
-    for (const [action, values] of LAUNCH_ENTRIES) {
-      if (statement.actions.some((pattern) => matches(lower(pattern), action))) {
-        for (const value of values) services.add(value);
-      }
-    }
+    const services = new Set(statement.actions.flatMap(launchServicesOfPattern));
     for (const service of services) {
       byService.set(service, [...(byService.get(service) ?? []), statement]);
     }
   }
   return byService;
+}
+const servicesByPattern = new Map<string, readonly string[]>();
+/** 1つのActionパターンが起動できるサービスです。パターンごとに覚えておきます（速さのためだけで、結果は変わりません）。 */
+function launchServicesOfPattern(pattern: string): readonly string[] {
+  const key = lower(pattern);
+  let services = servicesByPattern.get(key);
+  if (services === undefined) {
+    const found = new Set<string>();
+    for (const [action, values] of LAUNCH_ENTRIES) {
+      if (matches(key, action)) for (const value of values) found.add(value);
+    }
+    services = [...found];
+    servicesByPattern.set(key, services);
+  }
+  return services;
 }
 /** ロールが信頼するサービスです（正規化済み）。`*`は別に扱います。 */
 const trustedServices = (role: RoleModel): Set<string> =>
