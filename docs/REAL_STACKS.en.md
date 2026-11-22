@@ -206,6 +206,8 @@ Twelve common CDK constructs were run with `pnpm real-stacks --trial2` after the
 - The one miss is RS-79 (an unauthenticated Cognito identity pool, class D), as predicted.
 - RS-80 (SageMaker) is detected through the launch table.
 
+Candidate 1 was made the same day (an AWS principal written with `Fn::Join` and similar is ignored like a literal one); RS-75 and RS-52 are accepted afterwards (RS-52 is back to the predicted miss).
+
 Two candidate changes would reduce `PG-IAM-003`. Both accept more templates, so they need the user's approval.
 
 1. Read an AWS principal of a trust policy that is written with `Fn::Join` and similar like a literal one, that is, ignore it (a literal AWS principal is already ignored and accepted; only the `Fn::Join` form is rejected today).

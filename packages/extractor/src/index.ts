@@ -99,6 +99,7 @@ function parseTrustServices(
   document: unknown,
   path: string,
   unsupported: UnsupportedFinding[],
+  context: ResolveContext,
 ): string[] {
   if (!object(document) || !Array.isArray(document.Statement)) {
     unsupported.push({
@@ -161,12 +162,22 @@ function parseTrustServices(
     }
     for (const [principalType, values] of Object.entries(raw.Principal)) {
       const parsed = strings(values);
-      if (!parsed) {
+      // サービスではないプリンシパル（AWS、Federatedなど）は、リテラルのときと同じく無視します。
+      // Fn::Join、Fn::Sub、Fn::GetAttなどで書かれていても、リゾルバが読めるなら、同じように無視します（読めない値は拒否します）。
+      // Serviceだけは、引き受けられるサービスを決めるため、リテラルでなければなりません。
+      // A principal that is not a service (AWS, Federated, ...) written with an intrinsic that the resolver can read is ignored
+      // like a literal one. A Service principal must stay literal. A value that cannot be read is still rejected.
+      const ignorable =
+        principalType !== "Service" &&
+        (Array.isArray(values) ? values : [values]).every(
+          (entry) => resolveValue(entry, context) !== undefined,
+        );
+      if (!parsed && !ignorable) {
         unsupported.push({
           sourcePath: `${sourcePath}.Principal.${principalType}`,
           reason: "Trust principals must contain literal strings",
         });
-      } else if (principalType === "Service") {
+      } else if (principalType === "Service" && parsed) {
         services.push(...parsed.map((service) => service.toLowerCase()));
       }
     }
@@ -248,6 +259,7 @@ export function extractStack(template: unknown): ExtractionResult {
       rawResource.Properties.AssumeRolePolicyDocument,
       trustPath,
       unsupported,
+      context,
     );
     const policies = rawResource.Properties.Policies;
     if (policies !== undefined) {

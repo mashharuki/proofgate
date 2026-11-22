@@ -43,7 +43,8 @@
       "observed": "PG-IAM-003",
       "class": "rejected as unsupported",
       "reasons": ["Trust principals must contain literal strings"],
-      "note": "Differs from the prediction. CDK writes AccountPrincipal as Fn::Join with Ref AWS::Partition, which the extractor cannot read in a trust policy, so the template is rejected (fail closed) instead of accepted. The chain itself is still not modeled: with a literal account ARN the template would be accepted."
+      "note": "Differs from the prediction. CDK writes AccountPrincipal as Fn::Join with Ref AWS::Partition, which the extractor cannot read in a trust policy, so the template is rejected (fail closed) instead of accepted. The chain itself is still not modeled: with a literal account ARN the template would be accepted. After the trust-principal change (2026-11-22) the template is accepted: the role chain is a documented miss, as first predicted.",
+      "observedAfterTrustFix": "accepted"
     },
     {
       "id": "RS-53",
