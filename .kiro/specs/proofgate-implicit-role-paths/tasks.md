@@ -1,16 +1,16 @@
 # Tasks: proofgate-implicit-role-paths
-Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Step 1 is in progress; nothing else is implemented.
+Status: APPROVED by the user on 2026-11-22 (design points 10.1 to 10.5 approved). Step 1 is done and waits for Checkpoint 1; nothing else is implemented.
 Requirements: [requirements.md](./requirements.md) (approved 2026-11-21). Design: [design.md](./design.md).
 Time box: see design section 11 (freeze 2026-11-29 for the brushup, deadline 2026-12-04 14:00 PT).
 Branches: one per step, from `main`: `implicit/step-1-evidence`, `implicit/step-2-extractor`, `implicit/step-3-core-lean`, `implicit/step-4-release-prep`. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: Fail Closed stays; changes only add findings or rejections; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at a checkpoint and needs the user's approval); the oracle is changed first and committed alone; every rule is test-first and the failing run is recorded; no dependency or toolchain change; no publish, tag, or release. After each task run the quality gate.
 
 ## Step 1: Evidence and Patterns, no code
-- [ ] 1. Create branch `implicit/step-1-evidence`.
-  - [ ] 1.1 Read the AWS pages and record what was read (date, URL, what it says) in `data-verification.md` of this spec: Lambda `UpdateFunctionCode` and `UpdateFunctionConfiguration`, CodeBuild `StartBuild` and `StartBuildBatch`, Step Functions `UpdateStateMachine`; the CloudFormation resource pages for `Role`, `ServiceRole`, `RoleArn`. An action whose page does not confirm the behavior stays out of the table.
-  - [ ] 1.2 Write the Patterns RS-54 and later under `examples/real-stacks/src/implicit-probe/` (own catalogue, runner option `--implicit`): per service one unsafe layout (a role that may change the resource that runs as a bucket-reaching role) and one safe layout (the resource runs as a role that cannot reach the bucket, or nobody can change it), plus one unknown-role layout (role from a parameter, a statement that touches the resource), plus one layout where the resource ARN is scoped to another resource.
-  - [ ] 1.3 Write `data/implicit-probe-predictions.json` (ground truth, Result on `main`, Result after the spec) and commit it **alone**. Never edit it afterwards. Record the pathfinding.cloud prediction: 52 of 91 reported after the spec (lambda-003/004/005, codebuild-002/003, stepfunctions-002 added).
-  - [ ] 1.4 Run the Patterns on the unchanged code and record the baseline `data/implicit-probe-baseline.json`. Record each difference from the prediction.
+- [x] 1. Create branch `implicit/step-1-evidence`.
+  - [x] 1.1 Read the AWS pages and record what was read (date, URL, what it says) in `data-verification.md` of this spec: Lambda `UpdateFunctionCode` and `UpdateFunctionConfiguration`, CodeBuild `StartBuild` and `StartBuildBatch`, Step Functions `UpdateStateMachine`; the CloudFormation resource pages for `Role`, `ServiceRole`, `RoleArn`. An action whose page does not confirm the behavior stays out of the table.
+  - [x] 1.2 Write the Patterns RS-54 and later under `examples/real-stacks/src/implicit-probe/` (own catalogue, runner option `--implicit`): per service one unsafe layout (a role that may change the resource that runs as a bucket-reaching role) and one safe layout (the resource runs as a role that cannot reach the bucket, or nobody can change it), plus one unknown-role layout (role from a parameter, a statement that touches the resource), plus one layout where the resource ARN is scoped to another resource.
+  - [x] 1.3 Write `data/implicit-probe-predictions.json` (ground truth, Result on `main`, Result after the spec) and commit it **alone**. Never edit it afterwards. Record the pathfinding.cloud prediction: 52 of 91 reported after the spec (lambda-003/004/005, codebuild-002/003, stepfunctions-002 added).
+  - [x] 1.4 Run the Patterns on the unchanged code and record the baseline `data/implicit-probe-baseline.json`. Record each difference from the prediction.
 - [ ] 2. **Checkpoint 1.** Report the evidence, the Patterns, and the baseline. Wait for the user's approval to start Step 2.
 
 ## Step 2: Model and extractor
