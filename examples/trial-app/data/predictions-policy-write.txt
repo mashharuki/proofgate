@@ -1,0 +1,6 @@
+Written 2026-11-22 BEFORE the variants exist and before any run.
+Variant                  npm 1.1.2   current code (packed tarballs of main 0640790)
+policy-attach-star       accepted    PG-IAM-005   (a deploy role holds iam:AttachRolePolicy on *: it can attach AdministratorAccess to itself)
+policy-writer-allowed    accepted    accepted     (the same role, listed in allowedPolicyWriters; 1.1.2 ignores the field)
+All 22 earlier variants: the same result as in the last run (no earlier variant gives PG-IAM-005).
+Date corrected on 2026-11-22 from 2026-11-23 (a typo; the machine date was 2026-11-22). The content is unchanged.

@@ -228,7 +228,7 @@ const rows: Row[] = [
     "safe",
   ),
   // RS-70: with `*` for the account the prefixes are not disjoint. CreateRole accepts a Path of the characters
-  // \u0021 to \u007E, colon included (IAM API Reference, CreateRole, read 2026-11-23). The role created with
+  // \u0021 to \u007E, colon included (IAM API Reference, CreateRole, read 2026-11-22). The role created with
   // Path "/ci-a:role/data-/" has the ARN "arn:aws:iam::<account>:role/ci-a:role/data-/<name>", which matches both
   // patterns (the account `*` takes "<account>:role/ci-a"). A role of the template with a non-default Path is
   // already rejected by the extractor, so only the created role can have such an ARN.

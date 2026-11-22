@@ -1,0 +1,7 @@
+Written 2026-11-22 BEFORE the run.
+Variant                  npm 1.1.2   current code (packed tarballs of main 98ab553)
+implicit-code            accepted    PG-IAM-004   (lambda:UpdateFunctionCode on *, the reader function reads the bucket)
+implicit-function-arn    accepted    PG-IAM-004   (the Resource is reader.functionArn)
+implicit-other-function  accepted    accepted     (the Resource is the ARN of another function that cannot reach the bucket)
+implicit-codebuild       accepted    PG-IAM-004   (codebuild:StartBuild on *, the project role reads the bucket)
+All 18 earlier variants: the same result as in /tmp/trial-new.txt (current code) and /tmp/trial-old.txt (1.1.2).

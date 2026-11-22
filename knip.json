@@ -16,6 +16,10 @@
     "examples/real-stacks": {
       "entry": ["src/app.ts", "src/runner.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "examples/trial-app": {
+      "entry": ["src/app.ts", "src/probe.ts", "src/run-variants.ts", "scripts/*.mjs"],
+      "project": ["src/**/*.ts", "scripts/*.mjs"]
     }
   }
 }
