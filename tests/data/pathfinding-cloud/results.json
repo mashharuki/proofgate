@@ -1,0 +1,575 @@
+{
+  "description": "Observed results of the pathfinding.cloud coverage benchmark, 2026-11-22 (code of main at be337d3). predictions.json was committed before the run and is not edited. The first run differed from the predictions in 5 paths; two (cloudformation-004, batch-001) were mistakes of the benchmark model (the fallback trust took the service 'iam'; the Batch service role was used instead of the job role) and were corrected in the test; the other three are real differences listed with notes.",
+  "summary": {
+    "PG-IAM-003": 1,
+    "accepted": 46,
+    "PG-IAM-004": 44
+  },
+  "byCategory": {
+    "existing-passrole": {
+      "accepted": 22
+    },
+    "new-passrole": {
+      "PG-IAM-003": 1,
+      "PG-IAM-004": 44,
+      "accepted": 2
+    },
+    "principal-access": {
+      "accepted": 14
+    },
+    "self-escalation": {
+      "accepted": 8
+    }
+  },
+  "results": [
+    {
+      "id": "apprunner-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-003",
+      "note": "The target role trusts tasks.apprunner.amazonaws.com, but the table maps apprunner:CreateService to bullet.amazonaws.com (the iam:PassedToService value of the Service Reference). The trust service is in no value of the table, so the role is rejected under design 5.4 instead of reported. Not a defect of the rule: it fails closed. It shows that the table and real trust principals can differ."
+    },
+    {
+      "id": "apprunner-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "batch-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "batch-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "batch-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "bedrock-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "bedrock-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "bedrock-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "bedrock-004",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "bedrock-005",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "bedrock-006",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "bedrock-007",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "braket-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "cloudformation-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "cloudformation-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "cloudformation-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "cloudformation-004",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "cloudformation-005",
+      "category": "new-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "codebuild-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "codebuild-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "codebuild-003",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "codebuild-004",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "codedeploy-001",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "cognitoidentity-001",
+      "category": "new-passrole",
+      "predicted": "accepted",
+      "observed": "PG-IAM-004",
+      "note": "cognito-identity:SetIdentityPoolRoles is in the launch table with cognito-identity.amazonaws.com, so the path is reported. Better than predicted."
+    },
+    {
+      "id": "datapipeline-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ec2instanceconnect-003",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ec2-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ec2-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ec2-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ec2-005",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ecs-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-002",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-004",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-005",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-006",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ecs-007",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-008",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ecs-009",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "emr-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "emrserverless-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "gamelift-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "accepted",
+      "note": "A MISS. The instance role of a GameLift fleet trusts ec2.amazonaws.com, but the table maps gamelift:CreateFleet to gamelift.amazonaws.com. ProofGate requires the trusted service to equal the PassedToService value, so the path is not seen. The same gap exists for any service that passes an EC2 instance role (EMR, Image Builder, GameLift). Candidate fix for a later spec: when the launch service passes an instance profile, also count trust of ec2.amazonaws.com."
+    },
+    {
+      "id": "glue-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "glue-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "glue-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "glue-004",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "glue-005",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "glue-006",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "glue-007",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "iam-001",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-002",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-003",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-004",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-005",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-006",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-007",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-008",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-009",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-010",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-011",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-012",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-013",
+      "category": "self-escalation",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-014",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-015",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-016",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-017",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-018",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-019",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-020",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "iam-021",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "imagebuilder-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "kinesisanalytics-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "lambda-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "lambda-002",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "lambda-003",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "lambda-004",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "lambda-005",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "lambda-006",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "omics-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "sagemaker-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "sagemaker-002",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "sagemaker-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "sagemaker-004",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "sagemaker-005",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "scheduler-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "ssm-001",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ssm-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "ssm-003",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "stepfunctions-001",
+      "category": "new-passrole",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004"
+    },
+    {
+      "id": "stepfunctions-002",
+      "category": "existing-passrole",
+      "predicted": "accepted",
+      "observed": "accepted"
+    },
+    {
+      "id": "sts-001",
+      "category": "principal-access",
+      "predicted": "accepted",
+      "observed": "accepted"
+    }
+  ]
+}

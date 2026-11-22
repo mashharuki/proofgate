@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "description": "Observed results of the incident-shaped Patterns RS-48 to RS-53, 2026-11-22, with `node dist/runner.js --incident --cli none` (main at be337d3). incident-probe-predictions.json was committed before the Patterns existed and is not edited.",
+  "results": [
+    {
+      "id": "RS-48",
+      "groundTruth": "unsafe",
+      "predicted": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-49",
+      "groundTruth": "unsafe",
+      "predicted": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    },
+    {
+      "id": "RS-50",
+      "groundTruth": "unsafe",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-51",
+      "groundTruth": "unsafe",
+      "predicted": "PG-IAM-004",
+      "observed": "PG-IAM-004",
+      "class": "correct detection",
+      "reasons": []
+    },
+    {
+      "id": "RS-52",
+      "groundTruth": "unsafe",
+      "predicted": "accepted",
+      "observed": "PG-IAM-003",
+      "class": "rejected as unsupported",
+      "reasons": ["Trust principals must contain literal strings"],
+      "note": "Differs from the prediction. CDK writes AccountPrincipal as Fn::Join with Ref AWS::Partition, which the extractor cannot read in a trust policy, so the template is rejected (fail closed) instead of accepted. The chain itself is still not modeled: with a literal account ARN the template would be accepted."
+    },
+    {
+      "id": "RS-53",
+      "groundTruth": "unsafe",
+      "predicted": "accepted",
+      "observed": "accepted",
+      "class": "false negative",
+      "reasons": []
+    }
+  ]
+}

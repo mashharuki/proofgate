@@ -71,10 +71,13 @@ Rules for every task: Fail Closed stays; changes only add findings or rejections
 
 ## Step 7: More trials until 2026-11-29
 
-- [ ] 14. For each new construct or layout tried: write the prediction first, run, record. A fix that a trial shows follows Requirements 7 and 9 and is merged alone.
+- [ ] 14. (In progress, branch `brushup/phase-7-trials`) For each new construct or layout tried: write the prediction first, run, record. A fix that a trial shows follows Requirements 7 and 9 and is merged alone.
 
 ## Data verification (2026-11-21, after Step 2)
 
 The user asked for a thorough check of the AWS data that the oracle and the evaluator share. Result and findings: [data-verification.md](./data-verification.md). Done on `brushup/data-verification`: the launch table rule was corrected (996 to 879 actions; read actions removed), independent S3 User Guide expectations were added to `tests/aws-tables.test.ts`, and 44 decisions of the real IAM engine were saved with a test that fixes the known deviations of the oracle (a `*` crossing a colon) and of the evaluator (case, over-approximation). Follow-ups a to e of section 5 of that document wait for the user's decision.
 
 Follow-up b of the data verification (the oracle reads `*` and `?` as plain wildcards that also stand for a colon; the tag `ARN_STAR_SPAN` removed) was done on 2026-11-21 at the user's request: see section 7 of `data-verification.md`. Follow-ups a, c, d, and e still wait for the user's decision.
+  - [x] 14.1 Incident-shaped Patterns RS-48 to RS-53 (predictions committed first, results in `incident-probe-results.json`).
+  - [x] 14.2 Coverage benchmark on the 91 pathfinding.cloud paths (data imported with attribution, predictions committed first, results in `tests/data/pathfinding-cloud/results.json`).
+  - [ ] 14.3 More trials until 2026-11-29. Findings so far: gamelift-001 miss (trust of an EC2 instance role passed to a launch service whose table value is another service), apprunner-001 only `PG-IAM-003` (trust `tasks.apprunner.amazonaws.com` vs table `bullet.amazonaws.com`).

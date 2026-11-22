@@ -1,11 +1,7 @@
 {
   "version": 1,
   "description": "Predictions for the incident-shaped Patterns RS-48 to RS-53 of the spec proofgate-brushup, Step 7, written on 2026-11-22 BEFORE these Patterns were run with ProofGate (main at be337d3). The Patterns follow the shapes of public incidents and techniques (see .kiro/steering/direction-research.md). Never edit this file.",
-  "predictedResultValues": [
-    "accepted",
-    "PG-IAM-003",
-    "PG-IAM-004"
-  ],
+  "predictedResultValues": ["accepted", "PG-IAM-003", "PG-IAM-004"],
   "patterns": [
     {
       "id": "RS-48",

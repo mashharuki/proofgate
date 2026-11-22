@@ -10,6 +10,7 @@ Subject: `examples/real-stacks` (aws-cdk-lib 2.277.0). Protected bucket: `arn:aw
 pnpm build
 pnpm real-stacks            # compares the 14 Patterns with the expected table (0 match, 1 difference, 2 harness error)
 pnpm real-stacks --cli all   # also runs the real cdk synth CLI (about one minute)
+pnpm real-stacks --incident --cli none   # the six incident-shaped Patterns RS-48 to RS-53 (observed only; --holdout, --probe, --launch work the same way)
 ```
 
 To synthesize one Pattern, run `pnpm exec cdk synth -c pattern=RS-02` in `examples/real-stacks` (with ProofGate: `PROOFGATE=1`).
@@ -126,6 +127,37 @@ The nine launch-service Patterns run with `pnpm real-stacks --launch`. The curre
 | RS-45 | The Lambda path, the data role has only `s3:PutBucketPolicy`     | unsafe                       | accepted   | PG-IAM-004   |
 | RS-46 | RS-39 without `ecs:RunTask`                                      | safe                         | accepted   | accepted     |
 | RS-47 | A passable role that trusts a service ProofGate does not know    | unknown (recorded as unsafe) | accepted   | PG-IAM-003   |
+
+## Incident-shaped Patterns (RS-48 to RS-53) and the 91 pathfinding.cloud paths (Step 7, 2026-11-22)
+
+Six Patterns shaped like public incidents and techniques were run with `pnpm real-stacks --incident` after their predictions were committed (`examples/real-stacks/data/incident-probe-predictions.json`); results are in `incident-probe-results.json`. The classes are those of `.kiro/steering/direction-research.md` (A: PassRole plus a launch action, B: change an existing resource, C: self-escalation, C': role chain, D: exposure through a resource policy). Every ground truth is unsafe.
+
+| ID    | Pattern                                                                                  | Class | Predicted  | Observed   |
+| ----- | ---------------------------------------------------------------------------------------- | ----- | ---------- | ---------- |
+| RS-48 | Sysdig 2025 shape: `lambda:UpdateFunctionCode` on an existing function                   | B     | accepted   | accepted   |
+| RS-49 | Unit 42 2024 shape: `iam:AttachRolePolicy` on `*`                                        | C     | accepted   | accepted   |
+| RS-50 | Capital One-like: `iam:PassRole` on `*`, `ec2:*`, an instance role that reads the bucket | A     | PG-IAM-004 | PG-IAM-004 |
+| RS-51 | Cryptomining-shaped: `iam:PassRole` on `*` and `ecs:RunTask`                             | A     | PG-IAM-004 | PG-IAM-004 |
+| RS-52 | Role chain: a pipeline role assumes a data role that trusts the account                  | C'    | accepted   | PG-IAM-003 |
+| RS-53 | A public function URL on a function whose role reads the bucket                          | D     | accepted   | accepted   |
+
+- The two class-A Patterns are detected. The three misses are classes B, C, and D, which are not supported yet, as predicted.
+- RS-52 was predicted to be accepted but is rejected (`PG-IAM-003`): CDK writes `AccountPrincipal` as `Fn::Join` with `Ref AWS::Partition`, which cannot be read in a trust policy. With a literal account ARN the template is accepted and the chain is missed.
+- RS-48 has the shape of the Sysdig report of 2025-11-28. It is the first target of `proofgate-implicit-role-paths`.
+
+Then the 91 AWS paths of Datadog [pathfinding.cloud](https://pathfinding.cloud/) (Apache-2.0) were each turned into a two-role model (an attacker role with the required permissions, and a target role that reads the protected bucket) and checked (`tests/pathfinding-benchmark.test.ts`, data in `tests/data/pathfinding-cloud/`). The predictions (`predictions.json`) were committed before the run.
+
+| Category            | Paths | `PG-IAM-004` | `PG-IAM-003` | Accepted (missed) |
+| ------------------- | ----- | ------------ | ------------ | ----------------- |
+| `new-passrole`      | 47    | 44           | 1            | 2                 |
+| `existing-passrole` | 22    | 0            | 0            | 22                |
+| `principal-access`  | 14    | 0            | 0            | 14                |
+| `self-escalation`   | 8     | 0            | 0            | 8                 |
+
+- 44 paths are reported: 44 of the 47 `new-passrole` paths (`cloudformation-005` has no PassRole and is accepted). `existing-passrole` (22, paths without PassRole), `principal-access` (14), and `self-escalation` (8) are not supported yet, so all are accepted.
+- Three results differ from the predictions. `cognitoidentity-001` is detected, better than predicted. `apprunner-001` is rejected with `PG-IAM-003` instead of reported, because the target role trusts `tasks.apprunner.amazonaws.com` while the launch table says `bullet.amazonaws.com`. `gamelift-001` is a **miss**: the fleet instance role trusts `ec2.amazonaws.com` but the table maps `gamelift:CreateFleet` to `gamelift.amazonaws.com`, so the trust does not match. Services that pass an EC2 instance role (EMR, Image Builder) can have the same kind of gap. A candidate fix is to count trust of `ec2.amazonaws.com` too when the launch service passes an instance profile. It only adds findings and belongs to a separate spec.
+- Two mistakes in the benchmark model (`cloudformation-004`, `batch-001`) were corrected and are written in `results.json`.
+- The benchmark reproduces only the preconditions (the combination of permissions). It does not check that an attack really works.
 
 ## Trial with the current code (2026-11-22)
 

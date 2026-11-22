@@ -127,6 +127,37 @@ npmから`@proofgate-cdk/cdk-plugin@1.1.1`を入れた、リポジトリの外�
 | RS-46 | RS-39から`ecs:RunTask`を除いたもの                                 | 安全                   | accepted   | accepted   |
 | RS-47 | ProofGateの知らないサービスを信頼する、渡せるロール                | 不明（危険として記録） | accepted   | PG-IAM-003 |
 
+## インシデントの形をしたPattern（RS-48〜RS-53）とpathfinding.cloudの91経路（Step 7、2026-11-22）
+
+公開されたインシデントや攻撃手法の形をしたPatternを6つ作り、実行の前に予想をコミットしてから（`examples/real-stacks/data/incident-probe-predictions.json`）、`pnpm real-stacks --incident`で試しました。結果は`incident-probe-results.json`にあります。分類は`.kiro/steering/direction-research.md`のものです（A: PassRoleと起動アクション、B: 既存リソースの書き換え、C: 自己昇格、C': ロールの連鎖、D: リソースポリシーによる露出）。正解はすべて「危険」です。
+
+| ID    | 構成                                                                                     | 分類 | 予想       | 結果       |
+| ----- | ---------------------------------------------------------------------------------------- | ---- | ---------- | ---------- |
+| RS-48 | Sysdig 2025型: 既存のLambda関数のコード更新（`lambda:UpdateFunctionCode`）               | B    | accepted   | accepted   |
+| RS-49 | Unit 42 2024型: `iam:AttachRolePolicy`を`*`に                                            | C    | accepted   | accepted   |
+| RS-50 | Capital One風: `iam:PassRole`を`*`、`ec2:*`、バケットを読むインスタンスロール            | A    | PG-IAM-004 | PG-IAM-004 |
+| RS-51 | 暗号資産の採掘型: `iam:PassRole`を`*`、`ecs:RunTask`                                     | A    | PG-IAM-004 | PG-IAM-004 |
+| RS-52 | ロールの連鎖: パイプラインのロールが、アカウントを信頼するデータロールを`sts:AssumeRole` | C'   | accepted   | PG-IAM-003 |
+| RS-53 | バケットを読むロールで動く関数の、公開関数URL（`AuthType: NONE`）                        | D    | accepted   | accepted   |
+
+- 分類Aの2件は検出しました。見逃しは、まだ対応していない分類B、C、Dの3件で、予想どおりです。
+- RS-52は、予想では受理でしたが、拒否（`PG-IAM-003`）でした。CDKの`AccountPrincipal`は`Fn::Join`と`Ref AWS::Partition`で書かれ、信頼ポリシーの中では読めないためです。リテラルのアカウントARNなら、このテンプレートは受理され、連鎖は見逃します。
+- RS-48は、Sysdigの報告（2025-11-28）と同じ形です。`proofgate-implicit-role-paths`の最初の対象です。
+
+次に、Datadogの[pathfinding.cloud](https://pathfinding.cloud/)（Apache-2.0）のAWSの91経路を、「攻撃者ロール（必要な権限）と、保護バケットを読む対象ロール」の2ロールのモデルにして、ProofGateが指摘するかを測りました（`tests/pathfinding-benchmark.test.ts`、データは`tests/data/pathfinding-cloud/`）。予想（`predictions.json`）は実行前にコミットしました。
+
+| 分類                | 経路数 | `PG-IAM-004` | `PG-IAM-003` | 受理（見逃し） |
+| ------------------- | ------ | ------------ | ------------ | -------------- |
+| `new-passrole`      | 47     | 44           | 1            | 2              |
+| `existing-passrole` | 22     | 0            | 0            | 22             |
+| `principal-access`  | 14     | 0            | 0            | 14             |
+| `self-escalation`   | 8      | 0            | 0            | 8              |
+
+- 指摘したのは44件です。`new-passrole`の47件のうち44件（`cloudformation-005`はPassRoleのない経路で、受理）です。`existing-passrole`（22件、PassRoleのない経路）、`principal-access`（14件）、`self-escalation`（8件）は、まだ対応していないため、すべて受理です。
+- 予想と違ったのは3件です。`cognitoidentity-001`は、予想より良く検出しました。`apprunner-001`は、信頼先のサービス（`tasks.apprunner.amazonaws.com`）が起動アクションの表の値（`bullet.amazonaws.com`）と違うため、検出ではなく`PG-IAM-003`で拒否しました。`gamelift-001`は**見逃し**です。フリートのインスタンスロールは`ec2.amazonaws.com`を信頼しますが、表は`gamelift:CreateFleet`を`gamelift.amazonaws.com`に結びつけているため、信頼先が一致しません。EMRやImage Builderのように、EC2のインスタンスロールを渡すサービスでも同じ種類のずれが起こりえます。直す案は「起動サービスがインスタンスプロファイルを渡すときは、`ec2.amazonaws.com`への信頼も数える」です。指摘を増やす方向だけの変更で、別のspecで扱います。
+- ベンチマークのモデルの誤りが2件ありました（`cloudformation-004`、`batch-001`）。モデルを直して、`results.json`に書きました。
+- このベンチマークは、攻撃の前提（権限の組み合わせ）だけを再現します。実際に攻撃が成立するかは見ていません。
+
 ## 今のコードを使った試用（2026-11-22）
 
 1.1.1の試用と同じアプリ（18の変種）で、npmの1.1.2と、このリポジトリの今のコード（パッケージにしたtarball）を比べました。違いは1つだけです。
