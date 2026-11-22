@@ -6,6 +6,7 @@ import type {
 } from "@proofgate-cdk/model";
 import { parseManagedPolicies } from "./managed-policies.js";
 import { type ResolveContext, resolveResources, resolveValue } from "./resolve.js";
+import { parseRoleBearingResources } from "./resources.js";
 
 /**
  * CloudFormation JSONから、ProofGateが扱うIAMの有限モデルを抽出します。
@@ -375,13 +376,15 @@ export function extractStack(template: unknown): ExtractionResult {
       reason: "No supported IAM policy statements were found; refusing a vacuous proof",
     });
   }
-  return unsupported.length > 0
-    ? { unsupported }
-    : {
-        model: {
-          version: "1",
-          roles: [...roles.values()].sort((a, b) => a.logicalId.localeCompare(b.logicalId)),
-        },
-        unsupported,
-      };
+  if (unsupported.length > 0) return { unsupported };
+  // ロールで動くリソース（spec proofgate-implicit-role-paths）。ないときは`resources`を付けません（既存のモデルを変えないためです）。
+  const resources = parseRoleBearingResources(template.Resources, roles, context);
+  return {
+    model: {
+      version: "1",
+      roles: [...roles.values()].sort((a, b) => a.logicalId.localeCompare(b.logicalId)),
+      ...(resources.length > 0 ? { resources } : {}),
+    },
+    unsupported,
+  };
 }
