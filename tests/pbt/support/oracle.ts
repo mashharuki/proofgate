@@ -30,6 +30,7 @@ import type {
 } from "@proofgate-cdk/model";
 import { BUCKET_GRANT_ACTIONS, LAUNCH_ACTIONS, OBJECT_ACTIONS } from "./aws-facts.js";
 import { IMPLICIT_ACTIONS } from "./aws-implicit.js";
+import { POLICY_WRITE_ACTIONS } from "./aws-policy-write.js";
 import { LAUNCH_SUPPLEMENTS } from "./aws-supplements.js";
 import {
   ANY_SUFFIX,
@@ -361,9 +362,90 @@ export function oracleUnknownRoles(model: StackModel): { readonly resource: stri
     )
     .map((resource) => ({ resource: resource.logicalId }));
 }
+// ---------------------------------------------------------------------------------------------------------------
+// Roles that change IAM itself (spec proofgate-self-escalation, design 4): PG-IAM-005.
+// - self-grant: P holds iam:PutRolePolicy or iam:AttachRolePolicy on a Resource that may denote P's own role ARN. After
+//   it P can reach every bucket, so it is a finding for every protected bucket, whatever P reaches today.
+// - take-over: P holds iam:UpdateAssumeRolePolicy on a Resource that may denote the role ARN of T (T is not P), and T reaches
+//   the bucket. T in allowedPassRoleTargets is excluded.
+// - creation grant: P holds iam:CreateRole (S1) and a self-grant action (S2) whose Resources, both of the shape of a role ARN,
+//   intersect (the Unit 42 sequence of 2024). The created role is not in the template.
+// - P in allowedPolicyWriters is excluded from all three.
+// The oracle matches role ARNs with its own code, case-sensitively, and does not count a bare name (IAM rejects it).
+// ロール自身がIAMを書き換える経路です（PG-IAM-005）。自分への付与、乗っ取り、作成して付与の3つです。
+// ---------------------------------------------------------------------------------------------------------------
+const ROLE_HEAD: Wide[] = [
+  ...literalTokens("arn:"),
+  NSTAR,
+  ...literalTokens(":iam:"),
+  NSTAR,
+  ...literalTokens(":"),
+  NSTAR,
+  ...literalTokens(":role/"),
+];
+/** Does the Resource pattern denote the ARN of the role? An unnamed role is read as its opaque name. */
+function roleDenotes(pattern: string, role: RoleModel): boolean {
+  if (/^\*+$/.test(pattern)) return true;
+  const unnamed = role.roleName === undefined;
+  const name = literalTokens(role.roleName ?? `_generated_${role.logicalId}`);
+  if (wideIntersects(compileGlob(pattern), [...ROLE_HEAD, ...name])) return true;
+  if (!unnamed) return false;
+  const at = pattern.indexOf(":role/");
+  if (at < 0) return false;
+  return (
+    /[*?]/.test(pattern.slice(at + ":role/".length)) &&
+    wideIntersects(compileGlob(pattern), [...ROLE_HEAD, ANY_SUFFIX])
+  );
+}
+const policyActions = (shape: "self-grant" | "take-over" | "creating") =>
+  POLICY_WRITE_ACTIONS.filter((entry) => entry.shape === shape).map((entry) => entry.action);
+const holding = (role: RoleModel, shape: "self-grant" | "take-over" | "creating") =>
+  role.statements.filter(
+    (s) => s.effect === "Allow" && policyActions(shape).some((action) => allows(s, action)),
+  );
+const isRoleShape = (pattern: string) =>
+  wideIntersects(compileGlob(pattern), [...ROLE_HEAD, ANY_SUFFIX]);
+function hasSelfGrant(role: RoleModel): boolean {
+  return holding(role, "self-grant").some((s) => s.resources.some((r) => roleDenotes(r, role)));
+}
+function hasCreationGrant(role: RoleModel): boolean {
+  const creating = holding(role, "creating")
+    .flatMap((s) => s.resources)
+    .filter(isRoleShape);
+  const writing = holding(role, "self-grant")
+    .flatMap((s) => s.resources)
+    .filter(isRoleShape);
+  return creating.some((a) => writing.some((b) => intersects(compileGlob(a), compileGlob(b))));
+}
+function hasTakeOver(principal: RoleModel, target: RoleModel): boolean {
+  return holding(principal, "take-over").some((s) =>
+    s.resources.some((r) => roleDenotes(r, target)),
+  );
+}
+function policyWritePaths(model: StackModel, config: ProofGateConfig): OraclePath[] {
+  const found: OraclePath[] = [];
+  for (const principal of model.roles) {
+    if (config.allowedPolicyWriters?.includes(principal.logicalId)) continue;
+    for (const bucketArn of config.protectedBucketArns) {
+      if (hasSelfGrant(principal) || hasCreationGrant(principal)) {
+        found.push({ principal: principal.logicalId, target: principal.logicalId, bucketArn });
+      }
+      for (const target of model.roles) {
+        if (target.logicalId === principal.logicalId) continue;
+        if (config.allowedPassRoleTargets?.includes(target.logicalId)) continue;
+        if (hasTakeOver(principal, target) && canReachBucket(target, bucketArn)) {
+          found.push({ principal: principal.logicalId, target: target.logicalId, bucketArn });
+        }
+      }
+    }
+  }
+  return found;
+}
 /** モデルが危険か安全かを返します。 */
 export function oracleVerdict(model: StackModel, config: ProofGateConfig): OracleVerdict {
-  return oraclePaths(model, config).length > 0 || implicitPaths(model, config).length > 0
+  return oraclePaths(model, config).length > 0 ||
+    implicitPaths(model, config).length > 0 ||
+    policyWritePaths(model, config).length > 0
     ? "unsafe"
     : "safe";
 }
