@@ -63,10 +63,11 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
 - [ ] 10. **Checkpoint 5.** Wait for the merge approval.
 
 ## Step 6: Write-ups and description (R8, R9, R10, R12)
-- [ ] 11. Create branch `submission/step-6-writeups`.
-  - [ ] 11.1 `docs/submission/kiro-usage.md` from the usage log (design 9): one section per item of the rules, the D1 chain with five links, the RS-70 failure, the provenance, the trust boundary, the external review named as another AI's opinion, unused features named as unused. Every claim links a file or a commit.
-  - [ ] 11.2 `docs/submission/description.md` (R12.1).
-  - [ ] 11.3 Check every link of both files against the repository (a script that lists the links and checks that the files and commits exist).
+- [x] 11. Create branch `submission/step-6-writeups`.
+  - [x] 11.1 `docs/submission/kiro-usage.md` from the usage log (design 9): one section per item of the rules, the D1 chain with five links, the RS-70 failure, the provenance, the trust boundary, the external review named as another AI's opinion, unused features named as unused. Every claim links a file or a commit.
+  - [x] 11.2 `docs/submission/description.md` (R12.1).
+  - [x] 11.3 Check every link of both files against the repository (a script that lists the links and checks that the files and commits exist).
+  - Done 2026-11-23 (waits for Checkpoint 6). `scripts/check-submission-links.mjs` checks relative links and requires every linked commit to be on `origin/main`; external URLs are listed, not fetched. On this branch one link is broken by design until PR #44 (Step 5) is merged: `description.md` links `comparison.md`. Facts corrected while writing, against the log and git: the MVP's content (taken from `git show --stat d5858f3`), "seven specs and one research folder" (the research folder has no requirements, design, or tasks), and the `?` count stated as features present, as the log does. Unused features are named as unused: Kiro CLI, Web, and Crew, custom agents, powers, Kiro's built-in PBT, and the hook firing on its own (not shown in the log).
 - [ ] 12. **Checkpoint 6.** The user reviews the provenance facts and the text.
 
 ## Step 7: Trials and the R3 decision (R6, R3)
