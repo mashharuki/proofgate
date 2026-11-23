@@ -17,7 +17,7 @@ This page lets you see it on one stack: the stack synthesizes normally, ProofGat
 ## 0. In a GitHub Codespace
 
 1. Sign in to GitHub, open https://github.com/mashharuki/proofgate, choose **Code**, then **Codespaces**, then **Create codespace on main**.
-2. Wait for the setup to finish. It installs Node.js, pnpm, and elan, builds the repository and the Lean project, and prepares `~/proofgate-npm-demo`, a copy of the demo stack that uses 1.2.0 from npm. It prints `Ready.` and the time of each phase (also in `/tmp/proofgate-setup-times.txt`).
+2. Wait for the setup to finish (the setup script took about 3.5 minutes in our measurement, after GitHub had created the container). It installs Node.js, pnpm, and elan, builds the repository and the Lean project, and prepares `~/proofgate-npm-demo`, a copy of the demo stack that uses 1.2.0 from npm. It prints `Ready.` and the time of each phase (also in `/tmp/proofgate-setup-times.txt`).
 3. In the terminal, run the four steps on the published version:
 
    ```bash
@@ -187,4 +187,4 @@ So Lean proves a property of that finite model. It does not prove anything about
 
 ## 8. Time
 
-Measured on 2026-11-23 on the author's macOS machine (Apple silicon), in a fresh clone, but with the pnpm store and the Lean toolchain already downloaded: `pnpm install` 2 s, `pnpm build` 4 s, `pnpm lean:build` 2 s, each synth about 2 s, `pnpm demo:fix` 7 s. A first run without any cache, on a fresh GitHub Actions runner (`ubuntu-latest`, job "Demo with the published npm version", 2026-11-23): Node.js and pnpm set-up 15 s, elan under 1 s, `npm install` of 1.2.0 and the build of the copy 9 s, and the four steps 20 s, which includes the download of the Lean toolchain and the first build of the bundled Lean project; 46 s in total. The time in a new GitHub Codespace will be added here.
+Measured on 2026-11-23 on the author's macOS machine (Apple silicon), in a fresh clone, but with the pnpm store and the Lean toolchain already downloaded: `pnpm install` 2 s, `pnpm build` 4 s, `pnpm lean:build` 2 s, each synth about 2 s, `pnpm demo:fix` 7 s. A first run without any cache, on a fresh GitHub Actions runner (`ubuntu-latest`, job "Demo with the published npm version", 2026-11-23): Node.js and pnpm set-up 15 s, elan under 1 s, `npm install` of 1.2.0 and the build of the copy 9 s, and the four steps 20 s, which includes the download of the Lean toolchain and the first build of the bundled Lean project; 46 s in total. In a new GitHub Codespace (2-core machine, 2026-11-23), the setup script of the dev container took 3 min 21 s: elan 1 s, `pnpm install` 19 s, `pnpm build` 39 s, `pnpm lean:build` 123 s (most of it the download of the Lean toolchain), and the npm copy of the demo 18 s. Add the time GitHub needs to create the container before that script starts; it was not measured. Then `node scripts/demo-fix.mjs --app-dir ~/proofgate-npm-demo` ran the four steps with the expected results.
