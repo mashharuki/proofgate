@@ -1,6 +1,6 @@
 # Tasks: proofgate-kiroween-submission
 
-Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 and 2 are done; Step 2 waits for Checkpoint 2. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
+Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 to 3 are done; Step 3 waits for Checkpoint 3 (the user merges and publishes). Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
 Deadline: Dec 5, 2026, 07:00 JST (Dec 4, 2:00 PM PT). Planned submission: Dec 4 JST. Brushup code freeze: 2026-11-29.
 Branches: one per step, from `main`: `submission/step-1-demo`, `submission/step-2-guide`, and so on. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: no rule, matcher, or verdict changes; no dependency or toolchain change of the packages; Kiro does not publish, tag, or bump a version outside Step 3; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at the checkpoint); English only under `docs/submission/`, `.devcontainer/`, and `.kiro`; no credentials anywhere; nothing is written as a trial or viewer result unless the user reported it. After each task run the quality gate; after each change under `tests/` run the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -35,11 +35,13 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
 - [ ] 4. **Checkpoint 2.** The user reviews the kit and the guide, approves the merge, and sends the trial requests.
 
 ## Step 3: Release 1.2.0 (R4, Option A)
-- [ ] 5. Create branch `submission/step-3-release`.
-  - [ ] 5.1 Tests first: the plugin's `version` equals the version in its `package.json`. Red with the fixed string `1.1.2`.
-  - [ ] 5.2 `ProofGateValidator.version` reads its own `package.json`. Version 1.2.0 in the four package manifests and the private examples. `CHANGELOG.md`: "Unreleased" becomes "1.2.0 - <date>".
-  - [ ] 5.3 Gate, `pnpm pack:check` (inspect the tarballs: Lean sources, no `.lake`, no test files), the differential against 1.1.2, the Lean audit, `pnpm verify:demo`, `pnpm demo:fix`.
+- [x] 5. Create branch `submission/step-3-release`.
+  - [x] 5.1 Tests first: the plugin's `version` equals the version in its `package.json`. Red with the fixed string `1.1.2`.
+  - [x] 5.2 `ProofGateValidator.version` reads its own `package.json`. Version 1.2.0 in the four package manifests and the private examples. `CHANGELOG.md`: "Unreleased" becomes "1.2.0 - <date>".
+  - [x] 5.3 Gate, `pnpm pack:check` (inspect the tarballs: Lean sources, no `.lake`, no test files), the differential against 1.1.2, the Lean audit, `pnpm verify:demo`, `pnpm demo:fix`.
+  - Done 2026-11-23 (waits for Checkpoint 3). Also found and fixed test-first: `ruleIds` listed only `PG-IAM-003` and `PG-IAM-004`, not `PG-IAM-005` (metadata only, no verdict change). Extra check beyond the task: the four packed 1.2.0 tarballs installed with npm in a directory outside the workspace ran the four demo steps (the plugin built its bundled Lean project there), reported `pluginVersion` 1.2.0, and printed the same violation text as the workspace. Differential against `v1.1.2` (3,038 inputs): no finding lost; 34 generated fragments without IAM resources are now accepted (the approved brushup Step 3); every other change adds findings. The CHANGELOG date is the day of the bump (2026-11-23) and is corrected if the user publishes on another day. After publishing, the README section on npm and `main` must be updated (task 7.5).
 - [ ] 6. **Checkpoint 3.** The user merges and publishes with `pnpm publish -r --access public`. Kiro does not publish or tag.
+  - 2026-11-23: the user published 1.2.0 (03:07 UTC) from the branch `submission/step-3-release`, before PR #41 was merged, so `main` still said 1.1.2 at that time. Kiro checked: all four packages are 1.2.0 and `latest` on the registry; the registry tarballs have the same files as the tarballs packed from the branch (only the order of two dependency keys in the plugin's `package.json` differs); a clean npm install of `@proofgate-cdk/cdk-plugin@1.2.0` runs the four demo steps and reports `pluginVersion` 1.2.0. The first install failed with `ETARGET` for `@proofgate-cdk/model@^1.2.0` because the npm metadata cache was older than the model's publication (about 2 minutes after the others); `--prefer-online` fixed it. PR #41 still needs the merge.
 
 ## Step 4: After the release (R4.4, R4.6, R5)
 - [ ] 7. Create branch `submission/step-4-container`.

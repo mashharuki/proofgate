@@ -2,7 +2,13 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
-## Unreleased
+## 1.2.0 - 2026-11-23
+
+Upgrade notes: `Violation.ruleId` can now be `"PG-IAM-005"`, and code that handles only `"PG-IAM-004"` should handle it too. `ProofGateConfig` has the new optional `allowedPolicyWriters`, and the model has the optional `resources`. Templates that 1.1.2 accepted can now be rejected (`PG-IAM-004`, `PG-IAM-005`), because every change below adds findings, except the four that read more templates: role-less templates, `Fn::Sub`, the managed policies, and non-service trust principals.
+
+### Fixed: the CDK report shows the real version and every rule ID
+
+The plugin reported the fixed version string `1.1.2` and listed only `PG-IAM-003` and `PG-IAM-004` as its rule IDs. It now reads its version from its own `package.json` and lists `PG-IAM-005` too.
 
 ### Added: roles that change IAM themselves (`PG-IAM-005`)
 
