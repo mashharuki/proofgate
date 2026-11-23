@@ -10,7 +10,7 @@ import {
   unknownTrustFindings,
 } from "@proofgate-cdk/core";
 import { extractStack } from "@proofgate-cdk/extractor";
-import type { ProofGateConfig } from "@proofgate-cdk/model";
+import { type ProofGateConfig, RULE_ID, RULE_ID_POLICY_WRITE } from "@proofgate-cdk/model";
 import type {
   IPolicyValidationContext,
   IPolicyValidationPlugin,
@@ -63,13 +63,22 @@ type LeanResult =
   | { readonly status: "error"; readonly diagnostic: string };
 
 /**
+ * このパッケージのpackage.jsonにある版です。CDKのレポートに表示する版を、公開する版と一致させます。
+ * The version in this package's package.json, so that the CDK report shows the published version.
+ */
+const PACKAGE_VERSION = (
+  JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+    version: string;
+  }
+).version;
+/**
  * 合成済みCloudFormationを検査し、CDK標準のValidation Reportを返します。
  */
 export class ProofGateValidator implements IPolicyValidationPlugin {
   /** プラグイン名、ルールID、バージョンはCDKレポートに表示されます。 */
   public readonly name = "ProofGate";
-  public readonly ruleIds = ["PG-IAM-003", "PG-IAM-004"];
-  public readonly version = "1.1.2";
+  public readonly ruleIds = ["PG-IAM-003", RULE_ID, RULE_ID_POLICY_WRITE];
+  public readonly version = PACKAGE_VERSION;
   private readonly leanDirectory: string;
   // undefinedは未実行、nullは成功、文字列は失敗診断を表します。同じsynth中の再ビルドを避けます。
   private leanBuildError: string | null | undefined;
