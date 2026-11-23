@@ -2,11 +2,31 @@
 
 ProofGate is a check that runs inside `cdk synth`. It reads the CloudFormation that AWS CDK produces and stops the synthesis when a principal can reach a protected S3 bucket through another role, for example by passing a role to a new Lambda function. A finite model of the IAM facts is checked with Lean 4 before the stack is accepted.
 
-This page lets you see it on one stack in about 10 minutes: the stack synthesizes normally, ProofGate rejects it, you remove one permission, and ProofGate accepts the same stack.
+This page lets you see it on one stack: the stack synthesizes normally, ProofGate rejects it, you remove one permission, and ProofGate accepts the same stack.
 
-**Version.** This page runs the code of this repository (`main`). The submission version, 1.2.0 on npm, will be filled in here after it is released. The package still reports itself as 1.1.2 until then.
+**Version.** `@proofgate-cdk/cdk-plugin` 1.2.0 from npm (published 2026-11-23). The repository's `main` has the same code, and the CDK report shows `pluginVersion: "1.2.0"`.
+
+**Three ways to try it.**
+
+1. In your browser, in a GitHub Codespace (section 0). Nothing to install.
+2. On your machine (sections 1 to 5).
+3. Without running anything: every CI run of this repository runs the four steps; open the latest run of the "CI" workflow under the Actions tab, job "Demo with the published npm version" (on `main`) or step "Demo on one stack" of "Validate and package".
 
 **No AWS account is used.** Nothing is deployed, and no credentials are read. Everything below is local `cdk synth`.
+
+## 0. In a GitHub Codespace
+
+1. Sign in to GitHub, open https://github.com/mashharuki/proofgate, choose **Code**, then **Codespaces**, then **Create codespace on main**.
+2. Wait for the setup to finish. It installs Node.js, pnpm, and elan, builds the repository and the Lean project, and prepares `~/proofgate-npm-demo`, a copy of the demo stack that uses 1.2.0 from npm. It prints `Ready.` and the time of each phase (also in `/tmp/proofgate-setup-times.txt`).
+3. In the terminal, run the four steps on the published version:
+
+   ```bash
+   node scripts/demo-fix.mjs --app-dir ~/proofgate-npm-demo
+   ```
+
+   or follow section 4 by hand in the repository (it uses the same code from the workspace).
+
+Cost: GitHub Free personal accounts include 120 core-hours of Codespaces compute and 15 GB-month of storage per month; this codespace uses the 2-core machine (2 core-hours per hour). Usage counts against the account that creates the codespace, and without a payment method GitHub blocks use when the quota runs out instead of charging (GitHub Docs, "GitHub Codespaces billing", read 2026-11-23). Delete the codespace when you are done.
 
 ## 1. Tools
 
@@ -124,6 +144,14 @@ pnpm demo:fix
 
 It runs steps 1 to 4 on the same stack, applies `fix.patch` to a copy in a temporary directory, and checks each exit code. It changes no file of the repository. The same command runs in every CI build of this repository; its log shows the four steps.
 
+### The same four steps with the npm package on your machine
+
+```bash
+node scripts/prepare-npm-demo.mjs /tmp/proofgate-npm-demo 1.2.0
+cd /tmp/proofgate-npm-demo && npm install && npx tsc -p tsconfig.json && cd -
+node scripts/demo-fix.mjs --app-dir /tmp/proofgate-npm-demo
+```
+
 ## 5. An exception is not a fix
 
 CDK lets the author acknowledge a finding:
@@ -159,4 +187,4 @@ So Lean proves a property of that finite model. It does not prove anything about
 
 ## 8. Time
 
-Measured on 2026-11-23 on the author's macOS machine (Apple silicon), in a fresh clone, but with the pnpm store and the Lean toolchain already downloaded: `pnpm install` 2 s, `pnpm build` 4 s, `pnpm lean:build` 2 s, each synth about 2 s, `pnpm demo:fix` 7 s. A first install on a new machine downloads the dependencies and the Lean toolchain and takes longer; that time is measured in a new GitHub Codespace and will be added here.
+Measured on 2026-11-23 on the author's macOS machine (Apple silicon), in a fresh clone, but with the pnpm store and the Lean toolchain already downloaded: `pnpm install` 2 s, `pnpm build` 4 s, `pnpm lean:build` 2 s, each synth about 2 s, `pnpm demo:fix` 7 s. A first run without any cache, on a fresh GitHub Actions runner (`ubuntu-latest`, job "Demo with the published npm version", 2026-11-23): Node.js and pnpm set-up 15 s, elan under 1 s, `npm install` of 1.2.0 and the build of the copy 9 s, and the four steps 20 s, which includes the download of the Lean toolchain and the first build of the bundled Lean project; 46 s in total. The time in a new GitHub Codespace will be added here.

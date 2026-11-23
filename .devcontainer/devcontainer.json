@@ -1,0 +1,19 @@
+{
+  "name": "ProofGate (try it)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "26.13.1",
+      "pnpmVersion": "11.24.0"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "codespaces": {
+      "openFiles": ["docs/GETTING_STARTED.en.md"]
+    }
+  }
+}
