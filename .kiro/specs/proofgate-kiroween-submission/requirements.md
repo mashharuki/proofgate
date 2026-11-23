@@ -1,6 +1,6 @@
 # Requirements: proofgate-kiroween-submission
 
-Status: APPROVED by the user on 2026-11-23 (revision 2, with the decisions recorded below). Revision 3 (2026-11-23): R4 follows Option A of the approved design (section 7.1).
+Status: APPROVED by the user on 2026-11-23 (revision 2, with the decisions recorded below). Revision 3 (2026-11-23): R4 follows Option A of the approved design (section 7.1). Revision 4 (2026-11-23): R9.1 and R9.2 changed by the user's decision (see R9).
 
 ## Why a separate spec
 
@@ -154,9 +154,10 @@ The user story: as a reviewer, I want to read from the rejection which principal
   - The usage log records only Kiro work.
   - `docs/PROOFS.md` and `AGENTS.md` say that Lean checks Booleans computed by TypeScript.
 - Missing evidence: an English statement for the submission.
+- Revision 4 (2026-11-23, the user's decision at Checkpoint 6): the submission materials do not describe the MVP of 2026-11-17 or the external mock review.
 - Acceptance criteria:
-  1. THE submission SHALL say what existed before Kiro (the MVP of 2026-11-17, built during the Submission Period without Kiro) and what was done in Kiro from 2026-11-18, and SHALL link the usage log.
-  2. It SHALL say that the external mock review came from another AI tool (Codex), was used as input, and is not an official score.
+  1. THE submission SHALL describe as Kiro work only what was done in Kiro from 2026-11-18 (the dates of the usage log), and SHALL link the usage log. It SHALL NOT describe earlier work as Kiro work, and SHALL NOT say that the whole project was built in Kiro.
+  2. THE submission materials SHALL NOT cite the external mock review, and SHALL NOT quote its scores.
   3. It SHALL say that Lean checks a finite model built by TypeScript, and that the extractor, the evaluator, the generated tables, and the assumption that the synthesized template is what is deployed are trusted. No text, slide, or video SHALL say that Lean proves CloudFormation or IAM semantics.
 - Owner: Kiro writes it. The user confirms the provenance facts.
 
