@@ -1,6 +1,6 @@
 # Tasks: proofgate-kiroween-submission
 
-Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Step 1 is done and waits for Checkpoint 1. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
+Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 and 2 are done; Step 2 waits for Checkpoint 2. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
 Deadline: Dec 5, 2026, 07:00 JST (Dec 4, 2:00 PM PT). Planned submission: Dec 4 JST. Brushup code freeze: 2026-11-29.
 Branches: one per step, from `main`: `submission/step-1-demo`, `submission/step-2-guide`, and so on. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: no rule, matcher, or verdict changes; no dependency or toolchain change of the packages; Kiro does not publish, tag, or bump a version outside Step 3; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at the checkpoint); English only under `docs/submission/`, `.devcontainer/`, and `.kiro`; no credentials anywhere; nothing is written as a trial or viewer result unless the user reported it. After each task run the quality gate; after each change under `tests/` run the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -27,10 +27,11 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
 - [ ] 2. **Checkpoint 1.** Report the output of `pnpm demo:fix` and the CI log line. Wait for the user's approval to merge.
 
 ## Step 2: Trial kit and guide draft (R6, R1)
-- [ ] 3. Create branch `submission/step-2-guide`.
-  - [ ] 3.1 `docs/submission/trial-protocol.md` and `docs/submission/trial-sheet.md` (design 8): the task, what the observer may say, what is recorded, separate times, the version or commit used. `docs/submission/trial-results.md` with "not verified".
-  - [ ] 3.2 `docs/GETTING_STARTED.en.md` (R1): what ProofGate is, the tools with exact versions, no AWS account, the manual fix path (design 3.4) and `pnpm demo:fix`, the expected exit codes and lines copied from a real run, the acknowledgement shown apart from the fix, what is not checked, what Lean covers. The version is marked "to be filled after the release". One English link line at the top of `README.md`.
-  - [ ] 3.3 Run the guide once from a fresh clone on this machine, exactly as written, and fix every step that does not work as written.
+- [x] 3. Create branch `submission/step-2-guide`.
+  - [x] 3.1 `docs/submission/trial-protocol.md` and `docs/submission/trial-sheet.md` (design 8): the task, what the observer may say, what is recorded, separate times, the version or commit used. `docs/submission/trial-results.md` with "not verified".
+  - [x] 3.2 `docs/GETTING_STARTED.en.md` (R1): what ProofGate is, the tools with exact versions, no AWS account, the manual fix path (design 3.4) and `pnpm demo:fix`, the expected exit codes and lines copied from a real run, the acknowledgement shown apart from the fix, what is not checked, what Lean covers. The version is marked "to be filled after the release". One English link line at the top of `README.md`.
+  - [x] 3.3 Run the guide once from a fresh clone on this machine, exactly as written, and fix every step that does not work as written.
+  - Done 2026-11-23 (waits for Checkpoint 2). The fresh clone of `a1a790e` from GitHub, with pnpm 11.24.0 installed by `npm install` as the guide says, gave the expected exit codes for every command (setup, steps 1 to 4 by hand, the restore, `pnpm demo:fix`, the acknowledged variant). Fixed in the guide after the run: the expected output of step 2 now includes the `file:` location line and says that pnpm adds its own lines. Found on the way: Node.js 26 ships without Corepack, so the guide installs pnpm with npm; and this machine's shell had been using pnpm 9.12.3 (Homebrew) for local runs, not the pinned 11.24.0 that CI uses. The fresh run used 11.24.0. The times in the guide are with caches; the cold time comes from the codespace (Step 4).
 - [ ] 4. **Checkpoint 2.** The user reviews the kit and the guide, approves the merge, and sends the trial requests.
 
 ## Step 3: Release 1.2.0 (R4, Option A)
