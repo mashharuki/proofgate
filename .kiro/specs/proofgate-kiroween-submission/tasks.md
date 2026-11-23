@@ -1,6 +1,6 @@
 # Tasks: proofgate-kiroween-submission
 
-Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 to 5 are done (1.2.0 published 2026-11-23); Step 5 waits for Checkpoint 5. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
+Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 to 6 are done (1.2.0 published 2026-11-23); Checkpoints 1 to 5 passed; Step 6 waits for Checkpoint 6. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
 Deadline: Dec 5, 2026, 07:00 JST (Dec 4, 2:00 PM PT). Planned submission: Dec 4 JST. Brushup code freeze: 2026-11-29.
 Branches: one per step, from `main`: `submission/step-1-demo`, `submission/step-2-guide`, and so on. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: no rule, matcher, or verdict changes; no dependency or toolchain change of the packages; Kiro does not publish, tag, or bump a version outside Step 3; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at the checkpoint); English only under `docs/submission/`, `.devcontainer/`, and `.kiro`; no credentials anywhere; nothing is written as a trial or viewer result unless the user reported it. After each task run the quality gate; after each change under `tests/` run the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -24,7 +24,7 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - [x] 1.4 Write `output-checklist.md` in this spec (design 4) from a real run of step 2 of the script.
   - [x] 1.5 Gate, the `tests/` typecheck, `pnpm verify:demo` (still exit 1 with `PG-IAM-004`), `git diff --check`.
   - Done 2026-11-23. Differences from the design: (1) on success CDK writes no plugin report (`pluginReports: []`, the same as without the plugin), so the script could not tell a passing gate from no gate; the example app now prints `ProofGate is on: protected bucket …` when `PROOFGATE=1`, and the script requires that line in steps 2 and 4 and its absence in step 1. (2) The patch is applied by the script (context lines must match, otherwise it fails) instead of `git apply`, which behaves differently inside and outside a repository. (3) The test always runs, like the existing CDK integration test; there is no skip when `lake` is missing. (4) The fixed copy is in a temporary directory outside the repository, with a symlink to the app's `node_modules`, instead of `.demo-fixed/` inside the app: the first gate run failed because Biome checked the generated copy (and jscpd would have seen the copied `app.ts` as a clone). No `.gitignore` or tool-config change is needed.
-- [ ] 2. **Checkpoint 1.** Report the output of `pnpm demo:fix` and the CI log line. Wait for the user's approval to merge.
+- [x] 2. **Checkpoint 1.** Report the output of `pnpm demo:fix` and the CI log line. Wait for the user's approval to merge. Passed 2026-11-23 (PR #39 merged).
 
 ## Step 2: Trial kit and guide draft (R6, R1)
 - [x] 3. Create branch `submission/step-2-guide`.
@@ -32,7 +32,7 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - [x] 3.2 `docs/GETTING_STARTED.en.md` (R1): what ProofGate is, the tools with exact versions, no AWS account, the manual fix path (design 3.4) and `pnpm demo:fix`, the expected exit codes and lines copied from a real run, the acknowledgement shown apart from the fix, what is not checked, what Lean covers. The version is marked "to be filled after the release". One English link line at the top of `README.md`.
   - [x] 3.3 Run the guide once from a fresh clone on this machine, exactly as written, and fix every step that does not work as written.
   - Done 2026-11-23 (waits for Checkpoint 2). The fresh clone of `a1a790e` from GitHub, with pnpm 11.24.0 installed by `npm install` as the guide says, gave the expected exit codes for every command (setup, steps 1 to 4 by hand, the restore, `pnpm demo:fix`, the acknowledged variant). Fixed in the guide after the run: the expected output of step 2 now includes the `file:` location line and says that pnpm adds its own lines. Found on the way: Node.js 26 ships without Corepack, so the guide installs pnpm with npm; and this machine's shell had been using pnpm 9.12.3 (Homebrew) for local runs, not the pinned 11.24.0 that CI uses. The fresh run used 11.24.0. The times in the guide are with caches; the cold time comes from the codespace (Step 4).
-- [ ] 4. **Checkpoint 2.** The user reviews the kit and the guide, approves the merge, and sends the trial requests.
+- [x] 4. **Checkpoint 2.** The user reviews the kit and the guide, approves the merge, and sends the trial requests. Passed 2026-11-23 (PR #40 merged).
 
 ## Step 3: Release 1.2.0 (R4, Option A)
 - [x] 5. Create branch `submission/step-3-release`.
@@ -40,7 +40,7 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - [x] 5.2 `ProofGateValidator.version` reads its own `package.json`. Version 1.2.0 in the four package manifests and the private examples. `CHANGELOG.md`: "Unreleased" becomes "1.2.0 - <date>".
   - [x] 5.3 Gate, `pnpm pack:check` (inspect the tarballs: Lean sources, no `.lake`, no test files), the differential against 1.1.2, the Lean audit, `pnpm verify:demo`, `pnpm demo:fix`.
   - Done 2026-11-23 (waits for Checkpoint 3). Also found and fixed test-first: `ruleIds` listed only `PG-IAM-003` and `PG-IAM-004`, not `PG-IAM-005` (metadata only, no verdict change). Extra check beyond the task: the four packed 1.2.0 tarballs installed with npm in a directory outside the workspace ran the four demo steps (the plugin built its bundled Lean project there), reported `pluginVersion` 1.2.0, and printed the same violation text as the workspace. Differential against `v1.1.2` (3,038 inputs): no finding lost; 34 generated fragments without IAM resources are now accepted (the approved brushup Step 3); every other change adds findings. The CHANGELOG date is the day of the bump (2026-11-23) and is corrected if the user publishes on another day. After publishing, the README section on npm and `main` must be updated (task 7.5).
-- [ ] 6. **Checkpoint 3.** The user merges and publishes with `pnpm publish -r --access public`. Kiro does not publish or tag.
+- [x] 6. **Checkpoint 3.** The user merges and publishes with `pnpm publish -r --access public`. Kiro does not publish or tag. Passed 2026-11-23 (PR #41 merged; 1.2.0 published).
   - 2026-11-23: the user published 1.2.0 (03:07 UTC) from the branch `submission/step-3-release`, before PR #41 was merged, so `main` still said 1.1.2 at that time. Kiro checked: all four packages are 1.2.0 and `latest` on the registry; the registry tarballs have the same files as the tarballs packed from the branch (only the order of two dependency keys in the plugin's `package.json` differs); a clean npm install of `@proofgate-cdk/cdk-plugin@1.2.0` runs the four demo steps and reports `pluginVersion` 1.2.0. The first install failed with `ETARGET` for `@proofgate-cdk/model@^1.2.0` because the npm metadata cache was older than the model's publication (about 2 minutes after the others); `--prefer-online` fixed it. PR #41 still needs the merge.
 
 ## Step 4: After the release (R4.4, R4.6, R5)
@@ -52,7 +52,7 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - [x] 7.4 Measure in a new codespace (design 5.4: Kiro with `gh codespace create` if the login allows it, otherwise the user). Record the times. If the setup is over 10 minutes, stop and ask about a prebuild.
   - Done 2026-11-23 by the user in a new codespace on `main` (`4cf8e08`): `/tmp/proofgate-setup-times.txt` shows 04:53:40Z to 04:57:01Z, 3 min 21 s for the setup script (elan 1 s, `pnpm install` 19 s, `pnpm build` 39 s, `pnpm lean:build` 123 s, the npm demo copy 18 s), with Node.js v26.13.1 and pnpm 11.24.0. The time to create the container before the script was not reported, so the total from "Create codespace" to "Ready" is not measured. `demo-fix.mjs --app-dir ~/proofgate-npm-demo` gave all four steps as expected, with the same output as locally and in CI. The setup script is under 10 minutes, so no prebuild is proposed.
   - [x] 7.5 Fill the version, the Codespaces entry, the free-quota text (design 5.3), and the measured times into `docs/GETTING_STARTED.en.md`. Done except the codespace times (after 7.4). The README section on npm and `main` now says 1.2.0.
-- [ ] 8. **Checkpoint 4.** Report the times and the npm comparison. Wait for the merge approval.
+- [x] 8. **Checkpoint 4.** Report the times and the npm comparison. Wait for the merge approval. Passed 2026-11-23 (PRs #42 and #43 merged).
 
 ## Step 5: Comparison with cdk-nag (R7)
 - [x] 9. Create branch `submission/step-5-comparison`.
@@ -61,7 +61,7 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - [x] 9.3 Run the three tools on both inputs; store the raw outputs unchanged under `comparison/cdk-nag/results/`.
   - [x] 9.4 Write the table. Keep a finding that more than one tool reports. Limit the claims to what was run.
   - Done 2026-11-23 (waits for Checkpoint 5). The plan was committed alone (`e7c10e1`) before the run. The plan's cdk-nag line was the cdk-nag 2 API (`Aspects`); 3.1.0 is a CDK validation plugin like ProofGate, so the run used `Validations.of(app).addPlugins(...)`, recorded as a deviation in Part 2 without editing Part 1. Result: cdk-nag reports three IAM5 wildcard findings before the fix and two after (the synth fails in both); ProofGate reports one path before and nothing after. Both flag the `iam:PassRole` statement, for different reasons. `scripts/apply-patch.mjs` was split out of `demo-fix.mjs` so the comparison reuses it. `biome.json` ignores `comparison/cdk-nag/results` (raw outputs kept unchanged). `pnpm-lock.yaml`, the root `package.json`, and the workspace packages are unchanged.
-- [ ] 10. **Checkpoint 5.** Wait for the merge approval.
+- [x] 10. **Checkpoint 5.** Wait for the merge approval. Passed 2026-11-23 (PR #44 merged).
 
 ## Step 6: Write-ups and description (R8, R9, R10, R12)
 - [x] 11. Create branch `submission/step-6-writeups`.
