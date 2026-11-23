@@ -1,0 +1,10 @@
+/private/var/folders/0c/vbkwk57s4lb21y1ts4ndr9zh0000gn/T/proofgate-comparison-d5IzHF/after/dist/app.js:20:10
+ERROR The IAM entity contains wildcard permissions and does not have a cdk-nag rule suppression with evidence for those permission. Metadata explaining the evidence (e.g. via supporting links) for wildcard permissions allows for transparency to operators. This is a granular rule that returns individual findings that can be suppressed with 'appliesTo'. The findings are in the format 'Action::<action>' for policy actions and 'Resource::<resource>' for resources. Example: appliesTo: ['Action::s3:*']. (AwsSolutions)
+   VulnerableAppStack/ProtectedDataRole/DefaultPolicy/Resource aws-cdk-lib.aws_iam.CfnPolicy
+   Acknowledge with 'AwsSolutions::AwsSolutions-IAM5[Resource::arn:aws:s3:::proofgate-protected-data/*]'
+
+/private/var/folders/0c/vbkwk57s4lb21y1ts4ndr9zh0000gn/T/proofgate-comparison-d5IzHF/after/dist/app.js:31:11
+ERROR The IAM entity contains wildcard permissions and does not have a cdk-nag rule suppression with evidence for those permission. Metadata explaining the evidence (e.g. via supporting links) for wildcard permissions allows for transparency to operators. This is a granular rule that returns individual findings that can be suppressed with 'appliesTo'. The findings are in the format 'Action::<action>' for policy actions and 'Resource::<resource>' for resources. Example: appliesTo: ['Action::s3:*']. (AwsSolutions)
+   VulnerableAppStack/DeveloperRole/DefaultPolicy/Resource aws-cdk-lib.aws_iam.CfnPolicy
+   Acknowledge with 'AwsSolutions::AwsSolutions-IAM5[Resource::*]'
+Synthesis finished with errors
