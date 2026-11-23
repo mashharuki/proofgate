@@ -48,6 +48,9 @@ developer.addToPolicy(
 
 // PROOFGATE=1の場合だけ検証プラグインを登録し、拒否される経路をデモします。
 if (process.env.PROOFGATE === "1") {
+  // 検証が有効なことを、合成の出力で分かるようにします（成功時、CDKはプラグインの結果を表示しません）。
+  // Say that the gate is on, because CDK prints nothing about a plugin that passes.
+  console.error(`ProofGate is on: protected bucket ${protectedBucketArn}`);
   Validations.of(app).addPlugins(
     new ProofGateValidator({ protectedBucketArns: [protectedBucketArn] }),
   );
