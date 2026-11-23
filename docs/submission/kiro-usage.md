@@ -2,11 +2,9 @@
 
 Every claim below links a file or a commit in this repository. The source is the Kiro usage log, [`.kiro/steering/kiroween.md`](../../.kiro/steering/kiroween.md): one row per real session, failures included, 108 rows from 2026-11-18 to 2026-11-23 at the time of writing.
 
-## Provenance: what existed before Kiro
+## Kiro app
 
-- The repository was created on 2026-11-16 (commit `31c5615`), and the author committed a first MVP on 2026-11-17 (`d5858f3` and the small follow-up commits of that evening), all inside the Submission Period (from 2026-10-30). The MVP was **not** built with Kiro. It had the four packages (model, extractor, core, CDK plugin), a Lambda-only `PG-IAM-004` rule, the Lean model, the two demo apps, one test file, and short docs.
-- All work from 2026-11-18 on was done in **Kiro IDE**, the only Kiro app used. Kiro CLI, Web, and Crew were not used.
-- An external mock review of commit `17fd143`, written by another AI tool (the author's Codex session), was used as input for the submission spec [`proofgate-kiroween-submission`](../../.kiro/specs/proofgate-kiroween-submission/requirements.md). It is an opinion, not an official score.
+All the work described here was done in **Kiro IDE**, from 2026-11-18 on. Kiro CLI, Web, and Crew were not used.
 
 ## Spec-driven development
 

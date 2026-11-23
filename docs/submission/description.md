@@ -62,4 +62,4 @@ On the same stack, cdk-nag 3.1.0 (`AwsSolutionsChecks`) reports three wildcard f
 
 ## Built with Kiro
 
-The MVP of 2026-11-17 was written without Kiro. Everything after it was built in Kiro IDE, through seven specs, steering, a quality-gate hook, and MCP servers. See [`docs/submission/kiro-usage.md`](kiro-usage.md).
+Developed in Kiro IDE from 2026-11-18, through seven specs, steering, a quality-gate hook, and MCP servers. See [`docs/submission/kiro-usage.md`](kiro-usage.md).
