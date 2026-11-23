@@ -1,0 +1,17 @@
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -29,14 +29,6 @@
+   roleName: "proofgate-vulnerable-developer",
+   assumedBy: new ServicePrincipal("ec2.amazonaws.com"),
+ });
+-// 条件1: 保護データ用ロールをLambdaへ渡せます。
+-developer.addToPolicy(
+-  new PolicyStatement({
+-    effect: Effect.ALLOW,
+-    actions: ["iam:PassRole"],
+-    resources: ["arn:aws:iam::*:role/proofgate-protected-data-role"],
+-  }),
+-);
+ // 条件2: 渡したロールを使うLambda関数のコードや実行を制御できます。
+ developer.addToPolicy(
+   new PolicyStatement({

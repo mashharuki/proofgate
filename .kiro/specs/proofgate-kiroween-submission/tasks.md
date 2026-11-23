@@ -1,6 +1,6 @@
 # Tasks: proofgate-kiroween-submission
 
-Status: DRAFT (2026-11-23), waiting for the user's approval. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
+Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Step 1 is done and waits for Checkpoint 1. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
 Deadline: Dec 5, 2026, 07:00 JST (Dec 4, 2:00 PM PT). Planned submission: Dec 4 JST. Brushup code freeze: 2026-11-29.
 Branches: one per step, from `main`: `submission/step-1-demo`, `submission/step-2-guide`, and so on. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: no rule, matcher, or verdict changes; no dependency or toolchain change of the packages; Kiro does not publish, tag, or bump a version outside Step 3; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at the checkpoint); English only under `docs/submission/`, `.devcontainer/`, and `.kiro`; no credentials anywhere; nothing is written as a trial or viewer result unless the user reported it. After each task run the quality gate; after each change under `tests/` run the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -17,12 +17,13 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
 | 8 Video and submission | 12-02 to 12-04 | user records, uploads, submits |
 
 ## Step 1: Demo sequence (R2, R3 checklist)
-- [ ] 1. Create branch `submission/step-1-demo`.
-  - [ ] 1.1 Tests first: `tests/demo-fix.test.ts` runs `pnpm demo:fix` and checks the four steps (exit 0, exit 1 with `PG-IAM-004` in the report, the fix applied, exit 0 with conclusion `success`) and an unchanged `git status --porcelain`. Show it red (the script does not exist).
-  - [ ] 1.2 Write `examples/vulnerable-app/fix.patch` (removes the `iam:PassRole` statement and its comment, 8 lines) and `scripts/demo-fix.mjs` (design 3.2: argument arrays, a copy under `.demo-fixed/`, one line per step, `--app-dir` for the npm copy later). Add `.demo-fixed/` to `.gitignore` and the root script `demo:fix`. Comments in Japanese with English beside.
-  - [ ] 1.3 Add the step `pnpm demo:fix` to `.github/workflows/ci.yml` after the tests.
-  - [ ] 1.4 Write `output-checklist.md` in this spec (design 4) from a real run of step 2 of the script.
-  - [ ] 1.5 Gate, the `tests/` typecheck, `pnpm verify:demo` (still exit 1 with `PG-IAM-004`), `git diff --check`.
+- [x] 1. Create branch `submission/step-1-demo`.
+  - [x] 1.1 Tests first: `tests/demo-fix.test.ts` runs `pnpm demo:fix` and checks the four steps (exit 0, exit 1 with `PG-IAM-004` in the report, the fix applied, exit 0 with conclusion `success`) and an unchanged `git status --porcelain`. Show it red (the script does not exist).
+  - [x] 1.2 Write `examples/vulnerable-app/fix.patch` (removes the `iam:PassRole` statement and its comment, 8 lines) and `scripts/demo-fix.mjs` (design 3.2: argument arrays, a copy under `.demo-fixed/`, one line per step, `--app-dir` for the npm copy later). Add the root script `demo:fix`. Comments in Japanese with English beside.
+  - [x] 1.3 Add the step `pnpm demo:fix` to `.github/workflows/ci.yml` after the tests.
+  - [x] 1.4 Write `output-checklist.md` in this spec (design 4) from a real run of step 2 of the script.
+  - [x] 1.5 Gate, the `tests/` typecheck, `pnpm verify:demo` (still exit 1 with `PG-IAM-004`), `git diff --check`.
+  - Done 2026-11-23. Differences from the design: (1) on success CDK writes no plugin report (`pluginReports: []`, the same as without the plugin), so the script could not tell a passing gate from no gate; the example app now prints `ProofGate is on: protected bucket …` when `PROOFGATE=1`, and the script requires that line in steps 2 and 4 and its absence in step 1. (2) The patch is applied by the script (context lines must match, otherwise it fails) instead of `git apply`, which behaves differently inside and outside a repository. (3) The test always runs, like the existing CDK integration test; there is no skip when `lake` is missing. (4) The fixed copy is in a temporary directory outside the repository, with a symlink to the app's `node_modules`, instead of `.demo-fixed/` inside the app: the first gate run failed because Biome checked the generated copy (and jscpd would have seen the copied `app.ts` as a clone). No `.gitignore` or tool-config change is needed.
 - [ ] 2. **Checkpoint 1.** Report the output of `pnpm demo:fix` and the CI log line. Wait for the user's approval to merge.
 
 ## Step 2: Trial kit and guide draft (R6, R1)
