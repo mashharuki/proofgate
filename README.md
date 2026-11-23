@@ -91,14 +91,9 @@ English: examples and data used for verification. `examples/real-stacks` has 84 
 
 ## 公開版と開発版
 
-npmの最新版は1.1.2です（`@proofgate-cdk/cdk-plugin`ほか4パッケージ）。このREADMEは`main`ブランチの内容を説明しており、次の機能はまだnpmに公開していません（[CHANGELOG](CHANGELOG.md)の「Unreleased」）。
+npmの最新版は1.2.0（2026-11-23公開、4パッケージとも同じ版）で、このREADMEが説明する`main`の内容と同じです。1.1.2からの変更は[CHANGELOG](CHANGELOG.md)の「1.2.0」にあります。主な追加は、Lambda以外の起動サービス（879の起動アクション）、`iam:PassRole`の要らない経路、ロール自身がIAMを書き換える経路（`PG-IAM-005`）と設定項目`allowedPolicyWriters`です。
 
-- Lambda以外の起動サービス（ECS、EC2、CodeBuild、Step Functionsなど、879の起動アクション）。1.1.2はLambdaだけを検査します
-- `iam:PassRole`の要らない経路（既存のLambda関数、CodeBuildプロジェクト、ステートマシンの変更）
-- ロール自身がIAMを書き換える経路（`PG-IAM-005`）と、設定項目`allowedPolicyWriters`
-- 保護対象バケットへのアクセスとして数えるS3のActionの拡張、IAMリソースのないテンプレートの受理、`Fn::Sub`、追加の管理ポリシー（読むのは7件）、信頼ポリシーのサービスではないプリンシパル
-
-English: npm has 1.1.2. This README describes `main`; launch services other than Lambda, paths without `iam:PassRole`, `PG-IAM-005` with `allowedPolicyWriters`, the wider S3 actions, role-less templates, `Fn::Sub`, the extra managed policies, and non-service trust principals are not published yet (see "Unreleased" in the CHANGELOG).
+English: npm has 1.2.0 (published 2026-11-23, the same version for all four packages), which is what this README describes. The changes from 1.1.2 are in the "1.2.0" section of the CHANGELOG.
 
 ## 公開パッケージ
 

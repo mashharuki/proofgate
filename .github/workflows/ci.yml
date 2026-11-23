@@ -66,3 +66,39 @@ jobs:
 
       - name: Verify npm package contents
         run: pnpm pack:check
+
+  # 公開版（npm）のProofGateで、同じ4つの手順を流します（spec proofgate-kiroween-submission, R4, R5）。
+  # The same four demo steps with the published npm version, so that anyone can see a run of the published package.
+  npm-demo:
+    name: Demo with the published npm version
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PROOFGATE_NPM_VERSION: 1.2.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v3
+        with:
+          cache: false
+          require-lockfile: true
+      - name: Install elan (the Lean toolchain comes from the published package)
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Prepare a copy of the demo stack that uses the npm version
+        run: node scripts/prepare-npm-demo.mjs "$RUNNER_TEMP/npm-demo" "$PROOFGATE_NPM_VERSION"
+      - name: Install the npm version and build the copy
+        working-directory: ${{ runner.temp }}/npm-demo
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc -p tsconfig.json
+      - name: Demo on one stack with the npm version (plain synth, rejection, fix, pass)
+        run: node scripts/demo-fix.mjs --app-dir "$RUNNER_TEMP/npm-demo"
+      - name: Show the version in the CDK report
+        run: |
+          grep -o '"pluginVersion": "[^"]*"' "$RUNNER_TEMP/npm-demo/cdk.out/validation-report.json"

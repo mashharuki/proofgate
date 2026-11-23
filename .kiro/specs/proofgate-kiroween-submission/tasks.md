@@ -44,12 +44,13 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
   - 2026-11-23: the user published 1.2.0 (03:07 UTC) from the branch `submission/step-3-release`, before PR #41 was merged, so `main` still said 1.1.2 at that time. Kiro checked: all four packages are 1.2.0 and `latest` on the registry; the registry tarballs have the same files as the tarballs packed from the branch (only the order of two dependency keys in the plugin's `package.json` differs); a clean npm install of `@proofgate-cdk/cdk-plugin@1.2.0` runs the four demo steps and reports `pluginVersion` 1.2.0. The first install failed with `ETARGET` for `@proofgate-cdk/model@^1.2.0` because the npm metadata cache was older than the model's publication (about 2 minutes after the others); `--prefer-online` fixed it. PR #41 still needs the merge.
 
 ## Step 4: After the release (R4.4, R4.6, R5)
-- [ ] 7. Create branch `submission/step-4-container`.
-  - [ ] 7.1 Check the registry: `latest` 1.2.0 for all four packages. In a new directory outside the repository, run the four steps against the npm packages (`--app-dir`) and compare the exit codes and the violation text with the workspace run. The report shows `pluginVersion` 1.2.0.
-  - [ ] 7.2 Add the CI job `npm-demo` (design 7.3).
-  - [ ] 7.3 `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` (design 5.1), with the timings written to `/tmp/proofgate-setup-times.txt` and the npm demo copy in `~/proofgate-npm-demo`.
+- [x] 7. Create branch `submission/step-4-container`.
+  - [x] 7.1 Check the registry: `latest` 1.2.0 for all four packages. In a new directory outside the repository, run the four steps against the npm packages (`--app-dir`) and compare the exit codes and the violation text with the workspace run. The report shows `pluginVersion` 1.2.0.
+  - [x] 7.2 Add the CI job `npm-demo` (design 7.3).
+  - [x] 7.3 `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` (design 5.1), with the timings written to `/tmp/proofgate-setup-times.txt` and the npm demo copy in `~/proofgate-npm-demo`.
+  - Progress 2026-11-23: 7.1 done (see Checkpoint 3). 7.2: job `npm-demo` with `scripts/prepare-npm-demo.mjs` (a copy of the demo stack that installs the npm version); it does not run on pull requests and was started once on the branch with `workflow_dispatch`. 7.3: the container uses the Node.js feature `node:2` at 26.13.1 with pnpm 11.24.0, and `tests/devcontainer.test.ts` keeps both equal to `.nvmrc` and `packageManager` and checks that no AWS tool or secret is configured (written together with the container, not red first). Local check of the container was not possible: the Docker daemon is not running on this machine. 7.4 waits: the `gh` login has no `codespace` scope, so the user creates the codespace.
   - [ ] 7.4 Measure in a new codespace (design 5.4: Kiro with `gh codespace create` if the login allows it, otherwise the user). Record the times. If the setup is over 10 minutes, stop and ask about a prebuild.
-  - [ ] 7.5 Fill the version, the Codespaces entry, the free-quota text (design 5.3), and the measured times into `docs/GETTING_STARTED.en.md`.
+  - [x] 7.5 Fill the version, the Codespaces entry, the free-quota text (design 5.3), and the measured times into `docs/GETTING_STARTED.en.md`. Done except the codespace times (after 7.4). The README section on npm and `main` now says 1.2.0.
 - [ ] 8. **Checkpoint 4.** Report the times and the npm comparison. Wait for the merge approval.
 
 ## Step 5: Comparison with cdk-nag (R7)
