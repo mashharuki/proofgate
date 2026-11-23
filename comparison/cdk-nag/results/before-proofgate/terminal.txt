@@ -1,0 +1,7 @@
+ProofGate is on: protected bucket arn:aws:s3:::proofgate-protected-data
+/private/var/folders/0c/vbkwk57s4lb21y1ts4ndr9zh0000gn/T/proofgate-comparison-d5IzHF/before/dist/app.js:26:19
+ERROR DeveloperRole58EC5A58 can pass role ProtectedDataRoleCDFF69BA to lambda.amazonaws.com and launch it (lambda:CreateFunction); ProtectedDataRoleCDFF69BA trusts lambda.amazonaws.com and can access protected bucket arn:aws:s3:::proofgate-protected-data. (ProofGate)
+   VulnerableAppStack/DeveloperRole/Resource (DeveloperRole58EC5A58) aws-cdk-lib.aws_iam.CfnRole
+   Suggested fix: Remove iam:PassRole or the launch action from DeveloperRole58EC5A58, remove the service from the trust policy of ProtectedDataRoleCDFF69BA, or prevent that role from accessing the protected bucket.
+   Acknowledge with 'ProofGate::PG-IAM-004'
+Synthesis finished with errors

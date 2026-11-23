@@ -9,7 +9,8 @@
       "!!**/.lake",
       "!!**/.pnpm-store",
       "!!**/.serena",
-      "!!**/.kiro"
+      "!!**/.kiro",
+      "!!**/comparison/cdk-nag/results"
     ]
   },
   "formatter": {
