@@ -1,5 +1,7 @@
 # ProofGate
 
+**English:** start with [Getting started with ProofGate](docs/GETTING_STARTED.en.md): one CDK stack that synthesizes, is rejected by ProofGate, is fixed, and passes, in about 10 minutes and without an AWS account.
+
 ## 概要
 
 ProofGateは、AWS CDKが生成したCloudFormationを解析し、危険なIAM権限昇格経路が存在しないことをデプロイ前にLeanで機械検証するCDK Validation Pluginです。
