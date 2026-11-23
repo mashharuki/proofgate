@@ -1,6 +1,6 @@
 # Tasks: proofgate-kiroween-submission
 
-Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 to 4 are done (1.2.0 published 2026-11-23); Step 4 waits for Checkpoint 4. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
+Status: APPROVED by the user on 2026-11-23 (PR #38 merged). Steps 1 to 5 are done (1.2.0 published 2026-11-23); Step 5 waits for Checkpoint 5. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (approved, Option A).
 Deadline: Dec 5, 2026, 07:00 JST (Dec 4, 2:00 PM PT). Planned submission: Dec 4 JST. Brushup code freeze: 2026-11-29.
 Branches: one per step, from `main`: `submission/step-1-demo`, `submission/step-2-guide`, and so on. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: no rule, matcher, or verdict changes; no dependency or toolchain change of the packages; Kiro does not publish, tag, or bump a version outside Step 3; no existing test or assertion is deleted, skipped, or weakened (a change that the work forces is listed at the checkpoint); English only under `docs/submission/`, `.devcontainer/`, and `.kiro`; no credentials anywhere; nothing is written as a trial or viewer result unless the user reported it. After each task run the quality gate; after each change under `tests/` run the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -55,11 +55,12 @@ Rules for every task: no rule, matcher, or verdict changes; no dependency or too
 - [ ] 8. **Checkpoint 4.** Report the times and the npm comparison. Wait for the merge approval.
 
 ## Step 5: Comparison with cdk-nag (R7)
-- [ ] 9. Create branch `submission/step-5-comparison`.
-  - [ ] 9.1 Write the plan in `docs/submission/comparison.md` (inputs, tools with exact versions, the rule pack, the commands, the question) and commit it **alone**, before any run.
-  - [ ] 9.2 Create `comparison/cdk-nag/` (design 6.1) with its own lockfile; add ignore entries for the quality tools if they scan it. Check that `pnpm-lock.yaml`, the root `package.json`, and the workspace packages are unchanged.
-  - [ ] 9.3 Run the three tools on both inputs; store the raw outputs unchanged under `comparison/cdk-nag/results/`.
-  - [ ] 9.4 Write the table. Keep a finding that more than one tool reports. Limit the claims to what was run.
+- [x] 9. Create branch `submission/step-5-comparison`.
+  - [x] 9.1 Write the plan in `docs/submission/comparison.md` (inputs, tools with exact versions, the rule pack, the commands, the question) and commit it **alone**, before any run.
+  - [x] 9.2 Create `comparison/cdk-nag/` (design 6.1) with its own lockfile; add ignore entries for the quality tools if they scan it. Check that `pnpm-lock.yaml`, the root `package.json`, and the workspace packages are unchanged.
+  - [x] 9.3 Run the three tools on both inputs; store the raw outputs unchanged under `comparison/cdk-nag/results/`.
+  - [x] 9.4 Write the table. Keep a finding that more than one tool reports. Limit the claims to what was run.
+  - Done 2026-11-23 (waits for Checkpoint 5). The plan was committed alone (`e7c10e1`) before the run. The plan's cdk-nag line was the cdk-nag 2 API (`Aspects`); 3.1.0 is a CDK validation plugin like ProofGate, so the run used `Validations.of(app).addPlugins(...)`, recorded as a deviation in Part 2 without editing Part 1. Result: cdk-nag reports three IAM5 wildcard findings before the fix and two after (the synth fails in both); ProofGate reports one path before and nothing after. Both flag the `iam:PassRole` statement, for different reasons. `scripts/apply-patch.mjs` was split out of `demo-fix.mjs` so the comparison reuses it. `biome.json` ignores `comparison/cdk-nag/results` (raw outputs kept unchanged). `pnpm-lock.yaml`, the root `package.json`, and the workspace packages are unchanged.
 - [ ] 10. **Checkpoint 5.** Wait for the merge approval.
 
 ## Step 6: Write-ups and description (R8, R9, R10, R12)

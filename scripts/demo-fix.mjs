@@ -19,6 +19,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, symlinkSync, writeFileSy
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { applyPatch } from "./apply-patch.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const at = process.argv.indexOf("--app-dir");
@@ -71,38 +72,6 @@ const indent = (text) =>
     .map((line) => `    ${line}`)
     .join("\n");
 
-/**
- * 統一差分を当てます。文脈の行が一致しないときは、推測せずに失敗します。
- * Applies a unified diff. If a context line does not match, it fails instead of guessing.
- */
-function applyPatch(source, patch) {
-  const lines = source.split("\n");
-  const hunks = patch.split("\n@@").slice(1);
-  let offset = 0;
-  for (const hunk of hunks) {
-    const [header, ...body] = hunk.split("\n");
-    const start = Number(/-(\d+)/.exec(header)?.[1]) - 1;
-    const old = [];
-    const next = [];
-    for (const line of body) {
-      if (line.startsWith("-")) old.push(line.slice(1));
-      else if (line.startsWith("+")) next.push(line.slice(1));
-      else if (line.startsWith(" ")) {
-        old.push(line.slice(1));
-        next.push(line.slice(1));
-      }
-    }
-    const at = start + offset;
-    const current = lines.slice(at, at + old.length);
-    if (current.join("\n") !== old.join("\n")) {
-      fail(`fix.patch does not match ${appDir}/src/app.ts near line ${start + 1}.`);
-    }
-    lines.splice(at, old.length, ...next);
-    offset += next.length - old.length;
-  }
-  return lines.join("\n");
-}
-
 if (!existsSync(join(appDir, "dist", "app.js")))
   fail(`${appDir}/dist/app.js is missing. Run pnpm build first.`);
 const cdk = bin("cdk");
@@ -133,7 +102,12 @@ const patch = readFileSync(patchFile, "utf8");
 const fixedDir = mkdtempSync(join(tmpdir(), "proofgate-demo-fixed-"));
 symlinkSync(join(appDir, "node_modules"), join(fixedDir, "node_modules"), "dir");
 cpSync(join(appDir, "src"), join(fixedDir, "src"), { recursive: true });
-const fixedSource = applyPatch(readFileSync(join(fixedDir, "src", "app.ts"), "utf8"), patch);
+let fixedSource;
+try {
+  fixedSource = applyPatch(readFileSync(join(fixedDir, "src", "app.ts"), "utf8"), patch);
+} catch (error) {
+  fail(`fix.patch does not match ${appDir}/src/app.ts: ${error.message}.`);
+}
 writeFileSync(join(fixedDir, "src", "app.ts"), fixedSource);
 // アプリのtsconfigを継承し、入出力だけをコピーに向けます。型定義はアプリとリポジトリのnode_modulesから探します。
 // Extend the app's tsconfig; only input and output point at the copy. Types are looked up in the app's and the repo's node_modules.
