@@ -8,3 +8,4 @@ cdk.out/
 **/Generated.lean
 .pack/
 
+**/.DS_Store
