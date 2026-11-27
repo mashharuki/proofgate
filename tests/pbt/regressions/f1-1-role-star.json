@@ -1,0 +1,46 @@
+{
+  "name": "f1-1-role-star",
+  "note": "PassRole on arn:aws:iam::*:role* (no literal :role/). The real IAM engine allows it for a role ARN (observation P10). 1.2.0 missed it (F1).",
+  "label": "unsafe",
+  "expectedTs": "unsafe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "roleName": "data-role",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:GetObject"],
+            "resources": ["arn:aws:s3:::protected-bucket/*"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "roleName": "dev-role",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::*:role*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:CreateFunction"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      }
+    ]
+  }
+}
