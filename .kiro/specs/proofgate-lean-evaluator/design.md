@@ -1,6 +1,6 @@
 # Design: proofgate-lean-evaluator
 
-Status: DRAFT (2026-11-27), waiting for the user's review. It follows the external expert's feedback of 2026-11-27: write the rule over request strings and compute it over patterns. Requirements: [requirements.md](./requirements.md). Sections 9 and 10 list the requirement changes that this design needs. `tasks.md` follows after approval.
+Status: DRAFT, revision 2 (2026-11-27), waiting for the user's approval. Revision 1 followed the external expert's first feedback (write the rule over request strings, compute it over patterns). Revision 2 follows the expert's review of revision 1: F1 is fixed first and on its own, `findings_iff` moves to 11-29, the role `Path` premise is stated, the fallback to `native_decide` is shown in the output, and an unsafe stack may be certified by a witness. Requirements: [requirements.md](./requirements.md) (revision 2 applies section 9). Tasks: [tasks.md](./tasks.md).
 
 ## 1. The central idea
 
@@ -49,6 +49,7 @@ Fix (section 8): the oracle first, alone; then the evaluator. Both read a PassRo
 2. Trust services: the regional form is mapped to the global one, as today.
 3. A protected bucket ARN with a wildcard: unnamed buckets' opaque names in Resources are replaced by `*`, as today.
 4. The extractor rejects a policy string that contains the reserved character U+0000 (`PG-IAM-003`). Section 4.2 needs this; no real policy contains it.
+5. **A role's `Path` is `/` only.** The extractor rejects any other `Path` with `PG-IAM-003` (`packages/extractor/src/index.ts`, the check on `Properties.Path`; tested in `tests/unsupported-hints.test.ts`). `RoleIdent` (4.2) writes a role ARN as `role/` followed by the name, which is true only under this premise. If ProofGate ever reads paths, `RoleIdent` must change with it. A test links the two: it fails if the extractor accepts a non-default `Path` while `RoleIdent` has no path part.
 
 ### 4.2 Definitions (Lean, sketch)
 
@@ -104,7 +105,7 @@ def EscalatesTo (m : Model) (p t : Role) (bp : List Tok) : Prop :=
 | --- | --- | --- |
 | S1 | Lowercase everything (4.1.1) | none |
 | S2 | `*` and `?` may stand for a colon (`Matches` as in the spikes; commit `527a92a`) | none |
-| S3 | Partition and account of a role ARN contain no colon (NSTAR) | removes findings only for PassRole Resources whose account part holds an extra colon, such as `arn:aws:iam::1:2:role/x`; no real role ARN matches them. **Needs the user's approval (permissive).** |
+| S3 | Partition and account of a role ARN contain no colon (NSTAR) | removes findings only for PassRole Resources whose account part holds an extra colon, such as `arn:aws:iam::1:2:role/x`; no real role ARN matches them, because of 4.1.5. **Needs the user's approval (permissive).** The differential lists every removed case. |
 | S4 | Unknown generated names: the reserved character ⊥ (4.2) | none; equivalent to the R0 rule (a wildcard in the name part counts, a literal counts only if it is the opaque name) |
 | S5 | A PassRole Resource counts if it denotes any identifier of the role (4.2) | **adds** the F1 findings (section 3) |
 | S6 | Launch resource: any string | none; the evaluator ignores it today |
@@ -155,6 +156,8 @@ The generated module holds the model and one theorem, depending on the TypeScrip
 - TypeScript says safe: `theorem generatedStackIsSafe : ∀ P ∈ model.roles, ∀ T, ∀ bp ∈ model.buckets, ¬ EscalatesTo model P T bp := (safe_iff model).mp (by decide +kernel)`.
 - TypeScript says unsafe with list L: `theorem generatedFindings : findings model = L := by decide +kernel`, plus `theorem generatedStackIsUnsafe : EscalatesTo model P₁ T₁ bp₁` derived through `findings_iff` for the first entry.
 
+Optional, if time allows (the expert's suggestion): certify an unsafe stack by a witness instead. TypeScript also writes concrete strings for the first finding (the role ARN, a launch resource, an object ARN), and the generated theorem proves `EscalatesTo model P T bp` directly from them, with each `Matches` checked through `globMatch_iff`. This is cheaper to check, and it does not go through `findings`, so an error in the Lean evaluator cannot make it pass. The safe case still needs `safe_iff`.
+
 The theorem is a readable statement about the rule, not `safe generatedPaths = true`. If TypeScript and Lean disagree, the theorem fails to check, Lean exits with an error, and the plugin reports `PG-IAM-003` with both lists (L4.2). The markers `PROOFGATE_SAFE` and `PROOFGATE_UNSAFE` stay. The plugin requires both the marker and a successful check.
 
 ## 6. Speed
@@ -169,7 +172,7 @@ Measured on the author's machine (Apple silicon), with the 879-entry table as Le
 Design:
 - The lookup goes through `launchGroups`. An action pattern whose service prefix (the part before `:`) is a literal looks only at its group.
 - The pattern `*` (all actions) uses the precomputed list of all services, with a lemma that this list equals the flat result.
-- A pattern with a wildcard inside the service prefix (for example `lambda*:create*`) needs the flat scan. For a template with such a pattern, the generated theorem uses `native_decide` (L3.2), and the report says so.
+- A pattern with a wildcard inside the service prefix (for example `lambda*:create*`) needs the flat scan. For a template with such a pattern, the generated theorem uses `native_decide` (L3.2). Because the trust base then depends on the input, the plugin states the method of every certificate in its output (`checked by the Lean kernel` or `checked with native_decide (trusts the Lean compiler)`), in the terminal and in the CDK report.
 - The model-level generated tests (thousands of cases) evaluate `findings` with `#eval` in one batch, which is compiled and fast. They are a test of agreement, not part of the trust base. The per-stack certificate in the product uses the kernel.
 - To measure during implementation: the largest template of `examples/real-stacks`, and every stack of the trial app.
 
@@ -186,12 +189,15 @@ Proofs show that `findings` decides `EscalatesTo`. They do not show that `Escala
 
 ## 8. Changes outside Lean
 
+Order: items 1 and 2 (F1) come first, as a separate step on `main`, before any Lean change (expert's review). F1 is needed whatever happens to the Lean work, and it is the content of the fallback release.
+
 1. **Oracle first, alone (F1):** `passRoleResourceMatches` reads a Resource as "intersects some identifier of the role", with NSTAR, in its own code. Red first: regression rows from P10, P11, and P14; the generated tests show the new disagreement with the evaluator.
 2. **Evaluator (F1):** `allowsPassRoleTarget` uses the existing `denotesArn` with `ROLE_SHAPE` (already used by `PG-IAM-005`), plus the bare-name and logical-ID rule. Differential against 1.2.0: list every added finding (F1) and every removed one (S3).
 3. **Generator:** `generateLean` writes the model (section 5.5) for scope A, and the Boolean lists for the other two shapes as today.
 4. **Plugin:** compares the TypeScript list with Lean's result; a failed check is `PG-IAM-003` with both lists.
 5. **Generated tests:** three-way agreement (oracle, TypeScript, Lean `#eval`); mutants of L5.2 against the Lean evaluator.
-6. **Docs:** `docs/PROOFS.md` rewritten with the trust table and the theorems; F1 in `CHANGELOG.md` as a fix; `security.md` gets S3 to S5.
+6. **Docs:** `docs/PROOFS.md` rewritten with the trust table and the theorems; F1 in `CHANGELOG.md` as a fix; `security.md` gets S3 to S5 and the `Path` premise. F1 is also told in `docs/submission/kiro-usage.md` and the description as the result of writing the rule over strings; the submission must not say "proved" without it.
+7. **Numbers:** F1 can change the pathfinding.cloud count (60 of 91), the expected tables of the real stacks, and the trial app's results. They are measured again after F1, and the README, the guide, the write-ups, and Kiro's list of slide and video changes for the user use the new numbers.
 
 ## 9. Changes to the requirements (proposed revision 2)
 
@@ -206,15 +212,18 @@ Proofs show that `findings` decides `EscalatesTo`. They do not show that `Escala
 
 | Date (JST) | Work | Stop condition |
 | --- | --- | --- |
-| 11-27 (done) | spec over strings, 3 witnesses, the pre-1.0 counterexample, NSTAR intersection, F1 found, speed measured | — |
-| 11-28 | `Glob.lean`, `Spec.lean`, `Tables.lean` and their equality test; bridge lemmas; `findings_iff` | `findings_iff` not proved by 11-29 18:00 → ship the matching, intersection, witness, and counterexample theorems, and keep the per-stack check as a Boolean comparison; say so in PROOFS.md |
-| 11-29 | F1: oracle, then evaluator (red first); generator and plugin; per-stack certificate; differential | the demo certificate over 10 s with the kernel → `native_decide` for the certificate, documented |
-| 11-30 | three-way generated tests, mutants, the observation layer, speed on real stacks, docs | the generated suite over the CI limit → reduce the Lean-checked case count, documented |
-| 12-01 | release 1.3.0 (the user publishes) | scope A not passing → 1.2.0 plus the F1 fix as 1.2.1, without the Lean change |
+| 11-27 (done) | spec over strings, 3 witnesses, the pre-1.0 counterexample, NSTAR intersection, F1 found, speed measured | - |
+| 11-28 morning | **F1 on its own**: oracle (red first, alone), evaluator (red first), differential against 1.2.0, all Pattern sets, the benchmark, the trial app, CHANGELOG; PR to `main` | - |
+| 11-28 afternoon | `Glob.lean` (from the spikes), `Tables.lean` and the equality test, `Spec.lean`, the axiom audit | - |
+| 11-29 | bridge lemmas, `findings`, `findings_iff` (main work of the day), `findings_mono`, `findings_exempt`, `safe_iff`, the counterexample theorems | `findings_iff` not proved by 11-29 18:00 → ship matching, intersection, witnesses, and counterexamples; keep the per-stack check as a Boolean comparison; say so in PROOFS.md |
+| 11-30 | generator and plugin with the certificate and its method in the output; three-way generated tests, mutants; the observation layer and witnesses; speed on real stacks; docs and numbers | the demo certificate over 10 s with the kernel → `native_decide` for it, shown in the output; the generated suite over the CI limit → fewer Lean-checked cases, documented |
+| 12-01 | release 1.3.0 (the user publishes) | scope A not passing → release F1 alone as 1.2.1 (already on `main`) |
 
 ## 11. Points for the user's decision
 
-1. **S3** (permissive): drop findings for PassRole Resources whose account part holds a colon (no real role ARN can match them). The alternative keeps them with an extra rule in Lean that only exists to match 1.2.0.
-2. **F1** goes into 1.3.0 as a fix that adds findings. It also affects `PG-IAM-004` users of 1.2.0, so it belongs in the CHANGELOG as a fix with a note.
-3. **Scope B** is dropped in favor of L11 and L12.
-4. The `native_decide` fallback for templates with a wildcard in an action's service prefix.
+The expert's view (review of revision 1) is noted for each point.
+
+1. **S3** (permissive): drop findings for PassRole Resources whose account part holds a colon. The expert: approve, given the `Path` premise (4.1.5), because only patterns that no real role ARN can match lose a finding.
+2. **F1**: fix it first, separately from the Lean work, and release it in 1.3.0 (or in 1.2.1 if the Lean work stops). The expert: include it, and do it first. Kiro also asks whether 1.2.1 should be published right after the F1 merge, because 1.2.0 is public with this false negative.
+3. **Scope B** is dropped in favor of L11 and L12. The expert: agree.
+4. **`native_decide` fallback** for templates with a wildcard in an action's service prefix. The expert: accept, on the condition that the output names the method of each certificate (now in section 6).
