@@ -99,6 +99,3 @@ jobs:
           npx tsc -p tsconfig.json
       - name: Demo on one stack with the npm version (plain synth, rejection, fix, pass)
         run: node scripts/demo-fix.mjs --app-dir "$RUNNER_TEMP/npm-demo"
-      - name: Show the version in the CDK report
-        run: |
-          grep -o '"pluginVersion": "[^"]*"' "$RUNNER_TEMP/npm-demo/cdk.out/validation-report.json"

@@ -78,7 +78,13 @@ const cdk = bin("cdk");
 console.log(`ProofGate demo on one stack: ${appDir}`);
 
 // 1. 通常の合成。 Plain synth.
-const plain = run(cdk, ["synth", "--quiet"], false);
+// 手順1と2も一時ディレクトリに出力します。同時に走るほかの合成（テストなど）と、アプリのcdk.outを取り合わないためです。
+// Steps 1 and 2 also write to a temporary directory, so that they never share the app's cdk.out with another synth running
+// at the same time (the CDK CLI locks the output directory; a test run in parallel failed on it).
+const workDir = mkdtempSync(join(tmpdir(), "proofgate-demo-"));
+const plainOut = join(workDir, "plain.out");
+const gatedOut = join(workDir, "gated.out");
+const plain = run(cdk, ["synth", "--quiet", "--output", plainOut], false);
 if (plain.status !== 0)
   fail(`step 1 plain synth exited ${plain.status}, expected 0.\n${indent(plain.output)}`);
 if (plain.output.includes(GATE_ON))
@@ -86,14 +92,17 @@ if (plain.output.includes(GATE_ON))
 console.log("step 1/4 plain synth: exit 0 (as expected)");
 
 // 2. ProofGateを有効にした合成。 Gated synth.
-const gated = run(cdk, ["synth", "--quiet"], true);
-const rules = proofGateRules(join(appDir, "cdk.out"));
+const gated = run(cdk, ["synth", "--quiet", "--output", gatedOut], true);
+const rules = proofGateRules(gatedOut);
 if (gated.status !== 1 || !rules.includes(RULE) || !gated.output.includes(GATE_ON)) {
   fail(
     `step 2 gated synth exited ${gated.status} with rules [${rules.join(", ")}], expected 1 with ${RULE}.\n${indent(gated.output)}`,
   );
 }
 console.log(`step 2/4 gated synth: exit 1, ${RULE} (as expected)`);
+const report = JSON.parse(readFileSync(join(gatedOut, "validation-report.json"), "utf8"));
+const proofGate = (report.pluginReports ?? []).find((p) => p.pluginName === "ProofGate");
+console.log(`    ProofGate version in the CDK report: ${proofGate?.pluginVersion ?? "unknown"}`);
 console.log(indent(gated.output));
 
 // 3. 修正を、リポジトリの外の一時ディレクトリのコピーに当てます。コピーはアプリのnode_modulesを参照します。
