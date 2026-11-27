@@ -1,0 +1,10 @@
+{
+    "result": "FAIL",
+    "message": "The policy document grants access to perform one or more of the listed actions.",
+    "reasons": [
+        {
+            "description": "One or more of the listed actions in the statement with index: 0.",
+            "statementIndex": 0
+        }
+    ]
+}

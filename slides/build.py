@@ -48,6 +48,7 @@ BASE_CSS = """
 @keyframes holdout{0%{opacity:1}99%{opacity:1}100%{opacity:0}}
 @keyframes arm{from{transform:rotate(-78deg)}to{transform:rotate(0)}}
 @keyframes mag{0%{transform:translateY(-180px)}35%{transform:translateY(-180px)}60%{transform:translateY(-90px)}85%,100%{transform:translateY(0)}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes glow{0%,100%{opacity:.35}50%{opacity:1}}
 .bespoke-marp-active .pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1) var(--d,0s) both}
 .bespoke-marp-active .fade{animation:fade .6s ease-out var(--d,0s) both}
@@ -55,8 +56,10 @@ BASE_CSS = """
 .bespoke-marp-active .hold{animation:holdout var(--d,1s) linear both}
 .bespoke-marp-active .arm{animation:arm 1.1s ease-in var(--d,0s) both}
 .bespoke-marp-active .mag{animation:mag 3.2s ease-in-out var(--d,0s) both}
+.bespoke-marp-active .grow{animation:grow .9s cubic-bezier(.2,.8,.2,1) var(--d,0s) both}
 .bespoke-marp-active .glow{animation:glow 1.6s ease-in-out var(--d,0s) infinite}
 .arm{transform-origin:0% 50%}
+.grow{transform-box:fill-box;transform-origin:0% 50%}
 """
 
 
@@ -310,7 +313,7 @@ def fig_ordinary() -> str:
 def fig_blindspot() -> str:
     u = "bs"
     body = ""
-    body += label(290, 34, "1文ずつ見る", 28, GRAY, 700)
+    body += label(290, 34, "1つずつ見る", 28, GRAY, 700)
     body += label(880, 34, "つなげて見る", 28, CYL, 700)
     body += f'<line x1="590" y1="20" x2="590" y2="350" stroke="{LINE}" stroke-width="2"/>'
     rows = ((70, i_key(CY), "ロールを渡せる"), (160, i_fn(CY), "関数を作れる"), (250, i_bucket(CY), "S3を読み書き"))
@@ -403,7 +406,7 @@ def fig_failclosed() -> str:
     cards = (
         (20, GRN, "経路なし", "", "通す", GRND, "ar-ok"),
         (140, RED, "経路あり", "PG-IAM-004 / 005", "止める", REDD, "ar-r"),
-        (260, AMB, "読めない・食い違い", "PG-IAM-003", "止める", AMBD, "ar-a"),
+        (260, AMB, "読めない", "PG-IAM-003", "止める", AMBD, "ar-a"),
     )
     for n, (y, edge, cond, code, act, fill, mk) in enumerate(cards):
         d = 0.9 + n * 0.7
@@ -421,24 +424,13 @@ def fig_failclosed() -> str:
 def fig_summary() -> str:
     u = "sm"
     body = ""
-    body += label(40, 40, "ここまでの検査", 28, CYL, 700, "start")
-    body += f'<g {fx("up", 0.3)}><text x="40" y="132" font-size="84" font-weight="700" fill="{WHITE}">879</text>' + label(40, 174, "起動アクションを検査", 28, GRAY, 700, "start") + "</g>"
-    body += f'<g {fx("up", 0.9)}><text x="40" y="264" font-size="84" font-weight="700" fill="{WHITE}">60/91</text>' + label(40, 306, "既知の昇格経路を検出", 28, GRAY, 700, "start") + "</g>"
-    body += f'<line x1="600" y1="20" x2="600" y2="322" stroke="{LINE}" stroke-width="2"/>'
-    body += label(660, 40, "Kiro で作った", 28, CYL, 700, "start")
-    chips = (
-        (660, 80, i_clip(CY), "spec × 7"),
-        (920, 80, i_compass(CY), "steering"),
-        (660, 195, i_hook(CY), "hook"),
-        (920, 195, i_plug(CY), "MCP"),
-    )
-    for n, (x, y, icon, text) in enumerate(chips):
-        body += f'<g {fx("pop", 1.5 + n * 0.35)}>' + chip(x, y, 240, 100, icon, text, u, None, 0.85).replace('x="' + str(x + 88) + '"', 'x="' + str(x + 92) + '"') + "</g>"
-    body += f'<g {fx("up", 3.2)}><rect x="250" y="370" width="680" height="68" rx="34" fill="{CYD}"/>' + label(590, 415, "次は ロール連鎖とデータ境界へ", 30, WHITE) + "</g>"
-    return svg(1180, 450, body, u).replace('viewBox="0 0 1180 450" width="1180" height="450"', 'viewBox="0 14 1180 426" width="1180" height="426"')
-
-
-
+    body += label(40, 40, "まだ対象外", 28, CYL, 700, "start")
+    for i, (t, d) in enumerate([("SCP", 0.3), ("権限境界", 0.9), ("ロールの連鎖", 1.5)]):
+        x = 40 + i * 380
+        body += f'<g {fx("up", d)}><rect x="{x}" y="80" width="340" height="150" rx="20" fill="none" stroke="{LINE}" stroke-width="2"/>' + label(x + 170, 168, t, 40, WHITE) + "</g>"
+    body += f'<g {fx("up", 2.4)}><rect x="250" y="300" width="680" height="68" rx="34" fill="{CYD}"/>' + label(590, 345, "次は ロール連鎖とデータ境界へ", 30, WHITE) + "</g>"
+    body += f'<g {fx("fade", 3.0)}><text x="590" y="440" font-family="{MONO}" font-size="28" fill="{CYL}" text-anchor="middle">github.com/mashharuki/proofgate</text></g>'
+    return svg(1180, 470, body, u)
 def fig_cover() -> str:
     u = "cv"
     gx, cy = 110, 90
@@ -452,7 +444,77 @@ def fig_cover() -> str:
     return svg(220, 180, body, u)
 
 
+def fig_verify() -> str:
+    u = "vf"
+    rows = (
+        ("ロールを渡して新しく動かす", 46, 47, True),
+        ("動いているものを書き換える", 6, 22, False),
+        ("ほかの主体に成りすます", 6, 14, False),
+        ("自分の権限を書き換える", 2, 8, False),
+    )
+    body = ""
+    x0, track = 470, 480
+    for n, (name, hit, total, lead) in enumerate(rows):
+        y = 50 + n * 78
+        d = 0.3 + n * 0.5
+        body += f'<g {fx("fade", d)}>' + label(40, y + 10, name, 28, WHITE, 700, "start") + "</g>"
+        body += f'<rect x="{x0}" y="{y - 20}" width="{track}" height="40" rx="20" fill="#2a2830"/>'
+        body += f'<rect {fx("grow", d)} x="{x0}" y="{y - 20}" width="{track * hit / total:.0f}" height="40" rx="20" fill="{CYD if lead else "#4a8a96"}"/>'
+        body += f'<g {fx("fade", d + 0.5)}><text x="1140" y="{y + 14}" font-size="44" font-weight="700" fill="{WHITE}" text-anchor="end">{hit}/{total}</text></g>'
+    body += f'<line x1="40" y1="334" x2="1140" y2="334" stroke="{LINE}" stroke-width="2"/>'
+    body += f'<g {fx("up", 2.6)}>' + label(40, 392, "全部で", 28, GRAY, 700, "start") + f'<text x="1140" y="398" font-size="64" font-weight="700" fill="{CYL}" text-anchor="end">60/91</text></g>'
+    body += f'<g {fx("up", 3.2)}>' + label(40, 456, "未検出31件の内訳: IAMユーザー・グループ11、既存リソースの書き換え16、ほか4", 26, GRAY, 600, "start") + "</g>"
+    return svg(1180, 470, body, u).replace('viewBox="0 0 1180 470" width="1180" height="470"', 'viewBox="0 6 1180 464" width="1180" height="464"')
+
+
+def fig_tools() -> str:
+    """既存ツールの指摘は1か所、ProofGateは経路。丸の枠は、ツールが指す場所。"""
+    u = "tl"
+    rows = (("cdk-nag", False), ("Checkov", False), ("Access Analyzer", False), ("ProofGate", True))
+    xs = (560, 720, 880, 1040)
+    icons = (i_person(WHITE), i_fn(WHITE), i_badge(WHITE), i_bucket(WHITE))
+    body = ""
+    for n, (name, chain) in enumerate(rows):
+        y = 58 + n * 104 + (22 if chain else 0)
+        d = 0.3 + n * 0.7
+        body += f'<g {fx("fade", d)}>' + label(40, y + 10, name, 30, CYL if chain else WHITE, 700, "start") + "</g>"
+        for k, (x, icon) in enumerate(zip(xs, icons)):
+            lit = chain or k == 0
+            fill = REDD if (chain and k == 3) else None
+            op = 1 if lit else 0.22
+            body += f'<g {fx("pop", d + 0.1)} opacity="{op}">' + tile(x, y, icon, 76, fill, u, 0.7) + "</g>"
+        if chain:
+            for k in range(3):
+                body += f'<g {fx("fade", d + 0.5 + k * 0.3)}>' + arrow(xs[k] + 46, y, xs[k + 1] - 46, y, RED, u, "ar-r", 5) + "</g>"
+        else:
+            body += f'<g {fx("pop", d + 0.4)}><rect x="{xs[0] - 45}" y="{y - 45}" width="90" height="90" rx="22" fill="none" stroke="{AMB}" stroke-width="5"/></g>'
+    return svg(1180, 450, body, u).replace('viewBox="0 0 1180 450" width="1180" height="450"', 'viewBox="0 -40 1180 490" width="1180" height="490"')
+
+
+def fig_agree() -> str:
+    """TypeScriptとLeanが別々に判定し、食い違えば止める。"""
+    u = "ag"
+    body = ""
+    body += f'<g {fx("pop", 0.3)}>' + tile(100, 200, i_graph(WHITE), 96, None, u, 1.1) + label(100, 288, "モデル", 24, WHITE, 600) + "</g>"
+    lanes = ((100, i_code(CY), "TypeScript"), (300, i_forall(WHITE), "Lean 4"))
+    for n, (y, icon, name) in enumerate(lanes):
+        d = 0.9 + n * 0.8
+        fill = CYD if n == 1 else None
+        body += f'<g {fx("fade", d)}>' + arrow(160, 200, 276, y + (22 if n == 0 else -22), GRAY, u, "ar-g") + "</g>"
+        body += f'<g {fx("pop", d + 0.2)}>' + tile(330, y, icon, 92, fill, u, 0.8) + label(396, y + 10, name, 28, WHITE, 700, "start") + "</g>"
+        body += f'<g {fx("pop", d + 0.6)}><rect x="570" y="{y - 26}" width="110" height="52" rx="26" fill="{REDD}"/>' + label(625, y + 9, "判定", 26, WHITE) + "</g>"
+        body += f'<g {fx("fade", d + 0.8)}>' + arrow(684, y, 722, 200 + (-32 if n == 0 else 32), GRAY, u, "ar-g", 4) + "</g>"
+    body += f'<g {fx("pop", 2.9)}><circle cx="770" cy="200" r="62" fill="url(#{u}-tile)" stroke="{CY}" stroke-width="3"/>' + label(770, 210, "一致？", 26, CYL) + "</g>"
+    body += f'<g {fx("fade", 3.4)}>' + arrow(824, 164, 888, 112, GRN, u, "ar-ok", 4) + arrow(824, 236, 888, 288, AMB, u, "ar-a", 4) + "</g>"
+    body += f'<g {fx("pop", 3.6)}><rect x="892" y="80" width="268" height="64" rx="32" fill="{GRND}"/>' + label(1026, 121, "一致 → そのまま", 26, WHITE) + "</g>"
+    body += f'<g {fx("pop", 4.0)}><rect x="892" y="256" width="268" height="64" rx="32" fill="{AMBD}"/>' + label(1026, 297, "食い違い → 止める", 26, WHITE) + f'<text x="1026" y="352" font-family="{MONO}" font-size="24" fill="{GRAY}" text-anchor="middle">PG-IAM-003</text></g>'
+    return svg(1180, 380, body, u)
+
+
 FIGURES = {
+    "s4-tools": fig_tools,
+    "s7-agree": fig_agree,
+    "s9-verify": fig_verify,
     "s1-cover": fig_cover,
     "s2-overview": fig_overview,
     "s3-ordinary": fig_ordinary,

@@ -74,7 +74,6 @@ section.appendix table tr:last-child td { border-bottom:none !important; }
 section.appendix table td:first-child { color:#7fe3f5 !important; font-weight:700; font-family:'SF Mono',Menlo,monospace; }
 section.appendix table tr:nth-child(2) td { background:rgba(255,226,120,.12) !important; }
 </style>
-
 <!-- _class: top -->
 <!-- _paginate: false -->
 
@@ -83,15 +82,6 @@ section.appendix table tr:nth-child(2) td { background:rgba(255,226,120,.12) !im
 # ProofGate
 
 synthで止める、権限昇格の道
-
----
-
-<!-- _class: image-full -->
-<!-- _header: 概要 -->
-
-# cdk synth の直後に関門を置く
-
-![w:1180](images/s2-overview.svg)
 
 ---
 
@@ -107,9 +97,9 @@ synthで止める、権限昇格の道
 <!-- _class: image-full -->
 <!-- _header: 課題 -->
 
-# 1文ずつ見るツールには死角がある
+# 既存ツールの指摘はポリシー単位だった
 
-![w:1180](images/s4-blindspot.svg)
+![w:1100](images/s4-tools.svg)
 
 ---
 
@@ -125,20 +115,11 @@ synthで止める、権限昇格の道
 <!-- _class: image-full -->
 <!-- _header: アプローチ -->
 
-# テンプレートから証明まで
+# 2つの実装が食い違えば止める
 
-![w:1180](images/s6-pipeline.svg)
+<p class="lead">TypeScript が出した4つの真偽値を、Lean が検査します。</p>
 
----
-
-<!-- _class: image-full -->
-<!-- _header: アプローチ -->
-
-# Leanが見るのは4つの○×
-
-<p class="lead">TypeScript が計算した4つの真偽値を、Lean が検査します。</p>
-
-![w:1180](images/s7-booleans.svg)
+![w:1180](images/s7-agree.svg)
 
 ---
 
@@ -151,9 +132,12 @@ synthで止める、権限昇格の道
 
 ---
 
-<!-- _class: crosshead -->
+<!-- _class: image-full -->
+<!-- _header: 検証 -->
 
-# さっそく止めてみます！
+# 公開されている91の昇格経路で試した
+
+![w:1100](images/s9-verify.svg)
 
 ---
 
@@ -162,9 +146,34 @@ synthで止める、権限昇格の道
 
 # 経路ごと、デプロイ前に止める
 
-<p class="lead">SCP・権限境界・ロール連鎖は、まだ対象外です。</p>
 
-![w:1010](images/s10-summary.svg)
+![w:900](images/s10-summary.svg)
+
+---
+
+<!-- _class: crosshead -->
+
+# 止まったら、どう直す？
+
+---
+
+<!-- _class: image-full -->
+<!-- _header: 補足 -->
+
+# テンプレートから証明まで
+
+![w:1180](images/s6-pipeline.svg)
+
+---
+
+<!-- _class: image-full -->
+<!-- _header: 補足 -->
+
+# Leanが見るのは4つの○×
+
+<p class="lead">TypeScript が計算した4つの真偽値を、Lean が検査します。</p>
+
+![w:1180](images/s7-booleans.svg)
 
 ---
 

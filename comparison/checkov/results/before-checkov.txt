@@ -1,0 +1,134 @@
+
+       _               _
+   ___| |__   ___  ___| | _______   __
+  / __| '_ \ / _ \/ __| |/ / _ \ \ / /
+ | (__| | | |  __/ (__|   < (_) \ V /
+  \___|_| |_|\___|\___|_|\_\___/ \_/
+
+By Prisma Cloud | version: 3.4.11 
+
+cloudformation scan results:
+
+Passed checks: 28, Failed checks: 2, Skipped checks: 0
+
+Check: CKV_AWS_108: "Ensure IAM policies does not allow data exfiltration"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-data-exfiltration
+Check: CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-write-access-without-constraint
+Check: CKV_AWS_107: "Ensure IAM policies does not allow credentials exposure"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-credentials-exposure
+Check: CKV_AWS_61: "Ensure AWS IAM policy does not allow assume role permission across all services"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-45
+Check: CKV_AWS_109: "Ensure IAM policies does not allow permissions management without constraints"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-permissions-management-resource-exposure-without-constraint
+Check: CKV_AWS_60: "Ensure IAM role allows only specific services or principals to assume it"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-44
+Check: CKV_AWS_110: "Ensure IAM policies does not allow privilege escalation"
+	PASSED for resource: AWS::IAM::Role.ProtectedDataRoleCDFF69BA
+	File: /before/cdk.out/VulnerableAppStack.template.json:3-23
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-does-not-allow-privilege-escalation
+Check: CKV_AWS_108: "Ensure IAM policies does not allow data exfiltration"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-data-exfiltration
+Check: CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-write-access-without-constraint
+Check: CKV_AWS_107: "Ensure IAM policies does not allow credentials exposure"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-credentials-exposure
+Check: CKV_AWS_63: "Ensure no IAM policies documents allow "*" as a statement's actions"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-48
+Check: CKV_AWS_109: "Ensure IAM policies does not allow permissions management without constraints"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-permissions-management-resource-exposure-without-constraint
+Check: CKV_AWS_62: "Ensure no IAM policies that allow full "*-*" administrative privileges are not created"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-45
+Check: CKV_AWS_40: "Ensure IAM policies are attached only to groups or roles (Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.)"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-16-iam-policy-privileges-1
+Check: CKV_AWS_110: "Ensure IAM policies does not allow privilege escalation"
+	PASSED for resource: AWS::IAM::Policy.ProtectedDataRoleDefaultPolicyAAE05E68
+	File: /before/cdk.out/VulnerableAppStack.template.json:24-50
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-does-not-allow-privilege-escalation
+Check: CKV_AWS_108: "Ensure IAM policies does not allow data exfiltration"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-data-exfiltration
+Check: CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-write-access-without-constraint
+Check: CKV_AWS_107: "Ensure IAM policies does not allow credentials exposure"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-credentials-exposure
+Check: CKV_AWS_61: "Ensure AWS IAM policy does not allow assume role permission across all services"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-45
+Check: CKV_AWS_109: "Ensure IAM policies does not allow permissions management without constraints"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-permissions-management-resource-exposure-without-constraint
+Check: CKV_AWS_60: "Ensure IAM role allows only specific services or principals to assume it"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-44
+Check: CKV_AWS_110: "Ensure IAM policies does not allow privilege escalation"
+	PASSED for resource: AWS::IAM::Role.DeveloperRole58EC5A58
+	File: /before/cdk.out/VulnerableAppStack.template.json:51-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-does-not-allow-privilege-escalation
+Check: CKV_AWS_108: "Ensure IAM policies does not allow data exfiltration"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-data-exfiltration
+Check: CKV_AWS_107: "Ensure IAM policies does not allow credentials exposure"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-credentials-exposure
+Check: CKV_AWS_63: "Ensure no IAM policies documents allow "*" as a statement's actions"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-48
+Check: CKV_AWS_109: "Ensure IAM policies does not allow permissions management without constraints"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-permissions-management-resource-exposure-without-constraint
+Check: CKV_AWS_62: "Ensure no IAM policies that allow full "*-*" administrative privileges are not created"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/bc-aws-iam-45
+Check: CKV_AWS_40: "Ensure IAM policies are attached only to groups or roles (Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.)"
+	PASSED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/iam-16-iam-policy-privileges-1
+Check: CKV_AWS_111: "Ensure IAM policies does not allow write access without constraints"
+	FAILED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-do-not-allow-write-access-without-constraint
+Check: CKV_AWS_110: "Ensure IAM policies does not allow privilege escalation"
+	FAILED for resource: AWS::IAM::Policy.DeveloperRoleDefaultPolicy6E63DC77
+	File: /before/cdk.out/VulnerableAppStack.template.json:72-104
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-iam-policies-does-not-allow-privilege-escalation
+
