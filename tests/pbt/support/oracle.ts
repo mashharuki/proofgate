@@ -69,28 +69,32 @@ const allows = (statement: StatementModel, action: string) =>
 
 // Decision 8.2: iam:PassRole Resource. The Resource names the roles that can be passed.
 // Wildcards and "*" are allowed. Names are case-sensitive.
-// Partition and account are not constrained because they are unknown at synthesis time.
+// Partition, region, and account are not constrained because they are unknown at synthesis time, but they contain no
+// colon (a run without a colon, NSTAR), as in every real ARN.
+// spec proofgate-lean-evaluator, L0 (F1, 2026-11-28): the Resource is read as a pattern that may denote the role's ARN,
+// by intersection. Before, the oracle split the Resource at colons and required "role/" in the sixth part, so it never
+// counted Resources such as arn:aws:iam::*:role*, arn:aws:iam:*role/x, arn:aws:iam::<account>:*, or arn:*, which the real
+// IAM engine allows (observations P10, P11, P14). The evaluator had the same blind spot, so no test could see it.
+// PassRoleのResourceは、ロールのARNを表しうるかを、交差で調べます（F1）。以前は「:role/」を要求していたため、
+// IAMエンジンが許可するパターンを数えていませんでした。
+// The reserved character U+0000 stands for a character that no policy literal contains (the extractor rejects it).
+const FRESH: Wide = { kind: "lit", char: "\u0000" };
 function passRoleResourceMatches(resource: string, target: RoleModel): boolean {
-  if (/^\*+$/.test(resource)) return true;
-  const parts = resource.split(":");
-  const [prefix, , service, region] = parts;
-  const rest = parts.slice(5).join(":");
-  if (parts.length < 6 || prefix !== "arn" || service !== "iam" || region !== "") return false;
-  if (!rest.startsWith("role/")) return false;
-  const namePattern = rest.slice("role/".length);
-  // spec proofgate-cdk-construct-support, rule R0 (design 2.3 and 5). A role without RoleName gets a
-  // name from CloudFormation that is unknown at synthesis. It is read as the opaque name
-  // "_generated_<LogicalId>". A pattern whose role-name part has a wildcard may match the real
-  // generated name, so it counts; a plain literal name cannot be the generated one, so it only
-  // counts if it is the opaque name itself (an exact reference such as role.roleArn).
-  // 名前のないロールは、CloudFormationが付ける未知の名前を、不透明な名前として読みます。
-  if (target.roleName === undefined) {
-    if (/[*?]/.test(namePattern)) return true;
-    return matchTokens(compileGlob(namePattern), `_generated_${target.logicalId}`);
+  const pattern = compileGlob(resource);
+  if (target.roleName !== undefined) {
+    return wideIntersects(pattern, [...ROLE_HEAD, ...literalTokens(target.roleName)]);
   }
-  return matchTokens(compileGlob(namePattern), target.roleName);
+  // spec proofgate-cdk-construct-support, rule R0 (design 2.3 and 5). A role without RoleName gets a name from
+  // CloudFormation that is unknown at synthesis. It may be the opaque name "_generated_<LogicalId>" (an exact reference
+  // such as role.roleArn), or an unknown name, read as a string that contains a character no literal can contain: a
+  // pattern meets it only through a wildcard in the name part.
+  // 名前のないロールは、不透明な名前か、どのリテラルにも含まれない文字を含む未知の名前として読みます。
+  const opaque = literalTokens(`_generated_${target.logicalId}`);
+  return (
+    wideIntersects(pattern, [...ROLE_HEAD, ...opaque]) ||
+    wideIntersects(pattern, [...ROLE_HEAD, ANY_SUFFIX, FRESH, ANY_SUFFIX])
+  );
 }
-
 /** 保護バケット内の全オブジェクトを表す集合です（末尾のスラッシュは取り除きます）。 */
 function protectedObjects(bucketArn: string) {
   return [...literalTokens(`${bucketArn.replace(/\/$/, "")}/`), ANY_SUFFIX];
