@@ -86,13 +86,14 @@ function passRoleResourceMatches(resource: string, target: RoleModel): boolean {
   }
   // spec proofgate-cdk-construct-support, rule R0 (design 2.3 and 5). A role without RoleName gets a name from
   // CloudFormation that is unknown at synthesis. It may be the opaque name "_generated_<LogicalId>" (an exact reference
-  // such as role.roleArn), or an unknown name, read as a string that contains a character no literal can contain: a
-  // pattern meets it only through a wildcard in the name part.
+  // such as role.roleArn), or an unknown name, read as a string that contains a character no literal can contain and
+  // no colon (role names have no colon): a pattern meets it only through a wildcard in the name part. With a plain star
+  // instead of NSTAR, the account `*` of arn:aws:iam::*:role/data-role would reach into the name (found by the fixed rows).
   // 名前のないロールは、不透明な名前か、どのリテラルにも含まれない文字を含む未知の名前として読みます。
   const opaque = literalTokens(`_generated_${target.logicalId}`);
   return (
     wideIntersects(pattern, [...ROLE_HEAD, ...opaque]) ||
-    wideIntersects(pattern, [...ROLE_HEAD, ANY_SUFFIX, FRESH, ANY_SUFFIX])
+    wideIntersects(pattern, [...ROLE_HEAD, NSTAR, FRESH, NSTAR])
   );
 }
 /** 保護バケット内の全オブジェクトを表す集合です（末尾のスラッシュは取り除きます）。 */
