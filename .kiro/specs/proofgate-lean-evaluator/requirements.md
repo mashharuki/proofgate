@@ -1,6 +1,6 @@
 # Requirements: proofgate-lean-evaluator
 
-Status: DRAFT, revision 2 (2026-11-27), waiting for the user's approval together with the design. Revision 2 applies design section 9 after the expert's two reviews: the rule is stated over request strings (L2.3), the per-stack theorem is readable (L3.1), F1 changes verdicts (L4.1, new L0), scope B is dropped (L10), and L11 and L12 are new. The user approved the direction on 2026-11-27 ("上記方針で進めましょう"): scope A is required and scope B follows if time allows, the code freeze moves to 2026-12-01, and the submission version becomes 1.3.0, which the user publishes. `design.md` and `tasks.md` are not written.
+Status: APPROVED by the user on 2026-11-27 (revision 3: L2.6 and the `WellFormed` hypothesis in L2.3 to L2.5 and L3.1, added at the user's request before approval). Revision 2: Revision 2 applies design section 9 after the expert's two reviews: the rule is stated over request strings (L2.3), the per-stack theorem is readable (L3.1), F1 changes verdicts (L4.1, new L0), scope B is dropped (L10), and L11 and L12 are new. The user approved the direction on 2026-11-27 ("上記方針で進めましょう"): scope A is required and scope B follows if time allows, the code freeze moves to 2026-12-01, and the submission version becomes 1.3.0, which the user publishes. `design.md` and `tasks.md` are not written.
 
 ## Why
 
@@ -70,9 +70,10 @@ THE Lean core SHALL prove, for all inputs (not by `decide` on one instance):
    - T trusts S, or trusts `*`;
    - T has an Allow statement that reaches B through an object action or a bucket-grant action, under the decided rules.
 
-   Then prove `findings_iff`: a triple is in the computed finding list if and only if `EscalatesTo` holds, and T is not in `allowedPassRoleTargets`. The computation uses pattern intersection, so the proof needs `intersect_iff`; it is not a restatement of the code.
-4. **Monotonicity:** adding a statement to a role, or adding a role, never removes a finding. This is the formal basis of the decided over-approximations that read more as allowed (for example, ignoring Deny).
-5. **Exemption:** `allowedPassRoleTargets` only removes findings whose target is listed.
+   Then prove `findings_iff` under the hypothesis `WellFormed m` (L2.6): a triple is in the computed finding list if and only if `EscalatesTo` holds, and T is not in `allowedPassRoleTargets`. The computation uses pattern intersection, so the proof needs `intersect_iff`; it is not a restatement of the code.
+4. **Monotonicity:** adding a statement to a role, or adding a role whose logical ID is not yet in the model, never removes a finding. This is the formal basis of the decided over-approximations that read more as allowed (for example, ignoring Deny).
+5. **Exemption:** under `WellFormed m`, `allowedPassRoleTargets` only removes findings whose target is listed.
+6. **Well-formed models:** `Spec.lean` defines `WellFormed m` as `(m.roles.map (·.logicalId)).Nodup` from the start. `findings_iff`, `safe_iff`, and the exemption theorem assume it. CloudFormation guarantees unique logical IDs; the hypothesis states it for Lean.
 
 Each theorem SHALL use only Lean's standard axioms. A test SHALL run `#print axioms` on each and fail on any other axiom.
 
@@ -80,7 +81,7 @@ Owner: Kiro.
 
 ### L3. The per-stack check is decided by the kernel
 
-1. FOR each template, THE generated theorem SHALL be a readable statement about the rule (design 5.5). If safe: no principal escalates to any protected bucket (`¬ EscalatesTo`). If unsafe: Lean's finding list equals the TypeScript list. It SHALL be closed by kernel evaluation (`decide`, or `decide +kernel` where the elaborator's recursion limit is too small), without `native_decide`. The compiler then leaves the trusted base for scope A.
+1. FOR each template, THE generated module SHALL prove `WellFormed model` by `decide`, and THE generated theorem SHALL be a readable statement about the rule (design 5.5). If safe: no principal escalates to any protected bucket (`¬ EscalatesTo`). If unsafe: Lean's finding list equals the TypeScript list. It SHALL be closed by kernel evaluation (`decide`, or `decide +kernel` where the elaborator's recursion limit is too small), without `native_decide`. The compiler then leaves the trusted base for scope A.
 2. IF a template has an action pattern with a wildcard in its service prefix, or a measured template exceeds the time budget of L7 with kernel evaluation, THEN `native_decide` MAY be used for that template only. THE plugin SHALL state the method of every certificate in the terminal and in the CDK report, and `docs/PROOFS.md` SHALL explain it.
 4. Optional: an unsafe template MAY be certified by a witness (concrete strings from TypeScript, `EscalatesTo` proved directly), which does not go through `findings`.
 3. THE result markers stay the same: only the explicit `PROOFGATE_SAFE` and `PROOFGATE_UNSAFE` count as decisions. A Lean or Lake failure is `PG-IAM-003`.

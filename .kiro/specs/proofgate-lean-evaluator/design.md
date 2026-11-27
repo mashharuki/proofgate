@@ -1,6 +1,6 @@
 # Design: proofgate-lean-evaluator
 
-Status: DRAFT, revision 2 (2026-11-27), waiting for the user's approval. Revision 1 followed the external expert's first feedback (write the rule over request strings, compute it over patterns). Revision 2 follows the expert's review of revision 1: F1 is fixed first and on its own, `findings_iff` moves to 11-29, the role `Path` premise is stated, the fallback to `native_decide` is shown in the output, and an unsafe stack may be certified by a witness. Requirements: [requirements.md](./requirements.md) (revision 2 applies section 9). Tasks: [tasks.md](./tasks.md).
+Status: APPROVED by the user on 2026-11-27, revision 3. Revision 3 adds the precondition that logical IDs are unique (4.4), at the user's request before approval. With the design the user approved S3, dropping scope B, and the `native_decide` fallback shown in the output (section 11); whether 1.2.1 is published at once is decided at Checkpoint 0. Revision 1 followed the external expert's first feedback (write the rule over request strings, compute it over patterns). Revision 2 follows the expert's review of revision 1: F1 is fixed first and on its own, `findings_iff` moves to 11-29, the role `Path` premise is stated, the fallback to `native_decide` is shown in the output, and an unsafe stack may be certified by a witness. Requirements: [requirements.md](./requirements.md) (revision 2 applies section 9). Tasks: [tasks.md](./tasks.md).
 
 ## 1. The central idea
 
@@ -99,7 +99,21 @@ def EscalatesTo (m : Model) (p t : Role) (bp : List Tok) : Prop :=
 
 `objectActions` holds the 44 object actions and `s3:*`, which the evaluator keeps as an entry. `bucketGrantActions` holds the 7 bucket-grant actions. `launchTable` holds the 879 entries plus the supplements. All of them are generated data (section 5.2).
 
-### 4.3 Decisions in the specification (they are hard to change later)
+### 4.3 Well-formed models: logical IDs are unique
+
+`findings` returns strings (principal, target, bucket), while `EscalatesTo` speaks about `Role` values. If two roles had the same logical ID, "the identifiers match" in `findings_iff` would not pick one role. CloudFormation makes logical IDs unique in a template, but the Lean theorems need it as a hypothesis. `Spec.lean` defines it from the start, so that no proof meets the problem halfway:
+
+```lean
+/-- Logical IDs are unique. CloudFormation guarantees it; the theorems assume it, and each certificate checks it. -/
+def WellFormed (m : Model) : Prop := (m.roles.map (·.logicalId)).Nodup
+```
+
+- `findings_iff`, `safe_iff`, and `findings_exempt` take `WellFormed m` as a hypothesis.
+- `findings_mono` is stated for adding a statement to a role (the logical IDs do not change), and for adding a role whose logical ID is not yet in the model (the result is again well-formed).
+- Every per-stack certificate also proves `WellFormed model` by `decide` (5.5), so the generated model is shown to meet the hypothesis.
+- Protected buckets are identified by their ARN string, so a repeated bucket ARN does not need a hypothesis: `findings` and the specification both quantify over the same strings.
+
+### 4.4 Decisions in the specification (they are hard to change later)
 
 | ID | Decision | Effect on verdicts vs 1.2.0 |
 | --- | --- | --- |
@@ -137,10 +151,10 @@ def EscalatesTo (m : Model) (p t : Role) (bp : List Tok) : Prop :=
    - `reaches_iff`: `Reaches t bp ↔ reachesB t bp = true`, where `reachesB` intersects each resource pattern with `bp ++ [lit '/', star]` or with `bp`. This needs a lemma on `Matches` of a concatenation.
    - `roleIdent_iff`: `(∃ x, RoleIdent t x ∧ Matches rp x) ↔ roleIdentB t rp = true`. `roleIdentB` intersects `rp` with the role-ARN shape `arn:<nstar>:iam::<nstar>:role/<name pattern>`, where the name pattern is the literal name, the opaque name, or `*⊥*`. It also intersects `rp` with the bare name and the logical ID.
    - `launch_index_iff`: the lookup by service prefix computes the same services as the flat table, for every action pattern.
-3. Main theorem: `findings_iff : (p, t, b) ∈ findings m ↔ ∃ P T bp, ids match ∧ EscalatesTo m P T bp`.
-4. `findings_mono`: adding a statement to a role or adding a role never removes a finding.
-5. `findings_exempt`: adding a logical ID to `allowedPassRoleTargets` removes exactly the findings whose target is that role.
-6. `safe_iff`: `findings m = [] ↔ ∀ P ∈ m.roles, ∀ T, ∀ bp ∈ m.buckets, ¬ EscalatesTo m P T bp`.
+3. Main theorem: `findings_iff (h : WellFormed m) : (p, t, b) ∈ findings m ↔ ∃ P ∈ m.roles, ∃ T ∈ m.roles, ∃ bp ∈ m.buckets, P.logicalId = p ∧ T.logicalId = t ∧ bp.arn = b ∧ EscalatesTo m P T bp`. Under `WellFormed m`, the roles P and T are the only ones with these logical IDs.
+4. `findings_mono`: adding a statement to a role never removes a finding; adding a role whose logical ID is not in the model never removes a finding (and keeps `WellFormed`).
+5. `findings_exempt (h : WellFormed m)`: adding a logical ID to `allowedPassRoleTargets` removes exactly the findings whose target is that role.
+6. `safe_iff (h : WellFormed m)`: `findings m = [] ↔ ∀ P ∈ m.roles, ∀ T, ∀ bp ∈ m.buckets, ¬ EscalatesTo m P T bp`.
 
 ### 5.4 Counterexample theorems (the proof has teeth)
 
@@ -153,8 +167,9 @@ Both are stated against `EscalatesTo`. The claim for the submission is "this the
 
 The generated module holds the model and one theorem, depending on the TypeScript verdict:
 
-- TypeScript says safe: `theorem generatedStackIsSafe : ∀ P ∈ model.roles, ∀ T, ∀ bp ∈ model.buckets, ¬ EscalatesTo model P T bp := (safe_iff model).mp (by decide +kernel)`.
-- TypeScript says unsafe with list L: `theorem generatedFindings : findings model = L := by decide +kernel`, plus `theorem generatedStackIsUnsafe : EscalatesTo model P₁ T₁ bp₁` derived through `findings_iff` for the first entry.
+- Always: `theorem generatedModelWellFormed : WellFormed model := by decide`.
+- TypeScript says safe: `theorem generatedStackIsSafe : ∀ P ∈ model.roles, ∀ T, ∀ bp ∈ model.buckets, ¬ EscalatesTo model P T bp := (safe_iff model generatedModelWellFormed).mp (by decide +kernel)`.
+- TypeScript says unsafe with list L: `theorem generatedFindings : findings model = L := by decide +kernel`, plus `theorem generatedStackIsUnsafe : EscalatesTo model P₁ T₁ bp₁` derived through `findings_iff` (with `generatedModelWellFormed`) for the first entry.
 
 Optional, if time allows (the expert's suggestion): certify an unsafe stack by a witness instead. TypeScript also writes concrete strings for the first finding (the role ARN, a launch resource, an object ARN), and the generated theorem proves `EscalatesTo model P T bp` directly from them, with each `Matches` checked through `globMatch_iff`. This is cheaper to check, and it does not go through `findings`, so an error in the Lean evaluator cannot make it pass. The safe case still needs `safe_iff`.
 
