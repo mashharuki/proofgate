@@ -10,7 +10,8 @@
       "!!**/.pnpm-store",
       "!!**/.serena",
       "!!**/.kiro",
-      "!!**/comparison/cdk-nag/results"
+      "!!**/comparison/cdk-nag/results",
+      "!!**/slides"
     ]
   },
   "formatter": {

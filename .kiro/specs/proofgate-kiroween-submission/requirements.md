@@ -137,8 +137,8 @@ The user story: as a reviewer, I want to read from the rejection which principal
 - Current evidence, in order:
   - Found: `.kiro/steering/kiroween.md`, row of 2026-11-18 "Spec, AWS Documentation MCP". While writing `design.md` and reading the AWS docs through the AWS Documentation MCP server, probing the evaluator showed that prefix-scoped S3 grants were judged safe (`design.md` section 3, line "S3 resource `bucket/reports/*` | judged safe | Defect").
   - Specified: `requirements.md` of `proofgate-verification-hardening`, "D1: S3 access by intersection" (commit `af9fcdf`).
-  - Red first: commit `83a357a`. The generated suite showed 532 soundness failures, 178 of them with a prefix-scoped grant.
-  - Fixed: commit `e11b4b2` (178 to 0).
+  - Red first: commit `83a357a`. The generated suite showed 532 soundness failures. 178 cases contain a prefix-scoped grant (a feature count, not a cause; not the same as the 178 failures left after the `?` fix).
+  - Fixed: commit `e11b4b2` (the 178 failures left after the `?` fix to 0; 532 to 0 in total).
   - Checked: commit `09226c8`. The differential over 18,014 inputs removed no finding, and the demos were byte-identical.
 - Missing evidence: a short English account for the write-up and the video, with links.
 - Acceptance criteria:

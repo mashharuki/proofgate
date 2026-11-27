@@ -1,0 +1,4 @@
+{
+    "result": "PASS",
+    "message": "The policy document does not grant access to perform one or more of the listed actions."
+}

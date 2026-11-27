@@ -32,8 +32,8 @@ Compared with prompting without a spec: the checkpoints made Kiro stop where its
 
 1. **Found.** While writing the design of the first spec, Kiro read the IAM and S3 pages through the AWS Documentation MCP server and probed the evaluator. The probe showed that a grant on part of the protected bucket (`bucket/reports/*`) was judged safe ([design, section 3](../../.kiro/specs/proofgate-verification-hardening/design.md); log row of 2026-11-18, "Spec, AWS Documentation MCP").
 2. **Specified.** It was added to the requirements as defect D1, "S3 access by intersection", after the user approved the scope clarification (commit [`af9fcdf`](https://github.com/mashharuki/proofgate/commit/af9fcdf)).
-3. **Red first.** The generated suite ran against the unfixed code: 532 soundness failures, 178 of them with a prefix-scoped grant (commit [`83a357a`](https://github.com/mashharuki/proofgate/commit/83a357a)).
-4. **Fixed.** S3 access is now decided by intersecting the Resource with the bucket's objects, and the failures went from 178 to 0 (commit [`e11b4b2`](https://github.com/mashharuki/proofgate/commit/e11b4b2)).
+3. **Red first.** The generated suite ran against the unfixed code: 532 soundness failures. Of these, 178 cases contain a prefix-scoped grant (a count of a feature present, not a proof of cause; it is a different number from the 178 failures left after the first fix) (commit [`83a357a`](https://github.com/mashharuki/proofgate/commit/83a357a)).
+4. **Fixed.** S3 access is now decided by intersecting the Resource with the bucket's objects, and the 178 failures that remained after the `?` fix went to 0, so the total went from 532 to 0 (commit [`e11b4b2`](https://github.com/mashharuki/proofgate/commit/e11b4b2)).
 5. **Checked.** A differential over 18,014 inputs removed no finding, and the demo outputs were byte-identical (commit [`09226c8`](https://github.com/mashharuki/proofgate/commit/09226c8)).
 
 ## A failure that the process caught: RS-70
