@@ -1,6 +1,6 @@
 # Tasks: proofgate-lean-evaluator
 
-Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Checkpoint 0 passed (1.2.1 published). Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
+Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Checkpoint 0 passed (1.2.1 published). Step 1 is done and waits for Checkpoint 1. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
 Deadline of the hackathon: Dec 5, 2026, 07:00 JST. Code freeze: 2026-12-01 (moved by the user from 11-29).
 Branches: one per step, from `main`: `leaneval/step-0-f1`, `leaneval/step-1-core`, `leaneval/step-2-theorems`, `leaneval/step-3-product`, `leaneval/step-4-release`. Work happens in the worktree `~/git/proofgate-leaneval`, so the user's uncommitted work in `~/git/proofgate` is never touched. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdicts change only as L0 allows; the oracle is changed first and committed alone; every rule is test-first and the failing run is recorded; no dependency or toolchain change (Lean `v4.31.0`, core library only); no `sorry` or project `axiom`; the axiom test of L2 passes; no publish, tag, or release by Kiro. After each task run the quality gate, and after each change under `tests/` the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -30,12 +30,19 @@ Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdict
 - [x] 2. **Checkpoint 0.** Passed 2026-11-28: PR #47 merged; the user chose to publish the fix at once as 1.2.1 (PR #48 merged, published by the user at 07:34 UTC after `npm login`, because the first try failed with E404 on an expired login). Report the differential. The user approves S3 and the merge, and decides whether 1.2.1 is published now.
 
 ## Step 1: Lean core (L2.1, L2.2, L1.2)
-- [ ] 3. Create branch `leaneval/step-1-core`.
-  - [ ] 3.1 `ProofGate/Glob.lean`: `Tok` with `nstar`, `Matches`, `globMatch`, `intersect`, `globMatch_iff`, `intersect_iff`, `nonempty`, the concatenation lemma for `Matches` (from `spike/IntersectNSpike.lean`).
-  - [ ] 3.2 `scripts/sync-service-reference.mjs` also writes `ProofGate/Tables.lean` (`launchGroups`, `objectActions` with `s3:*`, `bucketGrantActions`, the list of all services). Test: it equals `aws-tables.generated.ts` and the supplements.
-  - [ ] 3.3 `ProofGate/Spec.lean` (design 4.2), with `WellFormed` (unique logical IDs, design 4.3) defined here from the start. The test for the `Path` premise (design 4.1.5).
-  - [ ] 3.4 The axiom test: `#print axioms` on every theorem of `Glob.lean`, failing on anything beyond `propext`, `Quot.sound`, `Classical.choice`. The CI grep for `sorry` and `axiom` covers the new files.
-  - [ ] 3.5 `lake build` of the bundled project, `pnpm pack:check` (the new files are in the tarball), gate.
+- [x] 3. Create branch `leaneval/step-1-core`.
+  - [x] 3.1 `ProofGate/Glob.lean`: `Tok` with `nstar`, `Matches`, `globMatch`, `intersect`, `globMatch_iff`, `intersect_iff`, `nonempty`, the concatenation lemma for `Matches` (from `spike/IntersectNSpike.lean`).
+  - [x] 3.2 `scripts/sync-service-reference.mjs` also writes `ProofGate/Tables.lean` (`launchGroups`, `objectActions` with `s3:*`, `bucketGrantActions`, the list of all services). Test: it equals `aws-tables.generated.ts` and the supplements.
+  - [x] 3.3 `ProofGate/Spec.lean` (design 4.2), with `WellFormed` (unique logical IDs, design 4.3) defined here from the start. The test for the `Path` premise (design 4.1.5).
+  - [x] 3.4 The axiom test: `#print axioms` on every theorem of `Glob.lean`, failing on anything beyond `propext`, `Quot.sound`, `Classical.choice`. The CI grep for `sorry` and `axiom` covers the new files.
+  - [x] 3.5 `lake build` of the bundled project, `pnpm pack:check` (the new files are in the tarball), gate.
+  - Done 2026-11-28 (waits for Checkpoint 1).
+    - 3.1 `Glob.lean` (666 lines, 19 theorems): the spike `IntersectNSpike.lean` moved unchanged into `ProofGate.Glob`, plus `compile`, `nonempty`, `matches_append` (matching a concatenation splits the string), `matches_lits`, and seven kernel checks on real ARN patterns. All new proofs went through on the first try.
+    - 3.2 Changed from the task: the table is written by a new offline script `scripts/lean-tables.mjs`, which reads the committed TypeScript tables, instead of by `sync-service-reference.mjs` (that one needs the network and would have pulled newer AWS data). `tests/lean-core.test.ts` checks that `Tables.lean` equals the script's output and that the grouped table holds every action and service of `aws-tables.generated.ts` plus the supplements: 879 actions in 176 groups.
+    - 3.3 `Spec.lean`: `WellFormed` is defined there from the start. Three deviations from the design sketch, found by comparing it with the evaluator line by line, all to keep the Lean rule equal to the TypeScript one: (a) the region of a role ARN is a run without a colon (the evaluator's `ROLE_SHAPE` has it; the sketch had an empty region); (b) the bare-name over-approximation applies to a role's real name only (the sketch also matched the opaque and unknown names, which the evaluator does not); (c) the unknown name of an unnamed role has no colon (found in Step 0). Also: the launch check ignores Resources (`AllowedAction`), as the evaluator does; a protected bucket ARN is read literally, as the evaluator does; each role carries its logical ID and its lowercase form. The test for the role-path premise passes.
+    - Design 4.1.4 needed a change that no task listed: the extractor now rejects a template that contains U+0000 in any string of its Resources (`PG-IAM-003`), red first. It only adds rejections.
+    - 3.4 The axiom test runs `#print axioms` on all 19 theorems of `Glob.lean`; only `propext`, `Quot.sound`, and `Classical.choice` appear. The CI grep covers the new files.
+    - 3.5 `lake build` passes; the plugin tarball contains the three new files. Forced change of an existing test, for approval: the CDK test "builds packaged Lean sources automatically" now has a 60 s limit, because the cold build of the bigger library takes about 5 s (vitest's default limit), up from about 1 s. Its assertion is unchanged.
 - [ ] 4. **Checkpoint 1.**
 
 ## Step 2: Theorems (L2.3 to L2.5, L12)

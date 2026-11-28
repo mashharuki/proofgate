@@ -13,6 +13,32 @@ import { parseRoleBearingResources } from "./resources.js";
  * 解釈が曖昧な構文を推測で通さず、Unsupportedとして記録することがこの層の責務です。
  */
 type JsonObject = Record<string, unknown>;
+/**
+ * 予約文字U+0000です。Leanの規則は、名前のないロールの未知の名前を「この文字を含む文字列」と読みます（spec
+ * proofgate-lean-evaluator, design 4.1.4）。テンプレートの文字列にこの文字があると、その読み方が成り立たないため拒否します。
+ * The reserved character U+0000. The Lean rule reads the unknown name of an unnamed role as a string that contains it, so a
+ * template string that contains it is rejected (design 4.1.4). No real policy contains it.
+ */
+const RESERVED_CHARACTER = "\u0000";
+/** テンプレートのリソースの中で、予約文字を含む最初の文字列の位置を返します。 The path of the first string with it. */
+function reservedCharacterPath(value: unknown, path: string): string | undefined {
+  if (typeof value === "string") return value.includes(RESERVED_CHARACTER) ? path : undefined;
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries()) {
+      const found = reservedCharacterPath(item, `${path}[${index}]`);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (object(value)) {
+    for (const [key, item] of Object.entries(value)) {
+      if (key.includes(RESERVED_CHARACTER)) return `${path}.${key}`;
+      const found = reservedCharacterPath(item, `${path}.${key}`);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
 /** IAMポリシー変数の構文（`${`から`}`まで）です。 */
 const POLICY_VARIABLE = /\$\{[^}]*\}/;
 
@@ -222,6 +248,14 @@ export function extractStack(template: unknown): ExtractionResult {
     };
   }
 
+  const reserved = reservedCharacterPath(template.Resources, "Resources");
+  if (reserved !== undefined) {
+    return {
+      unsupported: [
+        { sourcePath: reserved, reason: "A policy string contains the reserved character U+0000" },
+      ],
+    };
+  }
   const context: ResolveContext = { resources: template.Resources };
   const roles = new Map<string, RoleModel>();
   // 第1段階: AWS::IAM::Role本体とロール内インラインポリシーを収集します。
