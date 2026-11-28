@@ -255,7 +255,10 @@ describe("CDK plugin fail-closed behavior", () => {
 
     rmSync(directory, { recursive: true, force: true });
     expect(report).toEqual({ success: true, violations: [] });
-  });
+    // The cold build of the bundled Lean library takes about 5 s since spec proofgate-lean-evaluator added Glob, Tables,
+    // and Spec (it took about 1 s before), which is at vitest's default limit of 5 s. Only the time limit changed.
+    // Leanのライブラリが大きくなり、未ビルドからのビルドが約5秒かかるため、時間の上限だけを延ばします。
+  }, 60_000);
 
   it("reports malformed synthesized templates as PG-IAM-003", () => {
     const directory = mkdtempSync(join(tmpdir(), "proofgate-template-test-"));
