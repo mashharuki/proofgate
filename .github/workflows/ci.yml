@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      PROOFGATE_NPM_VERSION: 1.2.0
+      PROOFGATE_NPM_VERSION: 1.2.1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7

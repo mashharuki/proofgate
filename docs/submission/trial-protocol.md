@@ -43,7 +43,7 @@ See `trial-sheet.md`. In short:
 
 ## Version
 
-Write the commit (`git log --oneline -1`) or the npm version that the participant used on the sheet. The planned version is 1.2.0 after its release; a trial before the release uses `main`.
+Write the commit (`git log --oneline -1`) or the npm version that the participant used on the sheet. The planned version is 1.2.1 (or the release after it, if any) after its release; a trial before the release uses `main`.
 
 ## After the trial
 
