@@ -53,6 +53,8 @@ structure Model where
 /-- Logical IDs are unique. CloudFormation guarantees it; the main theorems assume it, and every certificate checks it. -/
 def WellFormed (m : Model) : Prop := (m.roles.map (·.id)).Nodup
 
+instance (m : Model) : Decidable (WellFormed m) := inferInstanceAs (Decidable (List.Nodup _))
+
 /-- Some Allow statement allows the action on the resource (in the same statement). Deny is ignored: a decided
 over-approximation. -/
 def Allowed (st : List Stmt) (action resource : List Char) : Prop :=
