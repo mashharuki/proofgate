@@ -91,9 +91,9 @@ English: examples and data used for verification. `examples/real-stacks` has 84 
 
 ## 公開版と開発版
 
-npmの最新版は1.2.0（2026-11-23公開、4パッケージとも同じ版）で、このREADMEが説明する`main`の内容と同じです。1.1.2からの変更は[CHANGELOG](CHANGELOG.md)の「1.2.0」にあります。主な追加は、Lambda以外の起動サービス（879の起動アクション）、`iam:PassRole`の要らない経路、ロール自身がIAMを書き換える経路（`PG-IAM-005`）と設定項目`allowedPolicyWriters`です。
+npmの最新版は1.2.1（2026-11-28公開、4パッケージとも同じ版）で、このREADMEが説明する`main`の内容と同じです。1.2.1は、`:role/`という文字列を含まない`iam:PassRole`のResource（`arn:aws:iam::123456789012:*`など）を見逃していた1.2.0の不具合の修正です。1.1.2からの変更は[CHANGELOG](CHANGELOG.md)の「1.2.0」と「1.2.1」にあります。主な追加は、Lambda以外の起動サービス（879の起動アクション）、`iam:PassRole`の要らない経路、ロール自身がIAMを書き換える経路（`PG-IAM-005`）と設定項目`allowedPolicyWriters`です。
 
-English: npm has 1.2.0 (published 2026-11-23, the same version for all four packages), which is what this README describes. The changes from 1.1.2 are in the "1.2.0" section of the CHANGELOG.
+English: npm has 1.2.1 (published 2026-11-28, the same version for all four packages), which is what this README describes. 1.2.1 fixes a missed path of 1.2.0: an `iam:PassRole` Resource without the literal `:role/` (for example `arn:aws:iam::123456789012:*`) was never counted. The changes from 1.1.2 are in the "1.2.0" and "1.2.1" sections of the CHANGELOG.
 
 ## 公開パッケージ
 

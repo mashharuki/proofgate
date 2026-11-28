@@ -1,6 +1,6 @@
 # Tasks: proofgate-lean-evaluator
 
-Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Step 0 is done and waits for Checkpoint 0. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
+Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Checkpoint 0 passed (1.2.1 published). Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
 Deadline of the hackathon: Dec 5, 2026, 07:00 JST. Code freeze: 2026-12-01 (moved by the user from 11-29).
 Branches: one per step, from `main`: `leaneval/step-0-f1`, `leaneval/step-1-core`, `leaneval/step-2-theorems`, `leaneval/step-3-product`, `leaneval/step-4-release`. Work happens in the worktree `~/git/proofgate-leaneval`, so the user's uncommitted work in `~/git/proofgate` is never touched. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdicts change only as L0 allows; the oracle is changed first and committed alone; every rule is test-first and the failing run is recorded; no dependency or toolchain change (Lean `v4.31.0`, core library only); no `sorry` or project `axiom`; the axiom test of L2 passes; no publish, tag, or release by Kiro. After each task run the quality gate, and after each change under `tests/` the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -27,7 +27,7 @@ Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdict
     - 1.4: `allowsPassRoleTarget` uses `intersectsStructured` with `ROLE_SHAPE`, keeping the bare-name and logical-ID rule. Mutants: plain stars instead of NSTAR (3 rows fail), requiring `:role/` again (9 rows fail).
     - 1.5: differential against `ec4b8ef` (the published 1.2.0): 4 added findings (the regressions `f1-1` to `f1-4`), 1 removed (`f1-5`, S3), no generated case changed. All eight Pattern sets (84 Patterns, including the hold-out set, run once in this spec) gave the same results as 1.2.0; the pathfinding.cloud benchmark (60 of 91) and the trial app (24 of 24) are unchanged, so no expected table needed an update. CHANGELOG "Unreleased"; `security.md` and `SUPPORTED_IAM.md` updated.
     - Also fixed on the way: the first gate run failed in the CDK integration test because `demo:fix` and that test synthesized `examples/vulnerable-app` into the same `cdk.out` at the same time; `demo:fix` now writes steps 1 and 2 to a temporary directory and prints the plugin version from that report (the CI step that read the app's `cdk.out` was removed).
-- [ ] 2. **Checkpoint 0.** Report the differential. The user approves S3 and the merge, and decides whether 1.2.1 is published now.
+- [x] 2. **Checkpoint 0.** Passed 2026-11-28: PR #47 merged; the user chose to publish the fix at once as 1.2.1 (PR #48 merged, published by the user at 07:34 UTC after `npm login`, because the first try failed with E404 on an expired login). Report the differential. The user approves S3 and the merge, and decides whether 1.2.1 is published now.
 
 ## Step 1: Lean core (L2.1, L2.2, L1.2)
 - [ ] 3. Create branch `leaneval/step-1-core`.

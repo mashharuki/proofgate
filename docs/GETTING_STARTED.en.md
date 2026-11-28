@@ -4,7 +4,7 @@ ProofGate is a check that runs inside `cdk synth`. It reads the CloudFormation t
 
 This page lets you see it on one stack: the stack synthesizes normally, ProofGate rejects it, you remove one permission, and ProofGate accepts the same stack.
 
-**Version.** `@proofgate-cdk/cdk-plugin` 1.2.0 from npm (published 2026-11-23). The repository's `main` has the same code, and the CDK report shows `pluginVersion: "1.2.0"`.
+**Version.** `@proofgate-cdk/cdk-plugin` 1.2.1 from npm (published 2026-11-28). The repository's `main` has the same code, and the CDK report shows `pluginVersion: "1.2.1"`. 1.2.1 fixes a missed path in 1.2.0: an `iam:PassRole` Resource without the literal `:role/`, such as `arn:aws:iam::123456789012:*`, was never counted (see the CHANGELOG).
 
 **Three ways to try it.**
 
@@ -17,7 +17,7 @@ This page lets you see it on one stack: the stack synthesizes normally, ProofGat
 ## 0. In a GitHub Codespace
 
 1. Sign in to GitHub, open https://github.com/mashharuki/proofgate, choose **Code**, then **Codespaces**, then **Create codespace on main**.
-2. Wait for the setup to finish (the setup script took about 3.5 minutes in our measurement, after GitHub had created the container). It installs Node.js, pnpm, and elan, builds the repository and the Lean project, and prepares `~/proofgate-npm-demo`, a copy of the demo stack that uses 1.2.0 from npm. It prints `Ready.` and the time of each phase (also in `/tmp/proofgate-setup-times.txt`).
+2. Wait for the setup to finish (the setup script took about 3.5 minutes in our measurement, after GitHub had created the container). It installs Node.js, pnpm, and elan, builds the repository and the Lean project, and prepares `~/proofgate-npm-demo`, a copy of the demo stack that uses 1.2.1 from npm. It prints `Ready.` and the time of each phase (also in `/tmp/proofgate-setup-times.txt`).
 3. In the terminal, run the four steps on the published version:
 
    ```bash
@@ -147,7 +147,7 @@ It runs steps 1 to 4 on the same stack, applies `fix.patch` to a copy in a tempo
 ### The same four steps with the npm package on your machine
 
 ```bash
-node scripts/prepare-npm-demo.mjs /tmp/proofgate-npm-demo 1.2.0
+node scripts/prepare-npm-demo.mjs /tmp/proofgate-npm-demo 1.2.1
 cd /tmp/proofgate-npm-demo && npm install && npx tsc -p tsconfig.json && cd -
 node scripts/demo-fix.mjs --app-dir /tmp/proofgate-npm-demo
 ```

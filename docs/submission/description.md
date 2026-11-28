@@ -57,7 +57,7 @@ On the same stack, cdk-nag 3.1.0 (`AwsSolutionsChecks`) reports three wildcard f
 ## Try it
 
 - Guide: [`docs/GETTING_STARTED.en.md`](../GETTING_STARTED.en.md), with a GitHub Codespace, a local run, or the CI log.
-- npm: `@proofgate-cdk/cdk-plugin` 1.2.0.
+- npm: `@proofgate-cdk/cdk-plugin` 1.2.1.
 - License: Apache-2.0.
 
 ## Built with Kiro
