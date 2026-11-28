@@ -2,7 +2,7 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
-## Unreleased
+## 1.2.1 - 2026-11-28
 
 ### Fixed: `iam:PassRole` Resources without the literal `:role/` were never counted
 
