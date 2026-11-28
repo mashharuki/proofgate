@@ -43,16 +43,36 @@ Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdict
     - Design 4.1.4 needed a change that no task listed: the extractor now rejects a template that contains U+0000 in any string of its Resources (`PG-IAM-003`), red first. It only adds rejections.
     - 3.4 The axiom test runs `#print axioms` on all 19 theorems of `Glob.lean`; only `propext`, `Quot.sound`, and `Classical.choice` appear. The CI grep covers the new files.
     - 3.5 `lake build` passes; the plugin tarball contains the three new files. Forced change of an existing test, for approval: the CDK test "builds packaged Lean sources automatically" now has a 60 s limit, because the cold build of the bigger library takes about 5 s (vitest's default limit), up from about 1 s. Its assertion is unchanged.
-- [ ] 4. **Checkpoint 1.**
+- [x] 4. **Checkpoint 1.** Passed 2026-11-28: the user approved and PR #50 was merged; the user chose to keep the current model for Step 2 and to switch to Sonnet from Step 3 (option A).
 
 ## Step 2: Theorems (L2.3 to L2.5, L12)
-- [ ] 5. Create branch `leaneval/step-2-theorems`.
-  - [ ] 5.1 `ProofGate/Eval.lean`: `findings` with the indexed launch lookup; `launch_index_iff`.
-  - [ ] 5.2 Bridge lemmas: `allowed_any_iff`, `reaches_iff`, `roleIdent_iff`.
-  - [ ] 5.3 `findings_iff`, under `WellFormed m`. **Stop at 11-29 18:00 if not proved:** report, and take the fallback of design section 10.
-  - [ ] 5.4 `findings_mono` (adding a statement; adding a role with a new logical ID), `findings_exempt` and `safe_iff` (under `WellFormed m`).
-  - [ ] 5.5 `ProofGate/Legacy.lean`: `legacy_s3_unsound`, `legacy_passrole_unsound`.
-  - [ ] 5.6 Speed: the demo stack, the largest real-stack template, and the trial app's stacks under kernel evaluation. Record the times.
+- [x] 5. Create branch `leaneval/step-2-theorems`.
+  - [x] 5.1 `ProofGate/Eval.lean`: `findings` with the indexed launch lookup; `launch_index_iff`.
+  - [x] 5.2 Bridge lemmas: `allowed_any_iff`, `reaches_iff`, `roleIdent_iff`.
+  - [x] 5.3 `findings_iff`, under `WellFormed m`. **Stop at 11-29 18:00 if not proved:** report, and take the fallback of design section 10.
+  - [x] 5.4 `findings_mono` (adding a statement; adding a role with a new logical ID), `findings_exempt` and `safe_iff` (under `WellFormed m`).
+  - [x] 5.5 `ProofGate/Legacy.lean`: `legacy_s3_unsound`, `legacy_passrole_unsound`.
+  - [x] 5.6 Speed: the demo stack, the largest real-stack template, and the trial app's stacks under kernel evaluation. Record the times.
+  - Done 2026-11-29, about 24 hours before the stop time of 5.3 (waits for Checkpoint 2). The fallback of design section 10 is not needed.
+    - 5.1 `Eval.lean` (534 lines, 35 theorems). The index lemma has other names than the task: `mem_entriesFor` (one action pattern) and `mem_launchEntries` (all statements of a role) state that the indexed lookup returns exactly the table entries that the role may call. The lookup has three cases: the action `*` returns the whole table without matching any name (`entriesFor`, added after the measurement below); a literal service prefix looks only in its group (`entriesForIdx`, with `splitPrefix_spec`, `sep_unique`, and the kernel check `groupsNoColon` that no group name holds a colon); any other wildcard in the prefix scans the whole table.
+    - 5.2 The bridge lemmas have other names than the task: `allowedB_iff` (through `intersect_iff`), `allowedActionB_iff`, `passB_iff` with `identPats_iff` (the role identities as patterns: `roleArnPat_iff`, `freshPat_iff`, `namePats_iff`), `reachesB_iff` with `objPat_iff`, `launchB_iff` with `svcOk_iff`, and `pathB_iff`.
+    - 5.3 `findings_iff` is stronger than the task: it needs no `WellFormed` hypothesis, because each finding carries the logical IDs of the roles it was computed from. `findings_iff_wf` is the form under `WellFormed m` that the user asked for: for roles of the model, `(P.id, T.id, b)` is a finding exactly when `b` is protected and `EscalatesTo m P T b` holds. `WellFormed` is decidable (`instance` in `Spec.lean`), so Step 3 can prove it by `decide`.
+    - 5.4 `safe_iff`, `findings_exempt`, and `findings_mono` also need no hypothesis. `findings_mono` is stated with `ModelLe m m'`: the same buckets and exemptions, and every role of `m` has a role in `m'` with the same ID, name, and trusts and at least its statements. This covers both cases of the task (a new statement, a new role).
+    - 5.5 `Legacy.lean` (3 theorems): `legacy_s3_unsound` (D1: matching the literal `<bucket>/*` misses `arn:aws:s3:::bkt/reports/*`), `legacy_passrole_unsound` (F1: the 1.2.0 PassRole check misses a Resource without `:role/`), and `legacy_passrole_path` (the Lean `findings` of that stack is the one finding, by `decide +kernel`).
+    - The axiom test of Step 1 now runs `#print axioms` on all 57 theorems of `Glob.lean`, `Eval.lean`, and `Legacy.lean` and requires the key names; only `propext`, `Quot.sound`, and `Classical.choice` appear. Lean audit: no `sorry`, no project `axiom`.
+    - 5.6 Speed, one `lake env lean` per template including Lean's start, `findings` checked by `decide +kernel`. The model was written by a scratch script that follows design 5.5 (not committed; Step 3 writes the real generator). On every template, Lean's finding count equalled the TypeScript count of (principal, target) pairs.
+
+      | Input | Templates | Time per template |
+      | --- | --- | --- |
+      | Demo stack, unsafe and fixed, plus `WellFormed` by `decide` | 1 file | 3.7 s in total |
+      | Real-stack Patterns, all catalogs (RS-78 skipped: an asset file is missing in the scratch synth) | 82 | 0.25 to 6.0 s, 96 s in total; slowest RS-21 6.0 s; RS-81 (59 statements) 0.3 s |
+      | Trial app, 24 variants (3 are rejected by the extractor and have no model) | 22 | safe 0.26 to 1.0 s, unsafe 3.5 to 5.3 s (`all-risky`) |
+      | Action `*`, no trusted service (worst case of the whole-table case) | 1 | more than 13 minutes before the `*` case was added, 4 s after |
+      | Action `lambda*:create*` (wildcard in the prefix) | 1 | not run to the end; it takes the whole-table scan that needed more than 13 minutes for `*` |
+
+      No template of the real stacks or the trial app has a wildcard in an action's service prefix other than `*` itself. Step 3 keeps the design's fallback for such a pattern: `native_decide`, shown in the output (task 7.2).
+    - Cold `lake build` of the bundled project: 13 s (Step 1: about 5 s). The CDK test with the 60 s limit passes.
+    - Gate passed (quality, typecheck, test, pack:check); `tests/` typecheck with a temporary tsconfig passed; `pnpm demo:fix` exit 0; `pnpm verify:demo` exit 1 with `PG-IAM-004` as designed. No product code changed in this step: the plugin still runs the Boolean module until Step 3.
 - [ ] 6. **Checkpoint 2.**
 
 ## Step 3: Product (L1, L3 to L8, L11)
