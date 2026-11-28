@@ -1,5 +1,8 @@
 import ProofGate.Model
 import ProofGate.Security
+import ProofGate.Glob
+import ProofGate.Tables
+import ProofGate.Spec
 
 /-!
 # ProofGate
