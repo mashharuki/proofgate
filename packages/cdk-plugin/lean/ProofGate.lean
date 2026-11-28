@@ -3,6 +3,8 @@ import ProofGate.Security
 import ProofGate.Glob
 import ProofGate.Tables
 import ProofGate.Spec
+import ProofGate.Eval
+import ProofGate.Legacy
 
 /-!
 # ProofGate
