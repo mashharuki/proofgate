@@ -86,14 +86,31 @@ describe("premises of the Lean rule (task 3.3, design 4.1)", () => {
     expect(result.model).toBeUndefined();
   });
 });
-describe("axioms of the Lean core (task 3.4)", () => {
+describe("axioms of the Lean core (tasks 3.4 and 5.x)", () => {
   const STANDARD = new Set(["propext", "Quot.sound", "Classical.choice"]);
-  it("every theorem of Glob.lean uses only Lean's standard axioms", () => {
-    const glob = read("ProofGate/Glob.lean");
-    const names = [...glob.matchAll(/^theorem (\w+)/gm)].map((m) => m[1] as string);
-    expect(names.length).toBeGreaterThan(10);
+  // Every theorem of these modules, with its namespace. A new theorem is covered without changing this test.
+  const MODULES: readonly (readonly [string, string])[] = [
+    ["ProofGate/Glob.lean", "ProofGate.Glob"],
+    ["ProofGate/Eval.lean", "ProofGate.Eval"],
+    ["ProofGate/Legacy.lean", "ProofGate.Legacy"],
+  ];
+  it("every theorem of Glob, Eval, and Legacy uses only Lean's standard axioms", () => {
+    const names = MODULES.flatMap(([file, ns]) =>
+      [...read(file).matchAll(/^theorem (\w+)/gm)].map((m) => `${ns}.${m[1] as string}`),
+    );
+    expect(names.length).toBeGreaterThan(40);
     expect(names).toEqual(
-      expect.arrayContaining(["globMatch_iff", "intersect_iff", "matches_append"]),
+      expect.arrayContaining([
+        "ProofGate.Glob.globMatch_iff",
+        "ProofGate.Glob.intersect_iff",
+        "ProofGate.Eval.findings_iff",
+        "ProofGate.Eval.safe_iff",
+        "ProofGate.Eval.findings_mono",
+        "ProofGate.Eval.findings_exempt",
+        "ProofGate.Eval.findings_iff_wf",
+        "ProofGate.Legacy.legacy_s3_unsound",
+        "ProofGate.Legacy.legacy_passrole_unsound",
+      ]),
     );
     const build = spawnSync("lake", ["build"], { cwd: lean, encoding: "utf8" });
     expect(build.status, `${build.stdout}${build.stderr}`).toBe(0);
@@ -102,7 +119,7 @@ describe("axioms of the Lean core (task 3.4)", () => {
       const file = join(dir, "Axioms.lean");
       writeFileSync(
         file,
-        ["import ProofGate", ...names.map((n) => `#print axioms ProofGate.Glob.${n}`)].join("\n"),
+        ["import ProofGate", ...names.map((n) => `#print axioms ${n}`)].join("\n"),
       );
       const run = spawnSync("lake", ["env", "lean", file], { cwd: lean, encoding: "utf8" });
       expect(run.status, run.stderr).toBe(0);
