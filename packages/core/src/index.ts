@@ -122,34 +122,44 @@ function bucketAccessStatements(role: RoleModel, bucketArn: string): StatementMo
 const GENERATED_NAME = /_generated_[A-Za-z0-9]+/g;
 /**
  * StatementのResourceが、指定した対象ロールを表しているかを判定します。
+ * ResourceのパターンとロールのARNの交差で調べます（spec proofgate-lean-evaluator, L0, F1）。1.2.0までは、Resourceに
+ * 文字列`:role/`がないと数えなかったため、IAMが許可する`arn:aws:iam::*:role*`、`arn:aws:iam::<アカウント>:*`、`arn:*`
+ * などを見逃していました。パーティション、リージョン、アカウントはコロンを含まない文字列です（NSTAR）。
+ * Does a Resource of the statement denote the target role? Decided by intersection with the role's ARN (F1). Up to 1.2.0
+ * a Resource without the substring `:role/` never counted, so `arn:aws:iam::*:role*`, `arn:aws:iam::<account>:*`, and
+ * `arn:*`, which IAM allows, were missed. Partition, region, and account are runs without a colon (NSTAR).
  */
 function allowsPassRoleTarget(statement: StatementModel, target: RoleModel): boolean {
   if (!allowsAction(statement, ["iam:PassRole"])) return false;
+  // ロールの論理IDや裸の名前も、対象を表すものとして数えます（過剰検出の側。IAMはARNでないResourceを受け付けません）。
+  // A logical ID or a bare role name also counts (decided over-approximation; IAM rejects a Resource that is no ARN).
   const directIdentifiers = [target.logicalId, target.roleName].filter((value): value is string =>
     Boolean(value),
   );
-  return statement.resources.some((resourcePattern) => {
-    if (directIdentifiers.some((identifier) => matches(resourcePattern, identifier))) return true;
-    const roleMarker = ":role/";
-    const markerIndex = resourcePattern.indexOf(roleMarker);
-    if (markerIndex < 0) return false;
-    const scope = resourcePattern.slice(0, markerIndex + roleMarker.length);
-    if (!target.roleName) {
-      // 名前のないロール: CloudFormationが付ける名前は合成時に不明なため、不透明な名前
-      // `_generated_<LogicalId>`として読みます（spec proofgate-cdk-construct-support, R0）。
-      // ロール名部分にワイルドカードがあるPatternは、実際の生成名に一致しうるので対象にします
-      // （過剰検出の側です）。リテラルは、不透明な名前そのもの（role.roleArnなど）のときだけ一致します。
-      // A role without RoleName: its real name is unknown at synthesis, so it is read as the opaque
-      // name `_generated_<LogicalId>`. A pattern with a wildcard in the role-name part may match the
-      // real generated name and counts (over-approximation); a literal counts only if it is the opaque name.
-      if (/[*?]/.test(resourcePattern.slice(scope.length))) return true;
-      return matches(resourcePattern, `${scope}_generated_${target.logicalId}`);
-    }
-    // partitionやアカウント部分はPolicy側の値を保ち、ロール名部分だけを検査対象へ置き換えます。
-    return matches(resourcePattern, `${scope}${target.roleName}`);
-  });
+  return statement.resources.some(
+    (resourcePattern) =>
+      directIdentifiers.some((identifier) => matches(resourcePattern, identifier)) ||
+      passRoleDenotesRole(resourcePattern, target),
+  );
 }
-
+/** どのポリシーのリテラルにも含まれない文字です（抽出器が拒否します）。 A character that no policy literal contains. */
+const FRESH: StructuredToken = { kind: "lit", char: "\u0000" };
+function passRoleDenotesRole(pattern: string, target: RoleModel): boolean {
+  const glob = globOf(pattern);
+  const prefix = arnPrefixOf(ROLE_SHAPE);
+  if (target.roleName !== undefined) {
+    return intersectsStructured(glob, [...prefix, ...literalOf(target.roleName)]);
+  }
+  // 名前のないロール: CloudFormationが付ける名前は合成時に不明です（spec proofgate-cdk-construct-support, R0）。
+  // 不透明な名前`_generated_<LogicalId>`（role.roleArnの参照）か、どのリテラルにも含まれない文字を含み、コロンを含まない
+  // 未知の名前として読みます。後者には、名前の部分のワイルドカードだけが一致します（過剰検出の側）。
+  // A role without RoleName: the opaque name `_generated_<LogicalId>` (a reference such as role.roleArn), or an unknown name
+  // that contains a character no literal contains and no colon; only a wildcard in the name part meets the latter.
+  return (
+    intersectsStructured(glob, [...prefix, ...literalOf(`_generated_${target.logicalId}`)]) ||
+    intersectsStructured(glob, [...prefix, NSTAR, FRESH, NSTAR])
+  );
+}
 /**
  * `s3:*`の1要素は、1.1.2までのリストに入っていたものです。アクションのパターンを文字列`s3:*`と比べる読み方のため、
  * `s3:?`のような実在しないパターンも一致していました。指摘が減らないように残します（過剰検出の側）。

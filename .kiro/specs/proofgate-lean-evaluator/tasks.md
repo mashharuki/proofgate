@@ -1,6 +1,6 @@
 # Tasks: proofgate-lean-evaluator
 
-Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
+Status: APPROVED by the user on 2026-11-27, together with the design (revision 3). Step 0 is done and waits for Checkpoint 0. Requirements: [requirements.md](./requirements.md) (revision 3). Design: [design.md](./design.md) (revision 3).
 Deadline of the hackathon: Dec 5, 2026, 07:00 JST. Code freeze: 2026-12-01 (moved by the user from 11-29).
 Branches: one per step, from `main`: `leaneval/step-0-f1`, `leaneval/step-1-core`, `leaneval/step-2-theorems`, `leaneval/step-3-product`, `leaneval/step-4-release`. Work happens in the worktree `~/git/proofgate-leaneval`, so the user's uncommitted work in `~/git/proofgate` is never touched. Committing is allowed. Push and merge need the user's approval; each step is merged on its own.
 Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdicts change only as L0 allows; the oracle is changed first and committed alone; every rule is test-first and the failing run is recorded; no dependency or toolchain change (Lean `v4.31.0`, core library only); no `sorry` or project `axiom`; the axiom test of L2 passes; no publish, tag, or release by Kiro. After each task run the quality gate, and after each change under `tests/` the temporary typecheck of `tests/`. Each session adds a row to the usage log.
@@ -14,12 +14,19 @@ Rules for every task: Fail Closed stays; a disagreement is `PG-IAM-003`; verdict
 | 4 Release | 12-01 | user merges and publishes |
 
 ## Step 0: F1 on its own (L0)
-- [ ] 1. Create branch `leaneval/step-0-f1` from `main`.
-  - [ ] 1.1 Tests first for the oracle: regression rows from P10, P11, P14 (and `arn:aws:iam::123456789012:*`, `arn:*`), and a test that checks the PassRole rows P01 to P14 against the oracle's PassRole function. Show them red.
-  - [ ] 1.2 Fix `passRoleResourceMatches` in the oracle (its own code: intersect with the role identifiers, NSTAR for partition and account). Typecheck of `tests/`. Commit the oracle alone. Show which generated cases now disagree with the evaluator (expected: harness disagreement until 1.4).
-  - [ ] 1.3 Tests first for the evaluator: fixed rows for the F1 Resources, the S3 Resources (`arn:aws:iam::1:2:role/x`), bare names and logical IDs, unnamed roles with literals and wildcards. Show them red.
-  - [ ] 1.4 Fix `allowsPassRoleTarget` with `denotesArn` and `ROLE_SHAPE`, keeping the bare-name and logical-ID rule. Mutants: drop NSTAR (the `role/other-*` row must fail), require `:role/` again (the F1 rows must fail).
-  - [ ] 1.5 Differential against 1.2.0: list every added finding (F1) and every removed one (S3). Run all Pattern sets, the pathfinding.cloud benchmark, and the trial app; update every expected table row by row with a reason. CHANGELOG ("Fixed", with the note for 1.2.0 users). Gate, usage-log row, PR.
+- [x] 1. Create branch `leaneval/step-0-f1` from `main`.
+  - [x] 1.1 Tests first for the oracle: regression rows from P10, P11, P14 (and `arn:aws:iam::123456789012:*`, `arn:*`), and a test that checks the PassRole rows P01 to P14 against the oracle's PassRole function. Show them red.
+  - [x] 1.2 Fix `passRoleResourceMatches` in the oracle (its own code: intersect with the role identifiers, NSTAR for partition and account). Typecheck of `tests/`. Commit the oracle alone. Show which generated cases now disagree with the evaluator (expected: harness disagreement until 1.4).
+  - [x] 1.3 Tests first for the evaluator: fixed rows for the F1 Resources, the S3 Resources (`arn:aws:iam::1:2:role/x`), bare names and logical IDs, unnamed roles with literals and wildcards. Show them red.
+  - [x] 1.4 Fix `allowsPassRoleTarget` with `denotesArn` and `ROLE_SHAPE`, keeping the bare-name and logical-ID rule. Mutants: drop NSTAR (the `role/other-*` row must fail), require `:role/` again (the F1 rows must fail).
+  - [x] 1.5 Differential against 1.2.0: list every added finding (F1) and every removed one (S3). Run all Pattern sets, the pathfinding.cloud benchmark, and the trial app; update every expected table row by row with a reason. CHANGELOG ("Fixed", with the note for 1.2.0 users). Gate, usage-log row, PR.
+  - Done 2026-11-28 (waits for Checkpoint 0). Branch cut from `leaneval/requirements` (the spec PR #46) and merged with `main` at `31ec6c2`, so it holds the spec too.
+    - 1.1: `tests/pbt/passrole-observations.test.ts` checks P01 to P14 against the oracle's PassRole judgment (P02 not applicable: role path; P09 a listed deviation: the account is unknown at synthesis); five regression files `f1-1` to `f1-5`. Red: P10, P11, P14 and all five regressions.
+    - 1.2: the oracle now intersects the Resource with `arn:<nstar>:iam:<nstar>:<nstar>:role/<name>`. My first version read an unnamed role's unknown name with plain stars, so `arn:aws:iam::*:role/data-role` met it through the account `*`; the fixed rows of 1.3 caught it, and a second oracle commit made the unknown name a run without a colon.
+    - 1.3: `tests/pbt/passrole-resource.test.ts`, 23 rows (oracle, evaluator, one Lean launch). Red: 12 rows against the 1.2.0 evaluator.
+    - 1.4: `allowsPassRoleTarget` uses `intersectsStructured` with `ROLE_SHAPE`, keeping the bare-name and logical-ID rule. Mutants: plain stars instead of NSTAR (3 rows fail), requiring `:role/` again (9 rows fail).
+    - 1.5: differential against `ec4b8ef` (the published 1.2.0): 4 added findings (the regressions `f1-1` to `f1-4`), 1 removed (`f1-5`, S3), no generated case changed. All eight Pattern sets (84 Patterns, including the hold-out set, run once in this spec) gave the same results as 1.2.0; the pathfinding.cloud benchmark (60 of 91) and the trial app (24 of 24) are unchanged, so no expected table needed an update. CHANGELOG "Unreleased"; `security.md` and `SUPPORTED_IAM.md` updated.
+    - Also fixed on the way: the first gate run failed in the CDK integration test because `demo:fix` and that test synthesized `examples/vulnerable-app` into the same `cdk.out` at the same time; `demo:fix` now writes steps 1 and 2 to a temporary directory and prints the plugin version from that report (the CI step that read the app's `cdk.out` was removed).
 - [ ] 2. **Checkpoint 0.** Report the differential. The user approves S3 and the merge, and decides whether 1.2.1 is published now.
 
 ## Step 1: Lean core (L2.1, L2.2, L1.2)

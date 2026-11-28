@@ -1,0 +1,46 @@
+{
+  "name": "f1-5-account-colon",
+  "note": "PassRole on an ARN whose account part holds a colon. No real role ARN matches it (the partition, region, and account contain no colon; role paths other than / are rejected). 1.2.0 reported it; decision S3 of spec proofgate-lean-evaluator, approved 2026-11-27.",
+  "label": "safe",
+  "expectedTs": "safe",
+  "config": {
+    "protectedBucketArns": ["arn:aws:s3:::protected-bucket"]
+  },
+  "model": {
+    "version": "1",
+    "roles": [
+      {
+        "logicalId": "Data",
+        "roleName": "data-role",
+        "trustServices": ["lambda.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["s3:GetObject"],
+            "resources": ["arn:aws:s3:::protected-bucket/*"],
+            "sourcePath": "Resources.Data.Properties.Policies[0].PolicyDocument.Statement[0]"
+          }
+        ]
+      },
+      {
+        "logicalId": "Dev",
+        "roleName": "dev-role",
+        "trustServices": ["ec2.amazonaws.com"],
+        "statements": [
+          {
+            "effect": "Allow",
+            "actions": ["iam:PassRole"],
+            "resources": ["arn:aws:iam::1:2:role/data-role"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[0]"
+          },
+          {
+            "effect": "Allow",
+            "actions": ["lambda:CreateFunction"],
+            "resources": ["*"],
+            "sourcePath": "Resources.Dev.Properties.Policies[0].PolicyDocument.Statement[1]"
+          }
+        ]
+      }
+    ]
+  }
+}

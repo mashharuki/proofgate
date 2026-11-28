@@ -2,6 +2,12 @@
 
 All published packages (`@proofgate-cdk/model`, `@proofgate-cdk/extractor`, `@proofgate-cdk/core`, `@proofgate-cdk/cdk-plugin`) share one version.
 
+## Unreleased
+
+### Fixed: `iam:PassRole` Resources without the literal `:role/` were never counted
+
+Up to 1.2.0, an `iam:PassRole` Resource counted only if it contained the substring `:role/`. Resources such as `arn:aws:iam::123456789012:*`, `arn:aws:iam::*:*`, `arn:aws:iam::*:role*`, `arn:aws:iam:*role/x`, `arn:aws:*`, and `arn:*` were never reported, although the real IAM engine allows them to pass a role (observations P10, P11, P14 of `iam:SimulateCustomPolicy`, 2026-11-21). A `PG-IAM-004` path through such a Resource was missed. The Resource is now read as a pattern that may denote the role's ARN, by intersection; the partition, region, and account are read as runs without a colon, as in every real ARN. This adds findings. It found no new finding in the 84 realistic Patterns, the 91 pathfinding.cloud paths, or the 24 trial variants, which use `role/` Resources. One reading is narrower than before: a Resource whose account part holds a colon (for example `arn:aws:iam::1:2:role/x`) no longer counts, because no real role ARN can match it (roles with a path other than `/` are rejected); the user approved this on 2026-11-27. The independent test oracle had the same blind spot and was fixed first. The defect was found while the rule was written over request strings in Lean (spec `proofgate-lean-evaluator`).
+
 ## 1.2.0 - 2026-11-23
 
 Upgrade notes: `Violation.ruleId` can now be `"PG-IAM-005"`, and code that handles only `"PG-IAM-004"` should handle it too. `ProofGateConfig` has the new optional `allowedPolicyWriters`, and the model has the optional `resources`. Templates that 1.1.2 accepted can now be rejected (`PG-IAM-004`, `PG-IAM-005`), because every change below adds findings, except the four that read more templates: role-less templates, `Fn::Sub`, the managed policies, and non-service trust principals.
